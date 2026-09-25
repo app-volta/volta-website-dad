@@ -1,0 +1,94 @@
+.cabecalho {
+  background: linear-gradient(
+    135deg,
+    var(--verde-escuro) 0%,
+    var(--verde-medio) 100%
+  );
+  color: #fff;
+  padding: 1rem clamp(1rem, 4vw, 2rem);
+}
+
+.cabecalho__linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.cabecalho__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+.cabecalho__logo {
+  background: var(--verde-destaque);
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.cabecalho__usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #eaf5e7;
+}
+
+.cabecalho__nome {
+  font-weight: 600;
+}
+
+.cabecalho__usuario .botao--sutil {
+  color: #fff;
+}
+
+.cabecalho__usuario .botao--sutil:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cabecalho__nav {
+  max-width: 1080px;
+  margin: 0.85rem auto 0;
+}
+
+.cabecalho__lista {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cabecalho__link {
+  color: #eaf5e7;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.cabecalho__link:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.cabecalho__link--ativo {
+  background: var(--verde-destaque);
+  color: #04240a;
+}
