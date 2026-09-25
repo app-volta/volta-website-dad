@@ -1,0 +1,37 @@
+.ocorrencias__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.ocorrencias__descricao {
+  color: var(--texto-suave);
+  margin: 0.15rem 0 0;
+}
+
+.ocorrencias__filtros {
+  margin-bottom: 1.5rem;
+}
+
+.ocorrencias__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.ocorrencias__link {
+  background: transparent;
+  border: none;
+  color: var(--verde-medio);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.ocorrencias__link:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
