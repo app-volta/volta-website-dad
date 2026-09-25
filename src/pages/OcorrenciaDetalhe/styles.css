@@ -1,0 +1,140 @@
+.detalhe__voltar {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--verde-medio);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.detalhe__voltar:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
+
+.detalhe__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.detalhe__descricao {
+  color: var(--texto);
+  margin: 0.3rem 0 0;
+  max-width: 60ch;
+}
+
+.detalhe__conteudo {
+  display: grid;
+  gap: 1rem;
+}
+
+.detalhe__foto {
+  max-width: 100%;
+  border-radius: var(--raio-forte);
+  border: 1px solid var(--borda);
+  max-height: 320px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.detalhe__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.detalhe__meta dt {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--texto-suave);
+  margin: 0 0 0.15rem;
+}
+
+.detalhe__meta dd {
+  margin: 0;
+  color: var(--texto);
+}
+
+.detalhe__ia {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.detalhe__ia-titulo {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.detalhe__ia-linha {
+  margin: 0;
+  color: var(--texto);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.detalhe__acoes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.detalhe__opcoes-material,
+.detalhe__opcoes-coop {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.detalhe__opcao-material,
+.detalhe__opcao-coop {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  background: #fff;
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detalhe__opcao-material:hover:not(:disabled),
+.detalhe__opcao-coop:hover:not(:disabled) {
+  border-color: var(--verde-medio);
+  background: var(--verde-suave);
+}
+
+.detalhe__opcao-coop {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.detalhe__opcao-coop span {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.detalhe__link {
+  background: transparent;
+  border: none;
+  color: var(--verde-medio);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-top: 1rem;
+}

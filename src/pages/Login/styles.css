@@ -1,0 +1,29 @@
+.login {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.login__cartao {
+  background: var(--superficie);
+  padding: 2rem;
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+  max-width: 420px;
+  width: 100%;
+}
+
+.login__titulo {
+  margin: 0 0 0.35rem;
+}
+
+.login__descricao {
+  color: var(--texto-suave);
+  margin: 0 0 1.25rem;
+}
+
+.login__rodape {
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--texto-suave);
+}

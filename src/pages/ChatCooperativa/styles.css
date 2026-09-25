@@ -1,0 +1,53 @@
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chat__voltar {
+  color: var(--verde-medio);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chat__voltar:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
+
+.chat__cabecalho h1 {
+  margin: 0;
+}
+
+.chat__meta {
+  color: var(--texto-suave);
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.chat__lista {
+  list-style: none;
+  padding: 1rem;
+  margin: 0;
+  background: var(--superficie);
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+  min-height: 240px;
+  max-height: 480px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat__form {
+  background: var(--superficie);
+  padding: 1rem;
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+}
+
+.chat__acao {
+  display: flex;
+  justify-content: flex-end;
+}

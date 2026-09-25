@@ -1,0 +1,130 @@
+.home__hero {
+  background: linear-gradient(
+    135deg,
+    var(--verde-escuro),
+    var(--verde-medio)
+  );
+  color: #fff;
+  padding: 2rem;
+  border-radius: var(--raio-forte);
+  margin-bottom: 2rem;
+}
+
+.home__saudacao {
+  margin: 0 0 0.35rem;
+  opacity: 0.9;
+}
+
+.home__titulo {
+  color: #fff;
+  margin: 0 0 0.75rem;
+  font-size: 2rem;
+}
+
+.home__subtitulo {
+  margin: 0 0 1.5rem;
+  max-width: 60ch;
+  opacity: 0.95;
+}
+
+.home__acoes {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.home__cta {
+  background: var(--verde-destaque);
+  color: #04240a;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.home__cta:hover {
+  background: #16b06a;
+  color: #04240a;
+}
+
+.home__cta--secundario {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.home__cta--secundario:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+.home__secao {
+  margin-bottom: 2rem;
+}
+
+.home__secao-cabecalho {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.home__secao-titulo {
+  font-size: 1.15rem;
+  margin: 0 0 0.75rem;
+}
+
+.home__cartoes-materiais {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.home__cartao-material {
+  border-radius: var(--raio-forte);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.home__cartao-emoji {
+  font-size: 1.6rem;
+}
+
+.home__cartao-rotulo {
+  font-weight: 600;
+}
+
+.home__cartao-numero {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.home__link {
+  background: transparent;
+  border: none;
+  color: var(--verde-medio);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.home__link:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
+
+.home__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}

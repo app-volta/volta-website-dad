@@ -1,0 +1,13 @@
+.cadastro__radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  cursor: pointer;
+}
+
+.cadastro__radio input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--verde-medio);
+}

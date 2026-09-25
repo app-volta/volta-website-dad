@@ -1,0 +1,14 @@
+.cooperativas__descricao {
+  color: var(--texto-suave);
+  margin: 0 0 1rem;
+}
+
+.cooperativas__filtros {
+  margin-bottom: 1.25rem;
+}
+
+.cooperativas__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
