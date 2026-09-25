@@ -1,0 +1,62 @@
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.campo__rotulo {
+  font-weight: 600;
+  color: var(--texto);
+  font-size: 0.9rem;
+}
+
+.campo__obrigatorio {
+  color: var(--erro-fg);
+}
+
+.campo__input,
+.campo__textarea,
+.campo__select {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--borda-forte);
+  border-radius: var(--raio);
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--texto);
+  min-height: 44px;
+}
+
+.campo__textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.campo__input:focus-visible,
+.campo__textarea:focus-visible,
+.campo__select:focus-visible {
+  outline: none;
+  border-color: var(--verde-destaque);
+  box-shadow: var(--foco);
+}
+
+.campo__input--erro,
+.campo__textarea--erro,
+.campo__select--erro {
+  border-color: var(--erro-fg);
+}
+
+.campo__ajuda {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.campo__erro {
+  color: var(--erro-fg);
+  font-size: 0.85rem;
+  margin: 0;
+  font-weight: 600;
+}
