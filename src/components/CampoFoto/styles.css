@@ -1,0 +1,40 @@
+.campo-foto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.campo-foto__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.campo-foto__input:focus-visible + .campo-foto__botao {
+  box-shadow: var(--foco);
+}
+
+.campo-foto__botao {
+  align-self: flex-start;
+  padding: 0.6rem 1rem;
+  border-radius: var(--raio);
+  border: 1px dashed var(--verde-medio);
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+  font-weight: 600;
+  min-height: 44px;
+}
+
+.campo-foto__preview {
+  max-width: 100%;
+  border-radius: var(--raio);
+  border: 1px solid var(--borda);
+  object-fit: cover;
+  max-height: 260px;
+}
