@@ -1,0 +1,206 @@
+:root {
+  /* Paleta VOLTA (Figma) */
+  --verde-escuro: #063300;
+  --verde-medio: #337d29;
+  --verde-destaque: #1ba463;
+  --verde-suave: #e6f4e1;
+  --fundo: #f7f8fc;
+  --superficie: #ffffff;
+  --texto: #10241c;
+  --texto-suave: #4a5a54;
+  --borda: #d7dfd8;
+  --borda-forte: #a9b7ab;
+
+  /* Materiais (pastel) — combinam com texto escuro em contraste AA */
+  --papelao-bg: #f6e2b8;
+  --papelao-fg: #4a2c00;
+  --plastico-bg: #cfe0ff;
+  --plastico-fg: #0b2b6b;
+  --metal-bg: #e0d6f5;
+  --metal-fg: #2f1e5c;
+  --vidro-bg: #cdeadf;
+  --vidro-fg: #0e3d2f;
+
+  /* Estado */
+  --erro-bg: #fde7e7;
+  --erro-fg: #7a1a1a;
+  --sucesso-bg: #e2f5e6;
+  --sucesso-fg: #1d5a2c;
+  --info-bg: #e2ecf5;
+  --info-fg: #1d3a5a;
+
+  --raio: 12px;
+  --raio-forte: 20px;
+  --sombra: 0 2px 8px rgba(6, 51, 0, 0.08);
+  --sombra-forte: 0 10px 30px rgba(6, 51, 0, 0.14);
+
+  --foco: 0 0 0 3px rgba(27, 164, 99, 0.45);
+
+  --fonte:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--fonte);
+  background: var(--fundo);
+  color: var(--texto);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--verde-escuro);
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0 0 0.75rem;
+}
+
+a {
+  color: var(--verde-medio);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--verde-escuro);
+}
+
+/* Acessibilidade: foco visível global (WCAG 2.4.7) */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--foco);
+  border-radius: 6px;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled,
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  padding: 12px 16px;
+  background: var(--verde-escuro);
+  color: #fff;
+  border-radius: 8px;
+  z-index: 1000;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+/* Layout base do app */
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1.25rem clamp(1rem, 4vw, 2rem) 4rem;
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Cartões e superfícies */
+.card {
+  background: var(--superficie);
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+  padding: 1.25rem;
+}
+
+/* Estados de lista */
+.lista-vazia {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+/* Chips / badges */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Grid utilitário */
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Rodapé */
+.rodape {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--texto-suave);
+  background: var(--superficie);
+  border-top: 1px solid var(--borda);
+}
+
+.rodape p {
+  margin: 0;
+}
+
+/* Preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
