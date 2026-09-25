@@ -1,0 +1,71 @@
+.cooperativa-card {
+  background: var(--superficie);
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cooperativa-card__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cooperativa-card__nome {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cooperativa-card__avaliacao {
+  color: #a06b00;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.cooperativa-card__local {
+  color: var(--texto-suave);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.cooperativa-card__materiais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.cooperativa-card__acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.cooperativa-card__telefone {
+  color: var(--verde-escuro);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.cooperativa-card__telefone:hover {
+  text-decoration: underline;
+}
+
+.cooperativa-card__chat {
+  color: var(--verde-medio);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cooperativa-card__chat:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}

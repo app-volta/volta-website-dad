@@ -1,0 +1,34 @@
+.chat-msg {
+  max-width: 78%;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--raio-forte);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.chat-msg--cooperativa {
+  align-self: flex-start;
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg--usuario {
+  align-self: flex-end;
+  background: var(--verde-escuro);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg__conteudo {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.chat-msg__hora {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  align-self: flex-end;
+}
