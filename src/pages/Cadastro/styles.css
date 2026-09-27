@@ -1,13 +1,29 @@
+.cadastro__papel {
+  border: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .cadastro__radio {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 10px;
   cursor: pointer;
+  color: var(--texto);
+}
+
+.cadastro__radio:hover {
+  border-color: var(--verde-primario);
 }
 
 .cadastro__radio input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--verde-medio);
+  accent-color: var(--verde-primario);
+  width: 16px;
+  height: 16px;
 }

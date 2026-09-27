@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
-import { Button } from "../../components/Button";
-import { ChatMessage } from "../../components/ChatMessage";
+import { Icone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
-import { TextArea } from "../../components/TextArea";
 import { useChatCooperativa } from "../../hooks/useChatCooperativa";
 import { obterCooperativa } from "../../services/cooperativas";
 import { enviarMensagem } from "../../services/chat";
@@ -27,8 +25,7 @@ export default function ChatCooperativa(): ReactNode {
   const [erroCampo, setErroCampo] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<boolean>(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
-
-  const referenciaLista = useRef<HTMLUListElement | null>(null);
+  const listaRef = useRef<HTMLUListElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -49,8 +46,8 @@ export default function ChatCooperativa(): ReactNode {
   }, [id]);
 
   useEffect(() => {
-    if (referenciaLista.current) {
-      referenciaLista.current.scrollTop = referenciaLista.current.scrollHeight;
+    if (listaRef.current) {
+      listaRef.current.scrollTop = listaRef.current.scrollHeight;
     }
   }, [mensagens]);
 
@@ -89,63 +86,97 @@ export default function ChatCooperativa(): ReactNode {
     }
   }
 
+  function hora(iso: string): string {
+    try {
+      return new Date(iso).toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  }
+
   return (
-    <section aria-labelledby="titulo-chat" className="chat">
-      <Link to="/cooperativas" className="chat__voltar">
-        ← Voltar para cooperativas
-      </Link>
-      <header className="chat__cabecalho">
-        <h1 id="titulo-chat">
-          Chat com {cooperativa?.nome ?? "cooperativa"}
-        </h1>
-        {cooperativa ? (
-          <p className="chat__meta">
-            {cooperativa.cidade}/{cooperativa.estado} — {cooperativa.telefone}
-          </p>
-        ) : null}
-      </header>
+    <div className="chat-tela">
+      {cooperativa ? (
+        <section className="chat-tela__destaque" aria-label="Cooperativa">
+          <span className="chat-tela__destaque-avatar" aria-hidden="true">
+            {cooperativa.nome.substring(0, 2).toUpperCase()}
+          </span>
+          <div className="chat-tela__destaque-info">
+            <h3 className="chat-tela__destaque-nome">{cooperativa.nome}</h3>
+            <span className="chip chat-tela__badge">Parceira J&amp;F</span>
+            <p className="chat-tela__destaque-desc">
+              Responde rápido · {cooperativa.distanciaKm.toFixed(1)} km · coleta
+              em até 24h · aceita todos os materiais
+            </p>
+          </div>
+        </section>
+      ) : null}
 
       {erroCoop ? <Alerta variante="erro">{erroCoop}</Alerta> : null}
       {erro ? <Alerta variante="erro">{erro}</Alerta> : null}
       {erroEnvio ? <Alerta variante="erro">{erroEnvio}</Alerta> : null}
 
-      {carregando ? (
-        <Spinner rotulo="Carregando conversa…" />
-      ) : (
-        <ul
-          className="chat__lista"
-          ref={referenciaLista}
-          aria-live="polite"
-          aria-label={`Conversa com ${cooperativa?.nome ?? "cooperativa"}`}
-        >
-          {mensagens && mensagens.length > 0 ? (
-            mensagens.map((mensagem) => (
-              <ChatMessage key={mensagem.id} mensagem={mensagem} />
-            ))
-          ) : (
-            <li className="lista-vazia">
-              Nenhuma mensagem ainda. Envie a primeira.
-            </li>
-          )}
-        </ul>
-      )}
+      <div className="chat-tela__conteudo">
+        {carregando ? (
+          <Spinner rotulo="Carregando conversa…" />
+        ) : (
+          <ul
+            className="chat-tela__lista"
+            ref={listaRef}
+            aria-live="polite"
+            aria-label="Mensagens"
+          >
+            {mensagens && mensagens.length > 0 ? (
+              mensagens.map((m) => (
+                <li
+                  key={m.id}
+                  className={
+                    m.origem === "usuario"
+                      ? "chat-tela__msg chat-tela__msg--usuario"
+                      : "chat-tela__msg chat-tela__msg--cooperativa"
+                  }
+                >
+                  <span className="chat-tela__msg-hora">{hora(m.enviadaEm)}</span>
+                  <p>{m.conteudo}</p>
+                </li>
+              ))
+            ) : (
+              <li className="lista-vazia">Envie a primeira mensagem.</li>
+            )}
+          </ul>
+        )}
+      </div>
 
-      <form onSubmit={submeter} className="chat__form" noValidate>
-        <TextArea
-          rotulo="Nova mensagem"
+      <form onSubmit={submeter} className="chat-tela__form" noValidate>
+        <label className="sr-only" htmlFor="chat-input">
+          Escrever mensagem
+        </label>
+        <input
+          id="chat-input"
+          className="chat-tela__input"
+          placeholder="Escrever mensagem…"
           value={texto}
-          onChange={setTexto}
-          rows={3}
-          erro={erroCampo}
-          required
-          ajuda="Máximo de 500 caracteres."
+          onChange={(evento) => setTexto(evento.target.value)}
+          aria-invalid={Boolean(erroCampo) || undefined}
+          aria-describedby={erroCampo ? "chat-erro" : undefined}
         />
-        <div className="chat__acao">
-          <Button type="submit" carregando={enviando}>
-            Enviar
-          </Button>
-        </div>
+        <button
+          type="submit"
+          className="chat-tela__botao"
+          disabled={enviando}
+          aria-label={enviando ? "Enviando…" : "Enviar mensagem"}
+        >
+          <Icone nome="enviar" tamanho={20} />
+        </button>
+        {erroCampo ? (
+          <p id="chat-erro" role="alert" className="chat-tela__erro">
+            {erroCampo}
+          </p>
+        ) : null}
       </form>
-    </section>
+    </div>
   );
 }
