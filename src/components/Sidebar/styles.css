@@ -1,0 +1,144 @@
+.sidebar {
+  width: var(--sidebar-largura);
+  min-height: 100vh;
+  background: var(--superficie);
+  border-right: 1px solid var(--borda);
+  padding: 30px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+}
+
+.sidebar__logo {
+  padding: 0 12px 8px;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  flex: 1;
+}
+
+.sidebar__grupo-titulo {
+  font-size: 0.7rem;
+  color: var(--texto-suave);
+  padding: 0 12px;
+  margin: 0 0 8px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+.sidebar__lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: var(--texto-medio);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar__link:hover {
+  background: var(--fundo);
+  color: var(--verde-escuro);
+}
+
+.sidebar__link--ativo {
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+  border-left-color: var(--verde-primario);
+}
+
+.sidebar__link-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+.sidebar__usuario {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--verde-suave);
+  border-radius: 14px;
+  margin-top: auto;
+}
+
+.sidebar__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--verde-primario);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.sidebar__usuario-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sidebar__usuario-nome {
+  color: var(--verde-escuro);
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__usuario-papel {
+  color: var(--texto-medio);
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 72px;
+    padding: 20px 8px;
+  }
+  .sidebar__grupo-titulo,
+  .sidebar__link span:not(.sidebar__link-icone),
+  .sidebar__usuario-info,
+  .sidebar__logo {
+    display: none;
+  }
+  .sidebar__link {
+    justify-content: center;
+  }
+  .sidebar__usuario {
+    padding: 6px;
+    justify-content: center;
+    background: transparent;
+  }
+}

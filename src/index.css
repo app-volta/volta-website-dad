@@ -1,40 +1,62 @@
 :root {
-  /* Paleta VOLTA (Figma) */
-  --verde-escuro: #063300;
-  --verde-medio: #337d29;
-  --verde-destaque: #1ba463;
-  --verde-suave: #e6f4e1;
-  --fundo: #f7f8fc;
-  --superficie: #ffffff;
-  --texto: #10241c;
-  --texto-suave: #4a5a54;
-  --borda: #d7dfd8;
-  --borda-forte: #a9b7ab;
+  /* Paleta VOLTA — Figma */
+  --verde-escuro: #0E3B2E;
+  --verde-medio: #1F8A4C;
+  --verde-primario: #2FB25A;
+  --verde-brilhante: #1BA463;
+  --verde-suave: #E7F5EC;
+  --verde-suave-borda: #B7DDC4;
 
-  /* Materiais (pastel) — combinam com texto escuro em contraste AA */
-  --papelao-bg: #f6e2b8;
-  --papelao-fg: #4a2c00;
-  --plastico-bg: #cfe0ff;
-  --plastico-fg: #0b2b6b;
-  --metal-bg: #e0d6f5;
-  --metal-fg: #2f1e5c;
-  --vidro-bg: #cdeadf;
-  --vidro-fg: #0e3d2f;
+  --fundo: #F7F8FA;
+  --superficie: #FFFFFF;
+  --texto: #12241C;
+  --texto-medio: #4A5A54;
+  --texto-suave: #6E7E77;
+  --borda: #E4E7EA;
+  --borda-forte: #C8CFD3;
 
-  /* Estado */
-  --erro-bg: #fde7e7;
-  --erro-fg: #7a1a1a;
-  --sucesso-bg: #e2f5e6;
-  --sucesso-fg: #1d5a2c;
-  --info-bg: #e2ecf5;
-  --info-fg: #1d3a5a;
+  /* Materiais (pastéis) */
+  --papelao-bg: #F5D69A;
+  --papelao-fg: #6B3F00;
+  --plastico-bg: #C7D9F5;
+  --plastico-fg: #0F2C6B;
+  --metal-bg: #D9CFEE;
+  --metal-fg: #3D2967;
+  --vidro-bg: #BFE2D2;
+  --vidro-fg: #0F4B34;
+
+  /* Prioridades e status */
+  --alta-bg: #FBD5D5;
+  --alta-fg: #8A1414;
+  --media-bg: #F8E4A8;
+  --media-fg: #6E4E00;
+  --baixa-bg: #CFE9D5;
+  --baixa-fg: #0F5A26;
+  --analise-bg: #FCE8B0;
+  --analise-fg: #6E4E00;
+  --coletada-bg: #D3EBD9;
+  --coletada-fg: #0F5A26;
+  --aprovada-bg: #CFE1D7;
+  --aprovada-fg: #0F5A26;
+  --aberta-bg: #FADADA;
+  --aberta-fg: #8A1414;
+
+  /* Estado global */
+  --erro-bg: #FDE7E7;
+  --erro-fg: #7A1A1A;
+  --sucesso-bg: #E2F5E6;
+  --sucesso-fg: #1D5A2C;
+  --info-bg: #E2ECF5;
+  --info-fg: #1D3A5A;
 
   --raio: 12px;
-  --raio-forte: 20px;
-  --sombra: 0 2px 8px rgba(6, 51, 0, 0.08);
-  --sombra-forte: 0 10px 30px rgba(6, 51, 0, 0.14);
+  --raio-forte: 16px;
+  --sombra-card: 0 1px 2px rgba(14, 59, 46, 0.04), 0 2px 8px rgba(14, 59, 46, 0.06);
+  --sombra-hover: 0 4px 16px rgba(14, 59, 46, 0.10);
+  --foco: 0 0 0 3px rgba(47, 178, 90, 0.35);
 
-  --foco: 0 0 0 3px rgba(27, 164, 99, 0.45);
+  --sidebar-largura: 256px;
+  --topbar-altura: 84px;
 
   --fonte:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
@@ -60,35 +82,37 @@ body {
   color: var(--texto);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   color: var(--verde-escuro);
-  margin: 0 0 0.5rem;
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
 p {
-  margin: 0 0 0.75rem;
+  margin: 0;
 }
 
 a {
   color: var(--verde-medio);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
+  font-weight: 600;
 }
 
 a:hover {
   color: var(--verde-escuro);
 }
 
-/* Acessibilidade: foco visível global (WCAG 2.4.7) */
 :focus-visible {
   outline: none;
   box-shadow: var(--foco);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 button {
@@ -107,7 +131,6 @@ img {
   display: block;
 }
 
-/* Screen-reader only */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -120,7 +143,6 @@ img {
   border: 0;
 }
 
-/* Skip link */
 .skip-link {
   position: absolute;
   top: -100px;
@@ -131,73 +153,43 @@ img {
   border-radius: 8px;
   z-index: 1000;
   text-decoration: none;
+  font-weight: 600;
 }
 
 .skip-link:focus {
   top: 8px;
 }
 
-/* Layout base do app */
 .app-shell {
   min-height: 100%;
   display: flex;
-  flex-direction: column;
 }
 
-.app-main {
-  flex: 1;
-  padding: 1.25rem clamp(1rem, 4vw, 2rem) 4rem;
-  max-width: 1080px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-/* Cartões e superfícies */
 .card {
   background: var(--superficie);
   border-radius: var(--raio-forte);
-  box-shadow: var(--sombra);
+  box-shadow: var(--sombra-card);
   padding: 1.25rem;
 }
 
-/* Estados de lista */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .lista-vazia {
   padding: 2rem 1rem;
   text-align: center;
   color: var(--texto-suave);
 }
 
-/* Chips / badges */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-/* Grid utilitário */
-.grid {
-  display: grid;
-  gap: 1rem;
-}
-
-/* Rodapé */
-.rodape {
-  padding: 1.5rem 1rem;
-  text-align: center;
-  color: var(--texto-suave);
-  background: var(--superficie);
-  border-top: 1px solid var(--borda);
-}
-
-.rodape p {
-  margin: 0;
-}
-
-/* Preferência de movimento reduzido */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
