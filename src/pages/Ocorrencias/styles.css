@@ -1,37 +1,201 @@
-.ocorrencias__cabecalho {
+.ocorrencias {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ocorrencias__topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
 }
 
-.ocorrencias__descricao {
+.ocorrencias__busca {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  align-items: center;
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 0 14px;
   color: var(--texto-suave);
-  margin: 0.15rem 0 0;
+  min-height: 44px;
 }
 
-.ocorrencias__filtros {
-  margin-bottom: 1.5rem;
+.ocorrencias__busca:focus-within {
+  border-color: var(--verde-primario);
+  box-shadow: var(--foco);
 }
 
-.ocorrencias__lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
+.ocorrencias__busca input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  color: var(--texto);
+  font-family: inherit;
 }
 
-.ocorrencias__link {
+.ocorrencias__busca input:focus {
+  outline: none;
+}
+
+.ocorrencias__abas {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--superficie);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+}
+
+.ocorrencias__aba {
+  border: none;
+  background: transparent;
+  color: var(--texto-medio);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  min-height: 36px;
+  font-size: 0.85rem;
+}
+
+.ocorrencias__aba:hover:not([aria-selected="true"]) {
+  color: var(--verde-escuro);
+  background: var(--fundo);
+}
+
+.ocorrencias__aba--ativa {
+  background: var(--verde-primario);
+  color: #fff;
+}
+
+.ocorrencias__tabela-wrapper {
+  overflow: auto;
+  padding: 0;
+}
+
+.ocorrencias__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.ocorrencias__tabela thead th {
+  text-align: left;
+  padding: 14px 20px;
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--borda);
+  background: var(--superficie);
+}
+
+.ocorrencias__tabela tbody tr {
+  border-bottom: 1px solid var(--borda);
+  transition: background 0.15s ease;
+}
+
+.ocorrencias__tabela tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ocorrencias__tabela tbody tr:hover {
+  background: var(--fundo);
+}
+
+.ocorrencias__tabela td {
+  padding: 14px 20px;
+  color: var(--texto);
+  font-size: 0.92rem;
+  vertical-align: middle;
+}
+
+.ocorrencias__linha {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 700;
+}
+
+.ocorrencias__nome {
+  color: var(--verde-escuro);
+}
+
+.ocorrencias__icone-material {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ocorrencias__icone-material[data-material="papelao"] {
+  background: var(--papelao-bg);
+  color: var(--papelao-fg);
+}
+.ocorrencias__icone-material[data-material="plastico"] {
+  background: var(--plastico-bg);
+  color: var(--plastico-fg);
+}
+.ocorrencias__icone-material[data-material="metal"] {
+  background: var(--metal-bg);
+  color: var(--metal-fg);
+}
+.ocorrencias__icone-material[data-material="vidro"] {
+  background: var(--vidro-bg);
+  color: var(--vidro-fg);
+}
+
+.ocorrencias__seta {
+  color: var(--texto-suave);
+  display: inline-flex;
+}
+
+.ocorrencias__seta:hover {
+  color: var(--verde-escuro);
+}
+
+.ocorrencias__chip--analise {
+  background: var(--analise-bg);
+  color: var(--analise-fg);
+}
+.ocorrencias__chip--aberta {
+  background: var(--aberta-bg);
+  color: var(--aberta-fg);
+}
+.ocorrencias__chip--aprovada {
+  background: var(--aprovada-bg);
+  color: var(--aprovada-fg);
+}
+.ocorrencias__chip--coletada {
+  background: var(--coletada-bg);
+  color: var(--coletada-fg);
+}
+
+.ocorrencias__rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+}
+
+.ocorrencias__mais {
   background: transparent;
   border: none;
-  color: var(--verde-medio);
+  color: var(--verde-primario);
   font-weight: 700;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-}
-
-.ocorrencias__link:hover {
-  color: var(--verde-escuro);
-  text-decoration: underline;
+  font-size: 0.9rem;
 }

@@ -8,55 +8,106 @@
 .campo__rotulo {
   font-weight: 600;
   color: var(--texto);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .campo__obrigatorio {
   color: var(--erro-fg);
 }
 
+.campo__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--superficie);
+  border: 1px solid var(--borda-forte);
+  border-radius: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campo__wrapper:focus-within {
+  border-color: var(--verde-primario);
+  box-shadow: var(--foco);
+}
+
+.campo__wrapper--erro {
+  border-color: var(--erro-fg);
+}
+
 .campo__input,
 .campo__textarea,
 .campo__select {
   width: 100%;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
+  padding: 12px 14px;
+  border: none;
   font-size: 1rem;
   font-family: inherit;
-  background: #fff;
+  background: transparent;
   color: var(--texto);
   min-height: 44px;
+  border-radius: 12px;
+}
+
+.campo__input--com-icone {
+  padding-left: 42px;
+}
+
+.campo__input:focus,
+.campo__textarea:focus,
+.campo__select:focus {
+  outline: none;
 }
 
 .campo__textarea {
   min-height: 120px;
   resize: vertical;
+  border: 1px solid var(--borda-forte);
+  padding: 12px 14px;
 }
 
-.campo__input:focus-visible,
-.campo__textarea:focus-visible,
-.campo__select:focus-visible {
+.campo__textarea:focus-visible {
   outline: none;
-  border-color: var(--verde-destaque);
+  border-color: var(--verde-primario);
   box-shadow: var(--foco);
 }
 
-.campo__input--erro,
-.campo__textarea--erro,
-.campo__select--erro {
+.campo__textarea--erro {
   border-color: var(--erro-fg);
+}
+
+.campo__icone-esq {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--texto-suave);
+  pointer-events: none;
+  display: inline-flex;
+}
+
+.campo__acao-dir {
+  background: transparent;
+  border: none;
+  color: var(--texto-suave);
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+.campo__acao-dir:hover {
+  color: var(--verde-escuro);
 }
 
 .campo__ajuda {
   color: var(--texto-suave);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin: 0;
 }
 
 .campo__erro {
   color: var(--erro-fg);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin: 0;
   font-weight: 600;
 }

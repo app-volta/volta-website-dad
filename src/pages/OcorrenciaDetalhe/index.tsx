@@ -1,89 +1,111 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
-import { MaterialBadge } from "../../components/MaterialBadge";
+import { Icone } from "../../components/Icone";
+import type { NomeIcone } from "../../components/Icone";
 import { Modal } from "../../components/Modal";
 import { Spinner } from "../../components/Spinner";
-import { StatusBadge } from "../../components/StatusBadge";
 import { useCooperativas } from "../../hooks/useCooperativas";
 import { useOcorrencia } from "../../hooks/useOcorrencia";
 import { atualizarOcorrencia } from "../../services/ocorrencias";
 import { MATERIAIS, METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
 import type { StatusOcorrencia } from "../../types/ocorrencia";
-import {
-  formatarDataHora,
-  formatarPorcentagem,
-} from "../../utils/formatacao";
+import { formatarDataHora } from "../../utils/formatacao";
 import "./styles.css";
 
-type AcaoAberta = "reclassificar" | "encaminhar" | null;
+type Acao = "reclassificar" | "encaminhar" | null;
+
+interface Passo {
+  readonly chave: StatusOcorrencia | "coleta";
+  readonly rotulo: string;
+}
+
+const PASSOS: readonly Passo[] = [
+  { chave: "aguardando_classificacao", rotulo: "Registrada" },
+  { chave: "classificada", rotulo: "Análise IA" },
+  { chave: "encaminhada", rotulo: "Aprovação" },
+  { chave: "coleta", rotulo: "Coleta" },
+];
+
+function iconePorMaterial(m: Material | null): NomeIcone {
+  if (!m) return "chip";
+  if (m === "papelao") return "papelao";
+  if (m === "plastico") return "plastico";
+  if (m === "metal") return "metal";
+  return "vidro";
+}
+
+function passoAtivo(status: StatusOcorrencia): number {
+  switch (status) {
+    case "aguardando_classificacao":
+      return 0;
+    case "classificada":
+      return 1;
+    case "encaminhada":
+      return 2;
+    case "finalizada":
+      return 3;
+  }
+}
 
 export default function OcorrenciaDetalhe(): ReactNode {
   const { id } = useParams();
   const navegar = useNavigate();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
-  const {
-    dados: cooperativas,
-    carregando: carregandoCoops,
-  } = useCooperativas();
-
-  const [acaoAberta, setAcaoAberta] = useState<AcaoAberta>(null);
+  const { dados: cooperativas } = useCooperativas();
+  const [acao, setAcao] = useState<Acao>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
+  const [msgSucesso, setMsgSucesso] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
-  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
   if (!id) {
     return (
       <Alerta variante="erro" titulo="Rota inválida">
-        Nenhum identificador de ocorrência foi informado.
+        Nenhum identificador foi informado.
       </Alerta>
     );
   }
 
-  async function reclassificar(novoMaterial: Material): Promise<void> {
+  async function reclassificar(mat: Material): Promise<void> {
     if (!dados) return;
     setSalvando(true);
     setErroAcao(null);
     try {
-      await atualizarOcorrencia(dados.id, { material: novoMaterial });
-      setMensagemSucesso(
-        `Classificação atualizada para ${METADADOS_MATERIAL[novoMaterial].rotulo}.`,
+      await atualizarOcorrencia(dados.id, { material: mat });
+      setMsgSucesso(
+        `Reclassificado como ${METADADOS_MATERIAL[mat].rotulo}.`,
       );
-      setAcaoAberta(null);
+      setAcao(null);
       setChaveRecarga((v) => v + 1);
     } catch (excecao) {
       setErroAcao(
-        excecao instanceof Error
-          ? excecao.message
-          : "Falha ao atualizar classificação.",
+        excecao instanceof Error ? excecao.message : "Falha ao atualizar.",
       );
     } finally {
       setSalvando(false);
     }
   }
 
-  async function encaminhar(cooperativaId: string): Promise<void> {
+  async function encaminhar(coopId: string): Promise<void> {
     if (!dados) return;
     setSalvando(true);
     setErroAcao(null);
     try {
       await atualizarOcorrencia(dados.id, {
-        cooperativaId,
+        cooperativaId: coopId,
         status: "encaminhada",
       });
-      setMensagemSucesso("Ocorrência encaminhada à cooperativa parceira.");
-      setAcaoAberta(null);
+      setMsgSucesso("Encaminhada com sucesso.");
+      setAcao(null);
       setChaveRecarga((v) => v + 1);
     } catch (excecao) {
       setErroAcao(
-        excecao instanceof Error
-          ? excecao.message
-          : "Falha ao encaminhar.",
+        excecao instanceof Error ? excecao.message : "Falha ao encaminhar.",
       );
     } finally {
       setSalvando(false);
@@ -96,187 +118,225 @@ export default function OcorrenciaDetalhe(): ReactNode {
     setErroAcao(null);
     try {
       await atualizarOcorrencia(dados.id, { status: "finalizada" });
-      setMensagemSucesso("Ocorrência finalizada.");
+      setMsgSucesso("Ocorrência finalizada.");
       setChaveRecarga((v) => v + 1);
     } catch (excecao) {
       setErroAcao(
-        excecao instanceof Error
-          ? excecao.message
-          : "Não foi possível finalizar.",
+        excecao instanceof Error ? excecao.message : "Falha ao finalizar.",
       );
     } finally {
       setSalvando(false);
     }
   }
 
-  if (carregando) {
-    return <Spinner rotulo="Carregando ocorrência…" />;
-  }
+  if (carregando) return <Spinner rotulo="Carregando ocorrência…" />;
 
   if (erro || !dados) {
     return (
-      <Alerta
-        variante="erro"
-        titulo="Não conseguimos abrir esta ocorrência"
-        acao={
-          <Button
-            variante="sutil"
-            onClick={() => setChaveRecarga((v) => v + 1)}
-          >
-            Tentar novamente
-          </Button>
-        }
-      >
-        {erro ?? "Ocorrência inexistente."}
+      <Alerta variante="erro" titulo="Não conseguimos abrir">
+        {erro ?? "Não encontramos essa ocorrência."}
       </Alerta>
     );
   }
 
-  const cooperativaAtual =
-    dados.cooperativaId && cooperativas
-      ? cooperativas.find((c) => c.id === dados.cooperativaId) ?? null
-      : null;
-
-  const acoesDisponiveis: readonly StatusOcorrencia[] = [
-    "classificada",
-    "encaminhada",
-  ];
+  const ativo = passoAtivo(dados.status);
+  const materialMeta = dados.material
+    ? METADADOS_MATERIAL[dados.material]
+    : null;
 
   return (
-    <section aria-labelledby="titulo-detalhe">
-      <Link to="/ocorrencias" className="detalhe__voltar">
-        ← Voltar para ocorrências
-      </Link>
-
-      <header className="detalhe__cabecalho">
-        <div>
-          <h1 id="titulo-detalhe">{dados.codigo}</h1>
-          <p className="detalhe__descricao">{dados.descricao}</p>
-        </div>
-        <StatusBadge status={dados.status} />
-      </header>
-
-      {mensagemSucesso ? (
-        <Alerta variante="sucesso">{mensagemSucesso}</Alerta>
+    <div className="detalhe">
+      {msgSucesso ? (
+        <Alerta variante="sucesso">{msgSucesso}</Alerta>
       ) : null}
       {erroAcao ? <Alerta variante="erro">{erroAcao}</Alerta> : null}
 
-      <div className="detalhe__conteudo">
-        <img
-          src={dados.fotoUrl}
-          alt={`Foto do resíduo em ${dados.localizacao.setor}`}
-          className="detalhe__foto"
-        />
+      <div className="detalhe__linha">
+        <div className="detalhe__coluna">
+          <div className="card detalhe__principal">
+            <div className="detalhe__meta-topo">
+              <p className="detalhe__meta-registro">
+                Registrada por <strong>{dados.criadaPor}</strong> ·{" "}
+                {formatarDataHora(dados.criadaEm)}
+              </p>
+              <span
+                className={`chip detalhe__status detalhe__status--${dados.status}`}
+              >
+                {dados.status === "aguardando_classificacao"
+                  ? "EM ANÁLISE"
+                  : dados.status === "classificada"
+                    ? "ABERTA"
+                    : dados.status === "encaminhada"
+                      ? "APROVADA"
+                      : "COLETADA"}
+              </span>
+            </div>
 
-        <dl className="detalhe__meta">
-          <div>
-            <dt>Local</dt>
-            <dd>
-              {dados.localizacao.setor} — {dados.localizacao.unidade}
-            </dd>
+            <ol className="detalhe__timeline" aria-label="Progresso">
+              {PASSOS.map((p, idx) => {
+                const feito = idx <= ativo;
+                return (
+                  <li
+                    key={p.chave}
+                    className={
+                      feito
+                        ? "detalhe__passo detalhe__passo--feito"
+                        : "detalhe__passo"
+                    }
+                    aria-current={idx === ativo ? "step" : undefined}
+                  >
+                    <span className="detalhe__passo-bolinha">
+                      {feito ? <Icone nome="check" tamanho={12} /> : null}
+                    </span>
+                    <span className="detalhe__passo-label">{p.rotulo}</span>
+                  </li>
+                );
+              })}
+            </ol>
+
+            <div className="detalhe__resumo">
+              <span
+                className="detalhe__resumo-icone"
+                data-material={dados.material ?? "papelao"}
+                aria-hidden="true"
+              >
+                <Icone nome={iconePorMaterial(dados.material)} tamanho={22} />
+              </span>
+              <div>
+                <p className="detalhe__resumo-titulo">
+                  {materialMeta ? materialMeta.rotulo : "Sem tipo"} · molhado
+                </p>
+                <p className="detalhe__resumo-linha1">
+                  Contaminação baixa · umidade superficial
+                </p>
+                <p className="detalhe__resumo-linha2">
+                  ≈ 38 kg · 11 caixas · {dados.localizacao.setor}
+                </p>
+              </div>
+            </div>
+
+            <h4 className="detalhe__rel-titulo">Relatório automático</h4>
+            <p className="detalhe__rel-texto">
+              Material com umidade superficial, ainda reciclável. Recomenda-se
+              remoção em até 24h e armazenamento em área coberta até a coleta
+              pela cooperativa parceira. Não descartar como rejeito.
+            </p>
+
+            <div className="detalhe__campos">
+              <div>
+                <p className="detalhe__campo-label">Tipo</p>
+                <p className="detalhe__campo-valor">
+                  {materialMeta ? materialMeta.rotulo : "Sem tipo"} (Classe A)
+                </p>
+              </div>
+              <div>
+                <p className="detalhe__campo-label">Contaminação</p>
+                <p className="detalhe__campo-valor">Baixa</p>
+              </div>
+              <div>
+                <p className="detalhe__campo-label">Quantidade</p>
+                <p className="detalhe__campo-valor">≈ 38 kg</p>
+              </div>
+              <div>
+                <p className="detalhe__campo-label">Prioridade</p>
+                <p className="detalhe__campo-valor">Alta</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <dt>Registrada em</dt>
-            <dd>{formatarDataHora(dados.criadaEm)}</dd>
-          </div>
-          <div>
-            <dt>Atualizada em</dt>
-            <dd>{formatarDataHora(dados.atualizadaEm)}</dd>
-          </div>
-          <div>
-            <dt>Cooperativa</dt>
-            <dd>
-              {cooperativaAtual ? (
-                <Link
-                  to={`/cooperativas/${cooperativaAtual.id}/chat`}
+        </div>
+
+        <aside className="detalhe__acoes" aria-label="Ações do responsável">
+          <div className="card">
+            <h4 className="detalhe__acoes-titulo">Ações do responsável</h4>
+            <ul className="detalhe__acoes-lista">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setAcao("reclassificar")}
+                  className="detalhe__acao"
                 >
-                  {cooperativaAtual.nome}
-                </Link>
-              ) : (
-                "Ainda não encaminhada"
-              )}
-            </dd>
+                  <span className="detalhe__acao-icone" data-cor="papelao">
+                    <Icone nome="editar" tamanho={16} />
+                  </span>
+                  <span>Alterar classificação</span>
+                  <Icone nome="seta-direita" tamanho={14} />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setAcao("encaminhar")}
+                  className="detalhe__acao"
+                >
+                  <span className="detalhe__acao-icone" data-cor="plastico">
+                    <Icone nome="seta-direita" tamanho={16} />
+                  </span>
+                  <span>Encaminhar para outro setor</span>
+                  <Icone nome="seta-direita" tamanho={14} />
+                </button>
+              </li>
+              <li>
+                <button type="button" className="detalhe__acao">
+                  <span className="detalhe__acao-icone" data-cor="metal">
+                    <Icone nome="mais" tamanho={16} />
+                  </span>
+                  <span>Adicionar observação</span>
+                  <Icone nome="seta-direita" tamanho={14} />
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={finalizar}
+                  disabled={dados.status === "finalizada" || salvando}
+                  className="detalhe__acao"
+                >
+                  <span className="detalhe__acao-icone" data-cor="vidro">
+                    <Icone nome="check" tamanho={16} />
+                  </span>
+                  <span>Finalizar ocorrência</span>
+                  <Icone nome="seta-direita" tamanho={14} />
+                </button>
+              </li>
+            </ul>
           </div>
-        </dl>
-
-        <section
-          aria-labelledby="titulo-classificacao"
-          className="detalhe__ia card"
-        >
-          <h2 id="titulo-classificacao" className="detalhe__ia-titulo">
-            Classificação da IA
-          </h2>
-          {dados.classificacao ? (
-            <>
-              <p className="detalhe__ia-linha">
-                Material:{" "}
-                {dados.material ? (
-                  <MaterialBadge material={dados.material} />
-                ) : (
-                  "—"
-                )}
-              </p>
-              <p className="detalhe__ia-linha">
-                Confiança:{" "}
-                <strong>
-                  {formatarPorcentagem(dados.classificacao.confianca)}
-                </strong>
-              </p>
-              <p className="detalhe__ia-linha">
-                Recomendação: {dados.classificacao.recomendacao}
-              </p>
-              <p className="detalhe__ia-linha">
-                Analisada em: {formatarDataHora(dados.classificacao.analisadaEm)}
-              </p>
-            </>
-          ) : (
-            <p>Ainda aguardando classificação.</p>
-          )}
-        </section>
-
-        <div className="detalhe__acoes">
-          <Button
-            variante="secundario"
-            onClick={() => setAcaoAberta("reclassificar")}
-            disabled={!acoesDisponiveis.includes(dados.status)}
-          >
-            Alterar classificação
-          </Button>
-          <Button
-            variante="secundario"
-            onClick={() => setAcaoAberta("encaminhar")}
-            disabled={dados.status === "finalizada"}
-          >
-            Encaminhar cooperativa
-          </Button>
           <Button
             variante="primario"
-            onClick={finalizar}
-            carregando={salvando}
+            larguraTotal
+            onClick={() => setAcao("encaminhar")}
             disabled={dados.status === "finalizada"}
           >
-            Finalizar ocorrência
+            Escolher cooperativa
           </Button>
-        </div>
+          <Button variante="sutil" onClick={() => navegar("/ocorrencias")}>
+            Voltar à listagem
+          </Button>
+        </aside>
       </div>
 
       <Modal
-        aberto={acaoAberta === "reclassificar"}
-        onFechar={() => setAcaoAberta(null)}
+        aberto={acao === "reclassificar"}
+        onFechar={() => setAcao(null)}
         titulo="Corrigir classificação"
       >
         <p>Escolha o material correto:</p>
         <ul className="detalhe__opcoes-material">
-          {MATERIAIS.map((material) => (
-            <li key={material}>
+          {MATERIAIS.map((mat) => (
+            <li key={mat}>
               <button
                 type="button"
                 className="detalhe__opcao-material"
-                onClick={() => reclassificar(material)}
+                onClick={() => reclassificar(mat)}
                 disabled={salvando}
               >
-                <MaterialBadge material={material} />
-                <span>{METADADOS_MATERIAL[material].rotulo}</span>
+                <span
+                  className="detalhe__opcao-icone"
+                  data-material={mat}
+                  aria-hidden="true"
+                >
+                  <Icone nome={iconePorMaterial(mat)} tamanho={18} />
+                </span>
+                <span>{METADADOS_MATERIAL[mat].rotulo}</span>
               </button>
             </li>
           ))}
@@ -284,42 +344,32 @@ export default function OcorrenciaDetalhe(): ReactNode {
       </Modal>
 
       <Modal
-        aberto={acaoAberta === "encaminhar"}
-        onFechar={() => setAcaoAberta(null)}
+        aberto={acao === "encaminhar"}
+        onFechar={() => setAcao(null)}
         titulo="Escolher cooperativa parceira"
       >
-        {carregandoCoops ? (
-          <Spinner rotulo="Carregando cooperativas…" />
-        ) : cooperativas && cooperativas.length > 0 ? (
+        {cooperativas && cooperativas.length > 0 ? (
           <ul className="detalhe__opcoes-coop">
-            {cooperativas.map((cooperativa) => (
-              <li key={cooperativa.id}>
+            {cooperativas.map((c) => (
+              <li key={c.id}>
                 <button
                   type="button"
                   className="detalhe__opcao-coop"
-                  onClick={() => encaminhar(cooperativa.id)}
+                  onClick={() => encaminhar(c.id)}
                   disabled={salvando}
                 >
-                  <strong>{cooperativa.nome}</strong>
+                  <strong>{c.nome}</strong>
                   <span>
-                    {cooperativa.cidade}/{cooperativa.estado} — {cooperativa.telefone}
+                    {c.cidade}/{c.estado} — {c.telefone}
                   </span>
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p>Nenhuma cooperativa disponível.</p>
+          <Spinner rotulo="Carregando cooperativas…" />
         )}
       </Modal>
-
-      <button
-        type="button"
-        className="detalhe__link"
-        onClick={() => navegar("/ocorrencias")}
-      >
-        Voltar à listagem
-      </button>
-    </section>
+    </div>
   );
 }

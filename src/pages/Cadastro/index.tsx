@@ -4,7 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
+import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
+import { LogoVolta } from "../../components/LogoVolta";
 import { useAuth } from "../../context/AuthContext";
 import type { PapelUsuario } from "../../types/usuario";
 import {
@@ -57,106 +59,135 @@ export default function Cadastro(): ReactNode {
     try {
       await cadastrarNovo(formulario);
     } catch {
-      /* erro capturado no contexto */
+      /* tratado no contexto */
     }
   }
 
   return (
-    <section className="login" aria-labelledby="titulo-cadastro">
-      <div className="login__cartao">
-        <h1 id="titulo-cadastro" className="login__titulo">
-          Criar conta VOLTA
-        </h1>
-        <p className="login__descricao">
-          Vamos configurar seu acesso à plataforma de gestão de resíduos.
-        </p>
-        {erro ? (
-          <Alerta variante="erro" titulo="Cadastro não concluído">
-            {erro}
-          </Alerta>
-        ) : null}
-        <form onSubmit={tratarSubmit} noValidate>
-          <Input
-            rotulo="Nome completo"
-            required
-            autoComplete="name"
-            value={formulario.nome}
-            onChange={(valor) =>
-              setFormulario((atual) => ({ ...atual, nome: valor }))
-            }
-            erro={errosCampo.nome}
-          />
-          <Input
-            rotulo="E-mail corporativo"
-            type="email"
-            required
-            autoComplete="email"
-            value={formulario.email}
-            onChange={(valor) =>
-              setFormulario((atual) => ({ ...atual, email: valor }))
-            }
-            erro={errosCampo.email}
-          />
-          <Input
-            rotulo="Senha"
-            type="password"
-            required
-            autoComplete="new-password"
-            value={formulario.senha}
-            onChange={(valor) =>
-              setFormulario((atual) => ({ ...atual, senha: valor }))
-            }
-            erro={errosCampo.senha}
-            ajuda="Mínimo de 6 caracteres."
-          />
-          <Input
-            rotulo="Unidade"
-            required
-            value={formulario.unidade}
-            onChange={(valor) =>
-              setFormulario((atual) => ({ ...atual, unidade: valor }))
-            }
-            ajuda="Ex.: Frigorífico Lins/SP."
-            erro={errosCampo.unidade}
-          />
-          <fieldset className="campo">
-            <legend className="campo__rotulo">Perfil de acesso</legend>
-            <label className="cadastro__radio">
-              <input
-                type="radio"
-                name="papel"
-                value="operador"
-                checked={formulario.papel === "operador"}
-                onChange={() =>
-                  setFormulario((atual) => ({ ...atual, papel: "operador" }))
-                }
-              />
-              <span>Operador de chão de fábrica</span>
-            </label>
-            <label className="cadastro__radio">
-              <input
-                type="radio"
-                name="papel"
-                value="responsavel_pgrs"
-                checked={formulario.papel === "responsavel_pgrs"}
-                onChange={() =>
-                  setFormulario((atual) => ({
-                    ...atual,
-                    papel: "responsavel_pgrs",
-                  }))
-                }
-              />
-              <span>Responsável PGRS</span>
-            </label>
-          </fieldset>
-          <Button type="submit" larguraTotal carregando={carregando}>
-            Criar conta
-          </Button>
-        </form>
-        <p className="login__rodape">
-          Já tem uma conta? <Link to="/login">Entrar</Link>
-        </p>
-      </div>
-    </section>
+    <div className="login-tela">
+      <aside className="login-tela__hero" aria-hidden="true">
+        <div className="login-tela__hero-orbes" />
+        <div className="login-tela__hero-conteudo">
+          <div className="login-tela__hero-logo">
+            <Icone nome="reciclagem" tamanho={64} />
+          </div>
+          <div>
+            <h2 className="login-tela__hero-titulo">Comece agora.</h2>
+            <p className="login-tela__hero-texto">
+              Cadastre-se e ganhe visibilidade completa do PGRS da sua unidade
+              em minutos.
+            </p>
+          </div>
+          <span className="login-tela__hero-tag">
+            Parceira J&amp;F · JBS Ambiental
+          </span>
+        </div>
+      </aside>
+
+      <main id="conteudo" className="login-tela__form-lado" tabIndex={-1}>
+        <div className="login-tela__form-card">
+          <div className="login-tela__form-logo">
+            <LogoVolta altura={40} />
+          </div>
+          <h1 className="login-tela__titulo">Criar conta VOLTA</h1>
+          <p className="login-tela__descricao">
+            Configuramos seu acesso à plataforma em segundos.
+          </p>
+
+          {erro ? (
+            <Alerta variante="erro" titulo="Cadastro não concluído">
+              {erro}
+            </Alerta>
+          ) : null}
+
+          <form onSubmit={tratarSubmit} noValidate>
+            <Input
+              rotulo="Nome completo"
+              required
+              autoComplete="name"
+              value={formulario.nome}
+              onChange={(valor) =>
+                setFormulario((atual) => ({ ...atual, nome: valor }))
+              }
+              erro={errosCampo.nome}
+            />
+            <Input
+              rotulo="E-mail corporativo"
+              type="email"
+              required
+              autoComplete="email"
+              value={formulario.email}
+              onChange={(valor) =>
+                setFormulario((atual) => ({ ...atual, email: valor }))
+              }
+              erro={errosCampo.email}
+              iconeEsquerdo="mensagem"
+            />
+            <Input
+              rotulo="Senha"
+              type="password"
+              required
+              autoComplete="new-password"
+              value={formulario.senha}
+              onChange={(valor) =>
+                setFormulario((atual) => ({ ...atual, senha: valor }))
+              }
+              erro={errosCampo.senha}
+              iconeEsquerdo="cadeado"
+              ajuda="Mínimo de 6 caracteres."
+            />
+            <Input
+              rotulo="Unidade"
+              required
+              value={formulario.unidade}
+              onChange={(valor) =>
+                setFormulario((atual) => ({ ...atual, unidade: valor }))
+              }
+              iconeEsquerdo="pin"
+              erro={errosCampo.unidade}
+              ajuda="Ex.: Frigorífico Lins/SP."
+            />
+            <fieldset className="cadastro__papel">
+              <legend className="campo__rotulo">Perfil de acesso</legend>
+              <label className="cadastro__radio">
+                <input
+                  type="radio"
+                  name="papel"
+                  value="operador"
+                  checked={formulario.papel === "operador"}
+                  onChange={() =>
+                    setFormulario((atual) => ({ ...atual, papel: "operador" }))
+                  }
+                />
+                <span>Operador de chão de fábrica</span>
+              </label>
+              <label className="cadastro__radio">
+                <input
+                  type="radio"
+                  name="papel"
+                  value="responsavel_pgrs"
+                  checked={formulario.papel === "responsavel_pgrs"}
+                  onChange={() =>
+                    setFormulario((atual) => ({
+                      ...atual,
+                      papel: "responsavel_pgrs",
+                    }))
+                  }
+                />
+                <span>Responsável PGRS</span>
+              </label>
+            </fieldset>
+
+            <Button type="submit" larguraTotal carregando={carregando}>
+              Criar conta
+            </Button>
+          </form>
+
+          <p className="login-tela__cadastro">
+            Já tem uma conta? <Link to="/login">Entrar</Link>
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }

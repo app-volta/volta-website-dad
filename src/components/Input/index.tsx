@@ -1,7 +1,15 @@
 import { useId } from "react";
 import type { InputHTMLAttributes, ReactNode } from "react";
 
+import { Icone } from "../Icone";
+import type { NomeIcone } from "../Icone";
 import "./styles.css";
+
+interface AcaoDireita {
+  readonly icone: NomeIcone;
+  readonly rotulo: string;
+  readonly aoClicar: () => void;
+}
 
 interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "id" | "onChange"> {
@@ -9,9 +17,10 @@ interface InputProps
   readonly erro?: string | null;
   readonly ajuda?: string;
   readonly onChange: (valor: string) => void;
+  readonly iconeEsquerdo?: NomeIcone;
+  readonly acaoDireita?: AcaoDireita;
 }
 
-/** Input com <label> associado via htmlFor + descrição/erro via aria-describedby. */
 export function Input({
   rotulo,
   erro,
@@ -20,6 +29,8 @@ export function Input({
   onChange,
   required,
   type = "text",
+  iconeEsquerdo,
+  acaoDireita,
   ...resto
 }: InputProps): ReactNode {
   const idBase = useId();
@@ -39,18 +50,43 @@ export function Input({
           </span>
         ) : null}
       </label>
-      <input
-        id={idInput}
-        type={type}
-        value={value}
-        onChange={(evento) => onChange(evento.target.value)}
-        aria-invalid={Boolean(erro) || undefined}
-        aria-describedby={describedBy}
-        aria-required={required || undefined}
-        className={erro ? "campo__input campo__input--erro" : "campo__input"}
-        required={required}
-        {...resto}
-      />
+      <div
+        className={
+          erro
+            ? "campo__wrapper campo__wrapper--erro"
+            : "campo__wrapper"
+        }
+      >
+        {iconeEsquerdo ? (
+          <span className="campo__icone-esq" aria-hidden="true">
+            <Icone nome={iconeEsquerdo} tamanho={18} />
+          </span>
+        ) : null}
+        <input
+          id={idInput}
+          type={type}
+          value={value}
+          onChange={(evento) => onChange(evento.target.value)}
+          aria-invalid={Boolean(erro) || undefined}
+          aria-describedby={describedBy}
+          aria-required={required || undefined}
+          className={
+            iconeEsquerdo ? "campo__input campo__input--com-icone" : "campo__input"
+          }
+          required={required}
+          {...resto}
+        />
+        {acaoDireita ? (
+          <button
+            type="button"
+            className="campo__acao-dir"
+            onClick={acaoDireita.aoClicar}
+            aria-label={acaoDireita.rotulo}
+          >
+            <Icone nome={acaoDireita.icone} tamanho={18} />
+          </button>
+        ) : null}
+      </div>
       {ajuda ? (
         <p id={idAjuda} className="campo__ajuda">
           {ajuda}
