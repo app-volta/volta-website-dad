@@ -189,18 +189,43 @@ export default function Home(): ReactNode {
       <section className="home-hero" aria-labelledby="home-hero-titulo">
         <svg
           className="home-hero__padrao"
-          viewBox="0 0 400 300"
+          viewBox="0 0 500 300"
           preserveAspectRatio="xMaxYMid slice"
           aria-hidden="true"
         >
-          <g fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" opacity="0.18">
-            <path d="M240 60 Q310 60 340 130" />
-            <polyline points="322 112 342 134 362 112" />
-            <path d="M360 180 Q360 250 290 260" />
-            <polyline points="306 244 288 262 306 280" />
-            <path d="M240 260 Q170 240 170 170" />
-            <polyline points="152 186 170 168 188 186" />
-          </g>
+          <defs>
+            <marker
+              id="hero-seta-ponta"
+              viewBox="0 0 14 14"
+              refX="4"
+              refY="7"
+              markerUnits="strokeWidth"
+              markerWidth="2.2"
+              markerHeight="2.2"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 7 L 0 14 Z" fill="#FFFFFF" />
+            </marker>
+          </defs>
+          <circle
+            cx="380"
+            cy="150"
+            r="150"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth="2"
+            opacity="0.18"
+          />
+          <path
+            d="M 110 230 C 130 100 260 40 360 90 C 430 115 455 180 410 240"
+            fill="none"
+            stroke="#FFFFFF"
+            strokeWidth="26"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.22"
+            markerEnd="url(#hero-seta-ponta)"
+          />
         </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
