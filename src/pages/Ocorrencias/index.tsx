@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
+import { GavetaOcorrencia } from "../../components/GavetaOcorrencia";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
@@ -55,7 +56,10 @@ export default function Ocorrencias(): ReactNode {
   const [aprovando, setAprovando] = useState<boolean>(false);
   const [aviso, setAviso] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [gavetaId, setGavetaId] = useState<string | null>(null);
+  const navegar = useNavigate();
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
+  const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
 
   const contagens = useMemo(() => {
     const base: Record<Filtro, number> = {
@@ -109,13 +113,17 @@ export default function Ocorrencias(): ReactNode {
     });
   }
 
-  async function aprovarSelecionadas(): Promise<void> {
+  async function aprovar(ids: readonly string[]): Promise<void> {
     setAprovando(true);
     setAviso(null);
     setErroAcao(null);
     try {
-      const aprovadas = await aprovarOcorrencias([...selecionadas]);
-      setSelecionadas(new Set());
+      const aprovadas = await aprovarOcorrencias(ids);
+      setSelecionadas((atual) => {
+        const novo = new Set(atual);
+        for (const id of ids) novo.delete(id);
+        return novo;
+      });
       setChaveRecarga((v) => v + 1);
       setAviso(
         aprovadas === 0
@@ -289,6 +297,10 @@ export default function Ocorrencias(): ReactNode {
                     return (
                       <tr
                         key={o.id}
+                        onClick={(evento) => {
+                          const alvo = evento.target as HTMLElement;
+                          if (!alvo.closest("label, button")) setGavetaId(o.id);
+                        }}
                         className={
                           selecionadas.has(o.id)
                             ? "ocorrencias__linha ocorrencias__linha--selecionada"
@@ -312,9 +324,10 @@ export default function Ocorrencias(): ReactNode {
                           </label>
                         </td>
                         <td>
-                          <Link
-                            to={`/ocorrencias/${o.id}`}
-                            className="ocorrencias__ocorrencia"
+                          <button
+                            type="button"
+                            className="ocorrencias__ocorrencia ocorrencias__titulo-botao"
+                            onClick={() => setGavetaId(o.id)}
                           >
                             <span
                               className="ocorrencias__tile"
@@ -335,7 +348,7 @@ export default function Ocorrencias(): ReactNode {
                                 {o.criadaPorNome}
                               </span>
                             </span>
-                          </Link>
+                          </button>
                         </td>
                         <td>{o.localizacao.setor}</td>
                         <td>
@@ -370,13 +383,14 @@ export default function Ocorrencias(): ReactNode {
                           {formatarRegistro(o.criadaEm)}
                         </td>
                         <td>
-                          <Link
-                            to={`/ocorrencias/${o.id}`}
-                            aria-label={`Abrir ocorrência ${o.codigo}`}
+                          <button
+                            type="button"
+                            aria-label={`Visualizar ocorrência ${o.codigo}`}
                             className="ocorrencias__seta"
+                            onClick={() => setGavetaId(o.id)}
                           >
                             <Icone nome="seta-direita" tamanho={14} />
-                          </Link>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -440,13 +454,21 @@ export default function Ocorrencias(): ReactNode {
         <button
           type="button"
           className="ocorrencias__lote-aprovar"
-          onClick={aprovarSelecionadas}
+          onClick={() => aprovar([...selecionadas])}
           disabled={selecionadas.size === 0 || aprovando}
         >
           <Icone nome="check" tamanho={14} />
           {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
         </button>
       </div>
+
+      <GavetaOcorrencia
+        ocorrencia={ocorrenciaGaveta}
+        aprovando={aprovando}
+        aoFechar={() => setGavetaId(null)}
+        aoAprovar={(id) => aprovar([id])}
+        aoAbrirCompleta={(id) => navegar(`/ocorrencias/${id}`)}
+      />
     </section>
   );
 }

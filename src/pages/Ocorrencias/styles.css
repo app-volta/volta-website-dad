@@ -191,7 +191,12 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: inherit;
+  font: inherit;
+  text-align: left;
   text-decoration: none;
 }
 
@@ -309,7 +314,14 @@
 
 .ocorrencias__seta {
   display: inline-flex;
+  padding: 6px;
+  border: 0;
+  background: transparent;
   color: var(--oc-texto);
+}
+
+.ocorrencias__tabela tbody tr {
+  cursor: pointer;
 }
 
 .ocorrencias__vazio {
