@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import logoBranca from "../../assets/logo-volta-branca.png";
+
 type VarianteLogo = "escura" | "clara";
 
 interface LogoVoltaProps {
@@ -8,64 +10,46 @@ interface LogoVoltaProps {
   readonly variante?: VarianteLogo;
 }
 
+const PROPORCAO = 1228 / 336;
+
 export function LogoVolta({
   altura = 32,
   rotulo = "VOLTA",
   variante = "escura",
 }: LogoVoltaProps): ReactNode {
-  const largura = Math.round((altura / 32) * 110);
-  const corTexto =
-    variante === "clara" ? "#FFFFFF" : "var(--verde-escuro)";
-  const corSimbolo =
-    variante === "clara" ? "#2FB25A" : "var(--verde-primario)";
+  const largura = Math.round(altura * PROPORCAO);
+
+  if (variante === "clara") {
+    return (
+      <img
+        src={logoBranca}
+        alt={rotulo}
+        width={largura}
+        height={altura}
+        draggable={false}
+        style={{ display: "block" }}
+      />
+    );
+  }
 
   return (
-    <svg
-      viewBox="0 0 110 32"
+    <span
       role="img"
       aria-label={rotulo}
-      width={largura}
-      height={altura}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <g>
-        <path
-          d="M2 6 L12 26 L22 6"
-          fill="none"
-          stroke={corTexto}
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <g transform="translate(24 4)">
-          <circle
-            cx="12"
-            cy="12"
-            r="10"
-            fill="none"
-            stroke={corSimbolo}
-            strokeWidth="3"
-          />
-          <path
-            d="M4 12 A8 8 0 0 1 20 12"
-            fill="none"
-            stroke={corSimbolo}
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <polygon points="19,9 22,12 19,15" fill={corSimbolo} />
-        </g>
-        <text
-          x="52"
-          y="24"
-          fontFamily="Inter, system-ui, sans-serif"
-          fontSize="26"
-          fontWeight="800"
-          fill={corTexto}
-        >
-          lta
-        </text>
-      </g>
-    </svg>
+      style={{
+        display: "block",
+        width: largura,
+        height: altura,
+        backgroundColor: "var(--verde-escuro)",
+        WebkitMaskImage: `url(${logoBranca})`,
+        maskImage: `url(${logoBranca})`,
+        WebkitMaskRepeat: "no-repeat",
+        maskRepeat: "no-repeat",
+        WebkitMaskSize: "contain",
+        maskSize: "contain",
+        WebkitMaskPosition: "left center",
+        maskPosition: "left center",
+      }}
+    />
   );
 }

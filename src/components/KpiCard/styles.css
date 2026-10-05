@@ -1,0 +1,75 @@
+.kpi-card {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-forte);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 128px;
+  box-shadow: var(--sombra-card);
+}
+
+.kpi-card__cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--texto-medio);
+}
+
+.kpi-card__icone {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--verde-suave);
+  color: var(--verde-escuro);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kpi-card__rotulo {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.kpi-card__corpo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpi-card__valor {
+  margin: 0;
+  color: var(--verde-escuro);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.kpi-card__valor small {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--verde-medio);
+  margin-left: 2px;
+}
+
+.kpi-card__spark {
+  flex-shrink: 0;
+}
+
+.kpi-card__delta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.kpi-card__delta--sobe {
+  color: var(--verde-medio);
+}
+
+.kpi-card__delta--desce {
+  color: var(--alta-fg);
+}

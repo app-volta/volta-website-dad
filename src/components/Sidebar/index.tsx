@@ -75,7 +75,7 @@ export function Sidebar(): ReactNode {
       </a>
       <aside className="sidebar" aria-label="Navegação principal">
         <div className="sidebar__topo">
-          <LogoVolta altura={30} variante="clara" />
+          <LogoVolta altura={28} variante="clara" />
           <span className="sidebar__chip-papel" aria-label={`Papel: ${papelChip}`}>
             {papelChip}
           </span>
