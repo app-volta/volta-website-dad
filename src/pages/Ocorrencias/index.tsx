@@ -10,17 +10,18 @@ import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { aprovarOcorrencias } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
-import type {
-  Ocorrencia,
-  PrioridadeOcorrencia,
-  StatusOcorrencia,
-} from "../../types/ocorrencia";
+import type { Ocorrencia } from "../../types/ocorrencia";
 import { baixarCsv, montarCsv } from "../../utils/exportarCsv";
 import { formatarPorcentagem, formatarRegistro } from "../../utils/formatacao";
+import {
+  ROTULO_CATEGORIA,
+  ROTULO_PRIORIDADE,
+  categoriaDe,
+} from "../../utils/statusOcorrencia";
+import type { CategoriaStatus } from "../../utils/statusOcorrencia";
 import "./styles.css";
 
-type Categoria = "aguardando" | "aprovadas" | "encaminhadas" | "recusadas";
-type Filtro = "todas" | Categoria;
+type Filtro = "todas" | CategoriaStatus;
 
 const POR_PAGINA = 10;
 
@@ -31,34 +32,6 @@ const FILTROS: readonly { readonly valor: Filtro; readonly rotulo: string }[] = 
   { valor: "encaminhadas", rotulo: "Encaminhadas" },
   { valor: "recusadas", rotulo: "Recusadas" },
 ];
-
-const ROTULO_STATUS: Readonly<Record<Categoria, string>> = {
-  aguardando: "AGUARDANDO APROVAÇÃO",
-  aprovadas: "APROVADA",
-  encaminhadas: "ENCAMINHADA",
-  recusadas: "RECUSADA",
-};
-
-const ROTULO_PRIORIDADE: Readonly<Record<PrioridadeOcorrencia, string>> = {
-  alta: "ALTA",
-  media: "MÉDIA",
-  baixa: "BAIXA",
-};
-
-function categoriaDe(status: StatusOcorrencia): Categoria {
-  switch (status) {
-    case "aguardando_classificacao":
-    case "classificada":
-      return "aguardando";
-    case "aprovada":
-    case "finalizada":
-      return "aprovadas";
-    case "encaminhada":
-      return "encaminhadas";
-    case "recusada":
-      return "recusadas";
-  }
-}
 
 function iconePorMaterial(material: Material | null): NomeIcone {
   return material ?? "reciclagem";
@@ -180,7 +153,7 @@ export default function Ocorrencias(): ReactNode {
         o.pesoKg,
         formatarPorcentagem(o.classificacao?.confianca ?? 0),
         ROTULO_PRIORIDADE[o.prioridade],
-        ROTULO_STATUS[categoriaDe(o.status)],
+        ROTULO_CATEGORIA[categoriaDe(o.status)],
         o.criadaPorNome,
         new Date(o.criadaEm).toLocaleString("pt-BR"),
       ]),
@@ -390,7 +363,7 @@ export default function Ocorrencias(): ReactNode {
                           <span
                             className={`ocorrencias__pill ocorrencias__status--${categoriaDe(o.status)}`}
                           >
-                            {ROTULO_STATUS[categoriaDe(o.status)]}
+                            {ROTULO_CATEGORIA[categoriaDe(o.status)]}
                           </span>
                         </td>
                         <td className="ocorrencias__registro">
