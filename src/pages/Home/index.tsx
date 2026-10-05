@@ -189,20 +189,17 @@ export default function Home(): ReactNode {
       <section className="home-hero" aria-labelledby="home-hero-titulo">
         <svg
           className="home-hero__padrao"
-          viewBox="0 0 600 300"
+          viewBox="0 0 400 300"
           preserveAspectRatio="xMaxYMid slice"
           aria-hidden="true"
         >
-          <g fill="none" stroke="#FFFFFF" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="470" cy="150" r="260" strokeWidth="2" opacity="0.18" />
-            <circle cx="470" cy="150" r="190" strokeWidth="2" opacity="0.22" />
-            <circle cx="470" cy="150" r="120" strokeWidth="2" opacity="0.28" />
-          </g>
-          <g fill="none" stroke="#FFFFFF" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" opacity="0.22">
-            <path d="M250 170 Q220 130 260 90 L300 90" />
-            <polyline points="286 76 304 90 286 104" />
-            <path d="M330 50 Q380 50 400 100" />
-            <polyline points="392 84 404 108 380 100" />
+          <g fill="none" stroke="#FFFFFF" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" opacity="0.18">
+            <path d="M240 60 Q310 60 340 130" />
+            <polyline points="322 112 342 134 362 112" />
+            <path d="M360 180 Q360 250 290 260" />
+            <polyline points="306 244 288 262 306 280" />
+            <path d="M240 260 Q170 240 170 170" />
+            <polyline points="152 186 170 168 188 186" />
           </g>
         </svg>
         <div className="home-hero__conteudo">
@@ -232,7 +229,7 @@ export default function Home(): ReactNode {
           </p>
         </aside>
         <div className="home-hero__mascote" aria-hidden="true">
-          <Mascote tamanho={200} />
+          <Mascote tamanho={130} />
         </div>
       </section>
 
