@@ -187,6 +187,24 @@ export default function Home(): ReactNode {
   return (
     <div className="home-v2">
       <section className="home-hero" aria-labelledby="home-hero-titulo">
+        <svg
+          className="home-hero__padrao"
+          viewBox="0 0 600 300"
+          preserveAspectRatio="xMaxYMid slice"
+          aria-hidden="true"
+        >
+          <g fill="none" stroke="#FFFFFF" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="470" cy="150" r="260" strokeWidth="2" opacity="0.18" />
+            <circle cx="470" cy="150" r="190" strokeWidth="2" opacity="0.22" />
+            <circle cx="470" cy="150" r="120" strokeWidth="2" opacity="0.28" />
+          </g>
+          <g fill="none" stroke="#FFFFFF" strokeWidth="18" strokeLinecap="round" strokeLinejoin="round" opacity="0.22">
+            <path d="M250 170 Q220 130 260 90 L300 90" />
+            <polyline points="286 76 304 90 286 104" />
+            <path d="M330 50 Q380 50 400 100" />
+            <polyline points="392 84 404 108 380 100" />
+          </g>
+        </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
             {saudacao()}, {primeiroNome}! Tem {pendentes || 4} ocorrências
