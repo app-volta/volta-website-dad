@@ -69,9 +69,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Registrar ocorrência"
-              subtitulo="Passo 1 de 2 — foto e detalhes"
-              comCta={false}
-              comBusca={false}
+              subtitulo="Foto, detalhes e análise da IA"
             >
               <Registrar />
             </RotaPrivada>
