@@ -1,34 +1,47 @@
 import type { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
 import { LogoVolta } from "../LogoVolta";
+import { Mascote } from "../Mascote";
 import "./styles.css";
 
 interface ItemNav {
   readonly rotulo: string;
   readonly caminho: string;
   readonly icone: NomeIcone;
+  readonly contador?: number;
 }
 
-const GRUPOS: readonly {
+interface GrupoNav {
   readonly titulo: string;
   readonly itens: readonly ItemNav[];
-}[] = [
+}
+
+const GRUPOS: readonly GrupoNav[] = [
   {
     titulo: "OPERAÇÃO",
     itens: [
       { rotulo: "Início", caminho: "/", icone: "casa" },
+      { rotulo: "Ocorrências", caminho: "/ocorrencias", icone: "grafico", contador: 4 },
       { rotulo: "Registrar", caminho: "/registrar", icone: "mais" },
+    ],
+  },
+  {
+    titulo: "GESTÃO",
+    itens: [
       { rotulo: "Cooperativas", caminho: "/cooperativas", icone: "folha" },
-      { rotulo: "Ocorrências", caminho: "/ocorrencias", icone: "grafico" },
+      { rotulo: "Relatórios PGRS", caminho: "/relatorios", icone: "relatorio" },
+      { rotulo: "Equipe", caminho: "/equipe", icone: "equipe" },
     ],
   },
   {
     titulo: "CONTA",
-    itens: [{ rotulo: "Perfil", caminho: "/perfil", icone: "usuario" }],
+    itens: [
+      { rotulo: "Configurações", caminho: "/configuracoes", icone: "engrenagem" },
+    ],
   },
 ];
 
@@ -42,12 +55,18 @@ function iniciais(nome: string): string {
 }
 
 const ROTULO_PAPEL = {
-  responsavel_pgrs: "Responsável — PGRS",
+  responsavel_pgrs: "Responsável PGRS",
   operador: "Operador",
+} as const;
+
+const CHIP_PAPEL = {
+  responsavel_pgrs: "GESTOR",
+  operador: "OPERADOR",
 } as const;
 
 export function Sidebar(): ReactNode {
   const { usuario } = useAuth();
+  const papelChip = usuario ? CHIP_PAPEL[usuario.papel] : "GESTOR";
 
   return (
     <>
@@ -55,8 +74,11 @@ export function Sidebar(): ReactNode {
         Pular para o conteúdo principal
       </a>
       <aside className="sidebar" aria-label="Navegação principal">
-        <div className="sidebar__logo">
-          <LogoVolta altura={32} />
+        <div className="sidebar__topo">
+          <LogoVolta altura={30} variante="clara" />
+          <span className="sidebar__chip-papel" aria-label={`Papel: ${papelChip}`}>
+            {papelChip}
+          </span>
         </div>
 
         <nav className="sidebar__nav" aria-label="Menu">
@@ -78,7 +100,17 @@ export function Sidebar(): ReactNode {
                       <span className="sidebar__link-icone">
                         <Icone nome={item.icone} tamanho={20} />
                       </span>
-                      <span>{item.rotulo}</span>
+                      <span className="sidebar__link-rotulo">
+                        {item.rotulo}
+                      </span>
+                      {item.contador ? (
+                        <span
+                          className="sidebar__link-badge"
+                          aria-label={`${item.contador} pendentes`}
+                        >
+                          {item.contador}
+                        </span>
+                      ) : null}
                     </NavLink>
                   </li>
                 ))}
@@ -87,8 +119,22 @@ export function Sidebar(): ReactNode {
           ))}
         </nav>
 
+        <div className="sidebar__ajuda" role="group" aria-label="Assistente VOLTA">
+          <div className="sidebar__ajuda-mascote" aria-hidden="true">
+            <Mascote tamanho={54} />
+          </div>
+          <p className="sidebar__ajuda-titulo">Precisa de ajuda?</p>
+          <p className="sidebar__ajuda-texto">
+            Pergunte ao VOLTA sobre a unidade.
+          </p>
+          <button type="button" className="sidebar__ajuda-botao">
+            <Icone nome="estrela" tamanho={14} />
+            <span>Abrir assistente</span>
+          </button>
+        </div>
+
         {usuario ? (
-          <div className="sidebar__usuario">
+          <Link to="/perfil" className="sidebar__usuario" aria-label="Abrir perfil">
             <span className="sidebar__avatar" aria-hidden="true">
               {iniciais(usuario.nome)}
             </span>
@@ -98,7 +144,10 @@ export function Sidebar(): ReactNode {
                 {ROTULO_PAPEL[usuario.papel]}
               </span>
             </div>
-          </div>
+            <span className="sidebar__usuario-seta" aria-hidden="true">
+              <Icone nome="seta-direita" tamanho={16} />
+            </span>
+          </Link>
         ) : null}
       </aside>
     </>
