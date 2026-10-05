@@ -188,44 +188,28 @@ export default function Home(): ReactNode {
     <div className="home-v2">
       <section className="home-hero" aria-labelledby="home-hero-titulo">
         <svg
-          className="home-hero__padrao"
-          viewBox="0 0 500 300"
-          preserveAspectRatio="xMaxYMid slice"
+          className="home-hero__seta"
+          viewBox="0 0 226.493 235.874"
+          width="226.493"
+          height="235.874"
+          fill="none"
           aria-hidden="true"
         >
-          <defs>
-            <marker
-              id="hero-seta-ponta"
-              viewBox="0 0 14 14"
-              refX="4"
-              refY="7"
-              markerUnits="strokeWidth"
-              markerWidth="2.2"
-              markerHeight="2.2"
-              orient="auto-start-reverse"
-            >
-              <path d="M 0 0 L 10 7 L 0 14 Z" fill="#FFFFFF" />
-            </marker>
-          </defs>
-          <circle
-            cx="380"
-            cy="150"
-            r="150"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="2"
-            opacity="0.18"
-          />
-          <path
-            d="M 110 230 C 130 100 260 40 360 90 C 430 115 455 180 410 240"
-            fill="none"
-            stroke="#FFFFFF"
-            strokeWidth="26"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.22"
-            markerEnd="url(#hero-seta-ponta)"
-          />
+          <g opacity="0.13">
+            <path
+              d="M201.701 123.282C201.552 141.723 195.641 159.655 184.794 174.568C173.947 189.481 158.707 200.629 141.209 206.45C123.711 212.272 104.831 212.475 87.2119 207.032C69.5926 201.589 54.1166 190.773 42.9507 176.096C31.7848 161.42 25.4882 143.62 24.9423 125.187C24.3965 106.754 29.6289 88.6123 39.9068 73.3012C50.1847 57.9901 64.9935 46.2766 82.2599 39.8006C99.5262 33.3247 118.386 32.4106 136.197 37.1863"
+              stroke="white"
+              strokeWidth="31.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M139.539 5.20016L174.179 46.8604L123.083 65.6155L139.539 5.20016Z"
+              fill="white"
+              stroke="white"
+              strokeWidth="10.4"
+              strokeLinejoin="round"
+            />
+          </g>
         </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
@@ -254,7 +238,7 @@ export default function Home(): ReactNode {
           </p>
         </aside>
         <div className="home-hero__mascote" aria-hidden="true">
-          <Mascote tamanho={130} />
+          <Mascote tamanho={122} altura={182} />
         </div>
       </section>
 

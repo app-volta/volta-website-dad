@@ -4,14 +4,16 @@ import mascoteOficial from "../../assets/mascote.png";
 
 interface MascoteProps {
   readonly tamanho?: number;
+  readonly altura?: number;
   readonly rotulo?: string;
 }
 
 export function Mascote({
   tamanho = 56,
+  altura: alturaProp,
   rotulo = "Assistente VOLTA",
 }: MascoteProps): ReactNode {
-  const altura = Math.round((tamanho / 100) * 120);
+  const altura = alturaProp ?? Math.round((tamanho / 100) * 120);
 
   return (
     <img
