@@ -15,12 +15,16 @@ const OcorrenciaDetalhe = lazy(() => import("./pages/OcorrenciaDetalhe"));
 const Cooperativas = lazy(() => import("./pages/Cooperativas"));
 const ChatCooperativa = lazy(() => import("./pages/ChatCooperativa"));
 const Perfil = lazy(() => import("./pages/Perfil"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Equipe = lazy(() => import("./pages/Equipe"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 interface RotaPrivadaProps {
   readonly titulo: string;
   readonly subtitulo?: string;
   readonly comCta?: boolean;
+  readonly comBusca?: boolean;
   readonly children: ReactNode;
 }
 
@@ -28,11 +32,17 @@ function RotaPrivada({
   titulo,
   subtitulo,
   comCta,
+  comBusca,
   children,
 }: RotaPrivadaProps): ReactNode {
   return (
     <PrivateRoute>
-      <AppLayout titulo={titulo} subtitulo={subtitulo} comCta={comCta}>
+      <AppLayout
+        titulo={titulo}
+        subtitulo={subtitulo}
+        comCta={comCta}
+        comBusca={comBusca}
+      >
         {children}
       </AppLayout>
     </PrivateRoute>
@@ -61,6 +71,7 @@ export default function App(): ReactNode {
               titulo="Registrar ocorrência"
               subtitulo="Passo 1 de 2 — foto e detalhes"
               comCta={false}
+              comBusca={false}
             >
               <Registrar />
             </RotaPrivada>
@@ -106,8 +117,46 @@ export default function App(): ReactNode {
               titulo="Chat com cooperativa"
               subtitulo="Parceiras próximas da sua unidade"
               comCta={false}
+              comBusca={false}
             >
               <ChatCooperativa />
+            </RotaPrivada>
+          }
+        />
+        <Route
+          path="/relatorios"
+          element={
+            <RotaPrivada
+              titulo="Relatórios PGRS"
+              subtitulo="Gere relatórios por período, setor e material"
+              comCta={false}
+            >
+              <Relatorios />
+            </RotaPrivada>
+          }
+        />
+        <Route
+          path="/equipe"
+          element={
+            <RotaPrivada
+              titulo="Equipe"
+              subtitulo="Responsáveis e permissões da sua unidade"
+              comCta={false}
+            >
+              <Equipe />
+            </RotaPrivada>
+          }
+        />
+        <Route
+          path="/configuracoes"
+          element={
+            <RotaPrivada
+              titulo="Configurações"
+              subtitulo="Preferências de notificação e integração"
+              comCta={false}
+              comBusca={false}
+            >
+              <Configuracoes />
             </RotaPrivada>
           }
         />
@@ -118,6 +167,7 @@ export default function App(): ReactNode {
               titulo="Perfil"
               subtitulo="Seus dados e unidade"
               comCta={false}
+              comBusca={false}
             >
               <Perfil />
             </RotaPrivada>

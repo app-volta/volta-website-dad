@@ -30,7 +30,11 @@ export type NomeIcone =
   | "cadeado"
   | "google"
   | "estrela"
-  | "chip";
+  | "chip"
+  | "relatorio"
+  | "equipe"
+  | "engrenagem"
+  | "upload";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -151,6 +155,30 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
     <path d="M12 3 L14.5 9 L21 9.7 L16 14 L17.5 20.5 L12 17 L6.5 20.5 L8 14 L3 9.7 L9.5 9 Z" />
   ),
   chip: <circle cx="12" cy="12" r="4" />,
+  relatorio: (
+    <>
+      <path d="M8 3 H16 V6 H8 Z" />
+      <path d="M6 6 H18 A1 1 0 0 1 19 7 V20 A1 1 0 0 1 18 21 H6 A1 1 0 0 1 5 20 V7 A1 1 0 0 1 6 6 Z" />
+      <path d="M9 11 H15 M9 15 H15 M9 18 H13" />
+    </>
+  ),
+  equipe: (
+    <>
+      <circle cx="9" cy="9" r="3" />
+      <path d="M3 20 C3 16 6 14 9 14 C12 14 15 16 15 20" />
+      <circle cx="17" cy="10" r="2.5" />
+      <path d="M15.5 14.2 C19 14.5 21 16.5 21 20" />
+    </>
+  ),
+  engrenagem: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2 V5 M12 19 V22 M4.2 4.2 L6.3 6.3 M17.7 17.7 L19.8 19.8 M2 12 H5 M19 12 H22 M4.2 19.8 L6.3 17.7 M17.7 6.3 L19.8 4.2" />
+    </>
+  ),
+  upload: (
+    <path d="M12 16 V4 M6 10 L12 4 L18 10 M4 20 H20" />
+  ),
 };
 
 export function Icone({
