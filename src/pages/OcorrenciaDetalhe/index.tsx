@@ -13,6 +13,7 @@ import { useOcorrencia } from "../../hooks/useOcorrencia";
 import { atualizarOcorrencia } from "../../services/ocorrencias";
 import { MATERIAIS, METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
+import { ROTULOS_STATUS } from "../../types/ocorrencia";
 import type { StatusOcorrencia } from "../../types/ocorrencia";
 import { formatarDataHora } from "../../utils/formatacao";
 import "./styles.css";
@@ -45,7 +46,9 @@ function passoAtivo(status: StatusOcorrencia): number {
       return 0;
     case "classificada":
       return 1;
+    case "aprovada":
     case "encaminhada":
+    case "recusada":
       return 2;
     case "finalizada":
       return 3;
@@ -156,19 +159,13 @@ export default function OcorrenciaDetalhe(): ReactNode {
           <div className="card detalhe__principal">
             <div className="detalhe__meta-topo">
               <p className="detalhe__meta-registro">
-                Registrada por <strong>{dados.criadaPor}</strong> ·{" "}
+                Registrada por <strong>{dados.criadaPorNome}</strong> ·{" "}
                 {formatarDataHora(dados.criadaEm)}
               </p>
               <span
                 className={`chip detalhe__status detalhe__status--${dados.status}`}
               >
-                {dados.status === "aguardando_classificacao"
-                  ? "EM ANÁLISE"
-                  : dados.status === "classificada"
-                    ? "ABERTA"
-                    : dados.status === "encaminhada"
-                      ? "APROVADA"
-                      : "COLETADA"}
+                {ROTULOS_STATUS[dados.status].toUpperCase()}
               </span>
             </div>
 

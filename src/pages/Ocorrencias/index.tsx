@@ -31,14 +31,18 @@ function ehDaAba(o: Ocorrencia, aba: FiltroAba): boolean {
 const ROTULOS_STATUS_UI: Readonly<Record<StatusOcorrencia, string>> = {
   aguardando_classificacao: "EM ANÁLISE",
   classificada: "ABERTA",
-  encaminhada: "APROVADA",
+  aprovada: "APROVADA",
+  encaminhada: "ENCAMINHADA",
+  recusada: "RECUSADA",
   finalizada: "COLETADA",
 };
 
 const CLASSE_STATUS: Readonly<Record<StatusOcorrencia, string>> = {
   aguardando_classificacao: "ocorrencias__chip--analise",
   classificada: "ocorrencias__chip--aberta",
+  aprovada: "ocorrencias__chip--aprovada",
   encaminhada: "ocorrencias__chip--aprovada",
+  recusada: "ocorrencias__chip--aberta",
   finalizada: "ocorrencias__chip--coletada",
 };
 

@@ -114,6 +114,8 @@ export default function Registrar(): ReactNode {
         descricao: descricaoInformada
           ? estado.descricao
           : `Resíduo registrado em ${estado.setor}`,
+        prioridade: estado.prioridade,
+        autorNome: usuario?.nome ?? "Equipe",
         localizacao: { setor: estado.setor, unidade: usuario?.unidade ?? "-" },
         fotoBase64: estado.fotoBase64 ?? "",
       });
