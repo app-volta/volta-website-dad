@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
+import { PainelAcesso } from "../../components/PainelAcesso";
 import { useAuth } from "../../context/AuthContext";
 import { combinar, validarEmail, validarSenha } from "../../utils/validadores";
 import "./styles.css";
@@ -34,6 +35,7 @@ export default function Login(): ReactNode {
     {},
   );
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
+  const [manterConectado, setManterConectado] = useState<boolean>(true);
 
   useEffect(() => {
     if (sessao) navegar(estadoDe ?? "/", { replace: true });
@@ -57,36 +59,28 @@ export default function Login(): ReactNode {
 
   return (
     <div className="login-tela">
-      <aside className="login-tela__hero" aria-hidden="true">
-        <div className="login-tela__hero-orbes" />
-        <div className="login-tela__hero-conteudo">
-          <div className="login-tela__hero-logo">
-            <Icone nome="reciclagem" tamanho={64} />
-          </div>
-          <div>
-            <h2 className="login-tela__hero-titulo">
-              O descarte certo começa com uma foto.
-            </h2>
-            <p className="login-tela__hero-texto">
-              Conectamos sua indústria às cooperativas de reciclagem, com
-              classificação automática por IA e relatório PGRS pronto pra
-              auditoria.
-            </p>
-          </div>
-          <span className="login-tela__hero-tag">
-            Parceira J&amp;F · JBS Ambiental
-          </span>
-        </div>
-      </aside>
+      <PainelAcesso
+        titulo={["Cuidar do descarte", "ficou simples."]}
+        texto="Aprove ocorrências, acompanhe metas e gerencie as cooperativas parceiras da sua unidade num lugar só."
+        destaques={[
+          "Aprovação de ocorrências em um clique",
+          "Relatório PGRS gerado automaticamente",
+          "Cooperativas homologadas e com licença em dia",
+        ]}
+      />
 
-      <main id="conteudo" className="login-tela__form-lado" tabIndex={-1}>
+      <main
+        id="conteudo"
+        className="login-tela__form-lado login-tela__form-lado--entrar"
+        tabIndex={-1}
+      >
         <div className="login-tela__form-card">
           <div className="login-tela__form-logo">
-            <LogoVolta altura={40} />
+            <LogoVolta altura={42} />
           </div>
           <h1 className="login-tela__titulo">Bem-vindo de volta</h1>
           <p className="login-tela__descricao">
-            Entre para continuar cuidando do descarte certo na sua unidade.
+            Entre com o e-mail da sua unidade.
           </p>
 
           {erro ? (
@@ -97,7 +91,7 @@ export default function Login(): ReactNode {
 
           <form onSubmit={tratarSubmit} noValidate>
             <Input
-              rotulo="E-mail da unidade"
+              rotulo="E-mail"
               type="email"
               autoComplete="email"
               required
@@ -127,12 +121,27 @@ export default function Login(): ReactNode {
               }}
             />
 
-            <div className="login-tela__esqueci">
-              <Link to="/cadastro">Esqueci minha senha</Link>
+            <div className="login-tela__linha">
+              <label className="login-tela__manter">
+                <input
+                  type="checkbox"
+                  className="login-tela__manter-input"
+                  checked={manterConectado}
+                  onChange={(evento) => setManterConectado(evento.target.checked)}
+                />
+                <span className="login-tela__manter-caixa" aria-hidden="true">
+                  <Icone nome="check" tamanho={12} />
+                </span>
+                <span>Manter conectado</span>
+              </label>
+              <Link to="/cadastro" className="login-tela__esqueci">
+                Esqueci minha senha
+              </Link>
             </div>
 
             <Button type="submit" larguraTotal carregando={carregando}>
-              Entrar
+              Entrar no painel
+              <Icone nome="seta-direita" tamanho={16} />
             </Button>
           </form>
 
@@ -146,8 +155,7 @@ export default function Login(): ReactNode {
             aria-label="Continuar com Google (indisponível na versão mock)"
             disabled
           >
-            <Icone nome="google" tamanho={20} />
-            <span>Continuar com Google</span>
+            Continuar com Google
           </button>
 
           <p className="login-tela__cadastro">

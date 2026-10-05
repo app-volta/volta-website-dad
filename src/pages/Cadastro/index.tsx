@@ -4,9 +4,9 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
-import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
+import { PainelAcesso } from "../../components/PainelAcesso";
 import { useAuth } from "../../context/AuthContext";
 import type { PapelUsuario } from "../../types/usuario";
 import {
@@ -65,29 +65,20 @@ export default function Cadastro(): ReactNode {
 
   return (
     <div className="login-tela">
-      <aside className="login-tela__hero" aria-hidden="true">
-        <div className="login-tela__hero-orbes" />
-        <div className="login-tela__hero-conteudo">
-          <div className="login-tela__hero-logo">
-            <Icone nome="reciclagem" tamanho={64} />
-          </div>
-          <div>
-            <h2 className="login-tela__hero-titulo">Comece agora.</h2>
-            <p className="login-tela__hero-texto">
-              Cadastre-se e ganhe visibilidade completa do PGRS da sua unidade
-              em minutos.
-            </p>
-          </div>
-          <span className="login-tela__hero-tag">
-            Parceira J&amp;F · JBS Ambiental
-          </span>
-        </div>
-      </aside>
+      <PainelAcesso
+        titulo={["Comece agora."]}
+        texto="Cadastre-se e ganhe visibilidade completa do PGRS da sua unidade em minutos."
+        destaques={[
+          "Aprovação de ocorrências em um clique",
+          "Relatório PGRS gerado automaticamente",
+          "Cooperativas homologadas e com licença em dia",
+        ]}
+      />
 
       <main id="conteudo" className="login-tela__form-lado" tabIndex={-1}>
         <div className="login-tela__form-card">
           <div className="login-tela__form-logo">
-            <LogoVolta altura={40} />
+            <LogoVolta altura={42} />
           </div>
           <h1 className="login-tela__titulo">Criar conta VOLTA</h1>
           <p className="login-tela__descricao">

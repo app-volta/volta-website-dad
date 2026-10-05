@@ -1,0 +1,118 @@
+.painel-acesso {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  color: #fff;
+  background: linear-gradient(155deg, #22c06f 0%, #1ba463 40%, #0e6b41 100%);
+}
+
+.painel-acesso__setas {
+  position: absolute;
+  top: 0;
+  right: -96px;
+  width: 834px;
+  height: 900px;
+  pointer-events: none;
+}
+
+.painel-acesso__logo {
+  position: absolute;
+  top: 56px;
+  left: 64px;
+}
+
+.painel-acesso__balao {
+  position: absolute;
+  top: 116px;
+  right: 231px;
+  width: 227px;
+  padding: 13px 16px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(6, 43, 25, 0.14);
+  z-index: 2;
+}
+
+.painel-acesso__balao p {
+  margin: 0;
+  color: #062b19;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 19px;
+}
+
+.painel-acesso__mascote {
+  position: absolute;
+  top: 102px;
+  right: 43px;
+  width: 214px;
+  height: 324px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.painel-acesso__copy {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 60px;
+  z-index: 2;
+}
+
+.painel-acesso__kicker {
+  display: inline-flex;
+  align-items: center;
+  height: 25px;
+  min-width: 143px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.painel-acesso__titulo {
+  margin: 24px 0 6px;
+  color: #fff;
+  font-size: clamp(2rem, 3.2vw, 2.875rem);
+  font-weight: 800;
+  line-height: 1.09;
+  letter-spacing: -0.02em;
+}
+
+.painel-acesso__titulo span {
+  display: block;
+}
+
+.painel-acesso__texto {
+  margin: 0;
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 26px;
+}
+
+.painel-acesso__lista {
+  list-style: none;
+  margin: 42px 0 0;
+  padding: 0 0 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.painel-acesso__lista li {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.painel-acesso__lista svg {
+  flex-shrink: 0;
+  color: #fff;
+}
