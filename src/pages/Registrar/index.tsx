@@ -1,11 +1,11 @@
-import { useReducer, useRef } from "react";
-import type { ChangeEvent, ReactNode } from "react";
+import { useReducer, useRef, useState } from "react";
+import type { ChangeEvent, DragEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
-import { Spinner } from "../../components/Spinner";
+import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { criarOcorrencia } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
@@ -27,9 +27,9 @@ const PRIORIDADES: readonly {
   readonly valor: Prioridade;
   readonly rotulo: string;
 }[] = [
-  { valor: "baixa", rotulo: "Baixa" },
-  { valor: "media", rotulo: "Média" },
   { valor: "alta", rotulo: "Alta" },
+  { valor: "media", rotulo: "Média" },
+  { valor: "baixa", rotulo: "Baixa" },
 ];
 
 const SETORES: readonly string[] = [
@@ -41,6 +41,30 @@ const SETORES: readonly string[] = [
   "Expedição",
 ];
 
+interface Deteccao {
+  readonly esquerda: number;
+  readonly topo: number;
+  readonly largura: number;
+  readonly altura: number;
+  readonly acrescimo: number | null;
+  readonly rotulo: string | null;
+}
+
+// A IA é um mock: as caixas são posições ilustrativas, não detecção real.
+const DETECCOES: readonly Deteccao[] = [
+  { esquerda: 9.4, topo: 42.1, largura: 33.6, altura: 43.3, acrescimo: 6, rotulo: null },
+  { esquerda: 44.2, topo: 26.2, largura: 37.5, altura: 59, acrescimo: 3, rotulo: null },
+  { esquerda: 79, topo: 60, largura: 17.7, altura: 27.4, acrescimo: null, rotulo: "umidade" },
+];
+
+function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    if (typeof leitor.result === "string") aoLer(leitor.result);
+  };
+  leitor.readAsDataURL(arquivo);
+}
+
 export default function Registrar(): ReactNode {
   const { usuario } = useAuth();
   const navegar = useNavigate();
@@ -49,28 +73,35 @@ export default function Registrar(): ReactNode {
     usuario?.unidade ?? "Frigorífico — Setor B2",
     estadoInicial,
   );
+  const [arrastando, setArrastando] = useState<boolean>(false);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
+  const inputCamera = useRef<HTMLInputElement | null>(null);
 
   function selecionarFoto(evento: ChangeEvent<HTMLInputElement>): void {
     const arquivo = evento.target.files?.[0];
-    if (!arquivo) {
-      despachar({ tipo: "definir_foto", foto: null });
-      return;
-    }
-    const leitor = new FileReader();
-    leitor.onload = () => {
-      const res = leitor.result;
-      if (typeof res === "string") {
-        despachar({ tipo: "definir_foto", foto: res });
-      }
-    };
-    leitor.readAsDataURL(arquivo);
+    if (!arquivo) return;
+    lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
+    evento.target.value = "";
+  }
+
+  function soltarFoto(evento: DragEvent<HTMLDivElement>): void {
+    evento.preventDefault();
+    setArrastando(false);
+    const arquivo = evento.dataTransfer.files?.[0];
+    if (!arquivo || !arquivo.type.startsWith("image/")) return;
+    lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
+  }
+
+  function trocarFoto(): void {
+    despachar({ tipo: "editar_novamente" });
+    inputArquivo.current?.click();
   }
 
   async function analisar(): Promise<void> {
+    const descricaoInformada = estado.descricao.trim().length > 0;
     const validacao = combinar({
       foto: validarFoto(estado.fotoBase64),
-      descricao: validarDescricao(estado.descricao),
+      descricao: descricaoInformada ? validarDescricao(estado.descricao) : null,
       setor: validarObrigatorio(estado.setor, "o setor", 80),
     });
     if (!validacao.valido) {
@@ -80,7 +111,9 @@ export default function Registrar(): ReactNode {
     despachar({ tipo: "iniciar_envio" });
     try {
       const criada = await criarOcorrencia({
-        descricao: estado.descricao,
+        descricao: descricaoInformada
+          ? estado.descricao
+          : `Resíduo registrado em ${estado.setor}`,
         localizacao: { setor: estado.setor, unidade: usuario?.unidade ?? "-" },
         fotoBase64: estado.fotoBase64 ?? "",
       });
@@ -99,16 +132,9 @@ export default function Registrar(): ReactNode {
     }
   }
 
-  const progresso =
-    estado.etapa === "detalhes"
-      ? 50
-      : estado.etapa === "analise" && estado.classificacao
-        ? 100
-        : 90;
-
   if (estado.etapa === "sucesso") {
     return (
-      <div className="registrar__sucesso card">
+      <div className="registrar__sucesso">
         <span className="registrar__sucesso-icone" aria-hidden="true">
           <Icone nome="check" tamanho={28} />
         </span>
@@ -136,21 +162,63 @@ export default function Registrar(): ReactNode {
     );
   }
 
+  const emAnalise = estado.etapa === "analise";
+  const concluida = emAnalise && estado.classificacao !== null;
+  const analisando = emAnalise && estado.classificacao === null;
+  const passo = estado.etapa === "detalhes" ? 1 : 2;
+  const rotuloPrioridade =
+    PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
+  const confiancaPct = estado.classificacao
+    ? Math.round(estado.classificacao.confianca * 100)
+    : 0;
+  const materialRotulo = estado.classificacao
+    ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
+    : "";
+
   return (
     <div className="registrar">
+      <input
+        ref={inputArquivo}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={selecionarFoto}
+      />
+      <input
+        ref={inputCamera}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={selecionarFoto}
+      />
+
       <div
         className="registrar__progresso"
         role="progressbar"
-        aria-valuenow={progresso}
+        aria-valuenow={passo * 50}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={`Passo ${estado.etapa === "detalhes" ? 1 : 2} de 2`}
+        aria-label={`Passo ${passo} de 2`}
       >
+        <span className="registrar__etapa registrar__etapa--cheia" />
         <span
-          className="registrar__progresso-barra"
-          style={{ width: `${progresso}%` }}
+          className={
+            passo === 2
+              ? "registrar__etapa registrar__etapa--cheia"
+              : "registrar__etapa"
+          }
         />
       </div>
+
+      <p className="sr-only" role="status" aria-live="polite">
+        {analisando ? "A IA está analisando a foto." : null}
+        {concluida ? "Análise concluída." : null}
+      </p>
 
       {estado.erroEnvio ? (
         <Alerta variante="erro" titulo="Falha na análise">
@@ -158,74 +226,124 @@ export default function Registrar(): ReactNode {
         </Alerta>
       ) : null}
 
-      {estado.etapa === "detalhes" ? (
-        <div className="registrar__linha">
-          <div className="registrar__foto card">
-            <input
-              ref={inputArquivo}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="registrar__foto-input"
-              onChange={selecionarFoto}
-              aria-label="Selecionar foto do resíduo"
-            />
-            {estado.fotoBase64 ? (
+      <div className="registrar__linha">
+        <div
+          className={
+            arrastando
+              ? "registrar__foto registrar__foto--arrastando"
+              : "registrar__foto"
+          }
+          onDragOver={(evento) => {
+            if (estado.etapa !== "detalhes") return;
+            evento.preventDefault();
+            setArrastando(true);
+          }}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={estado.etapa === "detalhes" ? soltarFoto : undefined}
+        >
+          {estado.fotoBase64 ? (
+            <>
               <img
                 src={estado.fotoBase64}
                 alt="Foto anexada do resíduo"
-                className="registrar__foto-preview"
+                className="registrar__foto-imagem"
               />
-            ) : (
-              <div className="registrar__foto-vazio">
-                <span className="registrar__foto-icone" aria-hidden="true">
-                  <Icone nome="camera" tamanho={32} />
+              {analisando ? (
+                <span className="registrar__scan" aria-hidden="true" />
+              ) : null}
+              {emAnalise ? (
+                <span className="registrar__selo">
+                  <Icone nome={concluida ? "check" : "brilho"} tamanho={12} />
+                  {concluida ? "Análise concluída" : "Analisando…"}
                 </span>
-                <p className="registrar__foto-titulo">
-                  Tire ou envie uma foto do resíduo
-                </p>
-                <p className="registrar__foto-desc">
-                  A IA identifica o tipo, a contaminação e a quantidade
-                  estimada.
-                </p>
-              </div>
-            )}
-            <div className="registrar__foto-botoes">
+              ) : null}
               <button
                 type="button"
-                className="registrar__botao registrar__botao--primario"
-                onClick={() => inputArquivo.current?.click()}
+                className="registrar__trocar"
+                onClick={trocarFoto}
               >
-                <Icone nome="camera" tamanho={16} /> Câmera
+                <Icone nome="galeria" tamanho={15} />
+                Trocar
               </button>
-              <button
-                type="button"
-                className="registrar__botao registrar__botao--outline"
-                onClick={() => inputArquivo.current?.click()}
-              >
-                Galeria
-              </button>
-            </div>
-            {estado.erroCampo.foto ? (
-              <p role="alert" className="registrar__erro-campo">
-                {estado.erroCampo.foto}
+              {concluida && estado.classificacao
+                ? DETECCOES.map((d) => (
+                    <span
+                      key={`${d.esquerda}-${d.topo}`}
+                      className="registrar__deteccao"
+                      aria-hidden="true"
+                      style={{
+                        left: `${d.esquerda}%`,
+                        top: `${d.topo}%`,
+                        width: `${d.largura}%`,
+                        height: `${d.altura}%`,
+                      }}
+                    >
+                      <span className="registrar__deteccao-rotulo">
+                        {d.rotulo ??
+                          `${materialRotulo.toLowerCase()} · ${Math.min(
+                            99,
+                            confiancaPct + (d.acrescimo ?? 0),
+                          )}%`}
+                      </span>
+                    </span>
+                  ))
+                : null}
+            </>
+          ) : (
+            <div className="registrar__foto-vazio">
+              <span className="registrar__foto-icone" aria-hidden="true">
+                <Icone nome="camera" tamanho={30} />
+              </span>
+              <p className="registrar__foto-titulo">
+                Arraste a foto do resíduo aqui
               </p>
-            ) : null}
-          </div>
+              <p className="registrar__foto-desc">
+                ou escolha um arquivo · a IA identifica tipo, contaminação e
+                quantidade
+              </p>
+              <div className="registrar__foto-botoes">
+                <button
+                  type="button"
+                  className="registrar__botao registrar__botao--primario"
+                  onClick={() => inputArquivo.current?.click()}
+                >
+                  <Icone nome="upload" tamanho={16} /> Enviar foto
+                </button>
+                <button
+                  type="button"
+                  className="registrar__botao registrar__botao--suave"
+                  onClick={() => inputCamera.current?.click()}
+                >
+                  <Icone nome="camera" tamanho={16} /> Usar câmera
+                </button>
+              </div>
+              {estado.erroCampo.foto ? (
+                <p role="alert" className="registrar__erro-campo">
+                  {estado.erroCampo.foto}
+                </p>
+              ) : null}
+            </div>
+          )}
+        </div>
 
-          <div className="registrar__campos">
-            <div className="campo">
-              <label htmlFor="reg-desc" className="campo__rotulo">
-                Descrição da ocorrência
+        {estado.etapa === "detalhes" ? (
+          <section className="registrar__painel" aria-labelledby="reg-titulo">
+            <h2 id="reg-titulo" className="registrar__painel-titulo">
+              Detalhes da ocorrência
+            </h2>
+
+            <div className="registrar__campo">
+              <label htmlFor="reg-desc" className="registrar__rotulo">
+                Descrição <span className="registrar__opcional">· opcional</span>
               </label>
               <textarea
                 id="reg-desc"
                 className={
                   estado.erroCampo.descricao
-                    ? "campo__textarea campo__textarea--erro"
-                    : "campo__textarea"
+                    ? "registrar__textarea registrar__textarea--erro"
+                    : "registrar__textarea"
                 }
-                placeholder="Ex.: caixas de papelão molhadas acumuladas ao lado da câmara fria, cerca de dez unidades..."
+                placeholder="Ex.: caixas de papelão molhadas ao lado da câmara fria"
                 value={estado.descricao}
                 onChange={(e) =>
                   despachar({
@@ -233,23 +351,24 @@ export default function Registrar(): ReactNode {
                     descricao: e.target.value,
                   })
                 }
+                aria-invalid={Boolean(estado.erroCampo.descricao) || undefined}
                 aria-describedby={
                   estado.erroCampo.descricao ? "reg-desc-erro" : undefined
                 }
               />
               {estado.erroCampo.descricao ? (
-                <p id="reg-desc-erro" role="alert" className="campo__erro">
+                <p id="reg-desc-erro" role="alert" className="registrar__erro-campo">
                   {estado.erroCampo.descricao}
                 </p>
               ) : null}
             </div>
 
-            <div className="campo">
-              <label htmlFor="reg-setor" className="campo__rotulo">
+            <div className="registrar__campo">
+              <label htmlFor="reg-setor" className="registrar__rotulo">
                 Onde está?
               </label>
               <div className="registrar__select">
-                <Icone nome="pin" tamanho={16} />
+                <Icone nome="pin" tamanho={17} />
                 <select
                   id="reg-setor"
                   value={estado.setor}
@@ -257,6 +376,9 @@ export default function Registrar(): ReactNode {
                     despachar({ tipo: "definir_setor", setor: e.target.value })
                   }
                 >
+                  {SETORES.includes(estado.setor) ? null : (
+                    <option value={estado.setor}>{estado.setor}</option>
+                  )}
                   {SETORES.map((s) => (
                     <option key={s} value={s}>
                       {s}
@@ -267,8 +389,8 @@ export default function Registrar(): ReactNode {
               </div>
             </div>
 
-            <fieldset className="registrar__prioridades">
-              <legend className="campo__rotulo">Prioridade estimada</legend>
+            <fieldset className="registrar__campo registrar__prioridades">
+              <legend className="registrar__rotulo">Prioridade</legend>
               <div className="registrar__prio-grid">
                 {PRIORIDADES.map((p) => (
                   <button
@@ -277,7 +399,7 @@ export default function Registrar(): ReactNode {
                     className={
                       estado.prioridade === p.valor
                         ? `registrar__prio registrar__prio--${p.valor} registrar__prio--ativa`
-                        : "registrar__prio"
+                        : `registrar__prio registrar__prio--${p.valor}`
                     }
                     onClick={() =>
                       despachar({
@@ -299,7 +421,7 @@ export default function Registrar(): ReactNode {
                   Avisar quem cuida do descarte
                 </p>
                 <p className="registrar__toggle-sub">
-                  A pessoa recebe o aviso assim que a análise concluir.
+                  A pessoa recebe assim que a análise concluir.
                 </p>
               </div>
               <button
@@ -312,120 +434,148 @@ export default function Registrar(): ReactNode {
                     ? "registrar__toggle registrar__toggle--on"
                     : "registrar__toggle"
                 }
-                aria-label={
-                  estado.avisarResponsavel
-                    ? "Desativar aviso"
-                    : "Ativar aviso"
-                }
+                aria-label="Avisar quem cuida do descarte"
               >
                 <span className="registrar__toggle-bolinha" />
               </button>
             </div>
-          </div>
-        </div>
-      ) : null}
 
-      {estado.etapa === "analise" ? (
-        <div className="registrar__linha">
-          <div className="registrar__foto card registrar__foto--verde">
-            <span className="registrar__foto-badge">
-              <Icone nome="check" tamanho={12} /> Análise concluída
-            </span>
-            <div className="registrar__foto-icone-grande" aria-hidden="true">
-              <Icone nome="camera" tamanho={44} />
-            </div>
-            <p className="registrar__local-info">Local informado</p>
-            <p className="registrar__local-valor">{estado.setor}</p>
-          </div>
-
-          <div className="registrar__ia card">
-            <div className="registrar__ia-topo">
-              <h3>O que a IA encontrou</h3>
-              <span
-                className={`chip registrar__prio-chip registrar__prio-chip--${estado.prioridade}`}
+            <div className="registrar__analisar">
+              <button
+                type="button"
+                className="registrar__botao registrar__botao--primario registrar__botao--largo"
+                onClick={analisar}
+                disabled={!estado.fotoBase64}
               >
-                {PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo.toUpperCase()}
-              </span>
+                <Icone nome="brilho" tamanho={16} /> Analisar com IA
+              </button>
+              {estado.fotoBase64 ? null : (
+                <p className="registrar__dica">
+                  Adicione uma foto pra liberar a análise
+                </p>
+              )}
             </div>
-            {estado.classificacao ? (
-              <>
-                <div className="registrar__ia-grid">
-                  <div className="registrar__ia-card" data-cor="papelao">
-                    <p className="registrar__ia-rotulo">Tipo</p>
-                    <p className="registrar__ia-valor">
-                      {METADADOS_MATERIAL[estado.classificacao.material].rotulo}
-                    </p>
-                  </div>
-                  <div className="registrar__ia-card" data-cor="vidro">
-                    <p className="registrar__ia-rotulo">Contaminação</p>
-                    <p className="registrar__ia-valor">Baixa</p>
-                  </div>
-                  <div className="registrar__ia-card" data-cor="plastico">
-                    <p className="registrar__ia-rotulo">Quantidade</p>
-                    <p className="registrar__ia-valor">≈ 38 kg</p>
-                  </div>
-                  <div className="registrar__ia-card" data-cor="metal">
-                    <p className="registrar__ia-rotulo">Volume</p>
-                    <p className="registrar__ia-valor">11 caixas</p>
-                  </div>
-                </div>
+          </section>
+        ) : (
+          <section className="registrar__painel" aria-labelledby="reg-titulo">
+            <div className="registrar__painel-topo">
+              <h2 id="reg-titulo" className="registrar__painel-titulo">
+                O que a IA encontrou
+              </h2>
+              {concluida ? (
+                <span
+                  className={`registrar__chip-prio registrar__chip-prio--${estado.prioridade}`}
+                >
+                  {rotuloPrioridade.toUpperCase()}
+                </span>
+              ) : null}
+            </div>
 
-                <div className="registrar__ia-confianca">
-                  <p>Confiança da IA</p>
-                  <div className="registrar__ia-barra">
+            <div
+              className={
+                analisando
+                  ? "registrar__ia-grid registrar__ia-grid--carregando"
+                  : "registrar__ia-grid"
+              }
+            >
+              <div className="registrar__ia-card" data-cor="papelao">
+                <p className="registrar__ia-rotulo">Tipo</p>
+                {concluida ? (
+                  <p className="registrar__ia-valor">{materialRotulo}</p>
+                ) : (
+                  <span className="registrar__ia-esqueleto" />
+                )}
+              </div>
+              <div className="registrar__ia-card" data-cor="vidro">
+                <p className="registrar__ia-rotulo">Contaminação</p>
+                {concluida ? (
+                  <p className="registrar__ia-valor">Baixa</p>
+                ) : (
+                  <span className="registrar__ia-esqueleto" />
+                )}
+              </div>
+              <div className="registrar__ia-card" data-cor="plastico">
+                <p className="registrar__ia-rotulo">Quantidade</p>
+                {concluida ? (
+                  <p className="registrar__ia-valor">≈ 38 kg</p>
+                ) : (
+                  <span className="registrar__ia-esqueleto" />
+                )}
+              </div>
+              <div className="registrar__ia-card" data-cor="metal">
+                <p className="registrar__ia-rotulo">Caixas</p>
+                {concluida ? (
+                  <p className="registrar__ia-valor">11 un.</p>
+                ) : (
+                  <span className="registrar__ia-esqueleto" />
+                )}
+              </div>
+            </div>
+
+            {analisando ? (
+              <div className="registrar__olhando">
+                <img
+                  src={mascoteCompleto}
+                  alt=""
+                  width={118}
+                  height={179}
+                  className="registrar__olhando-mascote"
+                />
+                <p>O VOLTA está olhando a foto com atenção…</p>
+              </div>
+            ) : null}
+
+            {concluida && estado.classificacao ? (
+              <>
+                <div className="registrar__confianca">
+                  <span>Confiança da IA</span>
+                  <div className="registrar__confianca-barra">
                     <span
-                      style={{
-                        width: `${estado.classificacao.confianca * 100}%`,
-                      }}
+                      style={{ width: `${estado.classificacao.confianca * 100}%` }}
                     />
                   </div>
-                  <span className="registrar__ia-pct">
+                  <strong>
                     {formatarPorcentagem(estado.classificacao.confianca)}
-                  </span>
+                  </strong>
                 </div>
 
-                <div className="registrar__ia-rec">
-                  <div className="registrar__ia-rec-topo">
-                    <Icone nome="check" tamanho={14} />
-                    <strong>Recomendação</strong>
+                <div className="registrar__recomenda">
+                  <img
+                    src={mascoteCompleto}
+                    alt=""
+                    width={84}
+                    height={127}
+                    className="registrar__recomenda-mascote"
+                  />
+                  <div>
+                    <p className="registrar__recomenda-titulo">
+                      <Icone nome="brilho" tamanho={14} /> VOLTA recomenda
+                    </p>
+                    <p className="registrar__recomenda-texto">
+                      {estado.classificacao.recomendacao}
+                    </p>
                   </div>
-                  <p>{estado.classificacao.recomendacao}</p>
+                </div>
+
+                <div className="registrar__acoes">
+                  <button
+                    type="button"
+                    className="registrar__botao registrar__botao--primario registrar__botao--largo"
+                    onClick={() => despachar({ tipo: "confirmar" })}
+                  >
+                    Confirmar e registrar
+                  </button>
+                  <button
+                    type="button"
+                    className="registrar__botao registrar__botao--contorno"
+                    onClick={() => despachar({ tipo: "editar_novamente" })}
+                  >
+                    Editar dados
+                  </button>
                 </div>
               </>
-            ) : (
-              <div className="registrar__ia-load">
-                <Spinner rotulo="A IA está analisando a foto…" />
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      <div className="registrar__acoes-rodape">
-        {estado.etapa === "detalhes" ? (
-          <Button
-            variante="primario"
-            larguraTotal
-            onClick={analisar}
-          >
-            <Icone nome="mais" tamanho={16} /> Analisar com IA
-          </Button>
-        ) : (
-          <>
-            <Button
-              variante="secundario"
-              onClick={() => despachar({ tipo: "editar_novamente" })}
-            >
-              Editar dados
-            </Button>
-            <Button
-              variante="primario"
-              onClick={() => despachar({ tipo: "confirmar" })}
-              disabled={!estado.classificacao}
-            >
-              Confirmar e gerar relatório
-            </Button>
-          </>
+            ) : null}
+          </section>
         )}
       </div>
     </div>
