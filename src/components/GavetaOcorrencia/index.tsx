@@ -4,6 +4,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
+import { contaminacao } from "../../utils/analiseOcorrencia";
 import { formatarPorcentagem } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
@@ -24,12 +25,6 @@ interface GavetaOcorrenciaProps {
 
 const SELETOR_FOCAVEL =
   'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])';
-
-function contaminacao(confianca: number): string {
-  if (confianca >= 0.85) return "Baixa";
-  if (confianca >= 0.75) return "Média";
-  return "Alta";
-}
 
 export function GavetaOcorrencia({
   ocorrencia,
