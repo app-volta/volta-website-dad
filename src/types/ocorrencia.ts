@@ -4,8 +4,12 @@ import type { Material } from "./material";
 export type StatusOcorrencia =
   | "aguardando_classificacao"
   | "classificada"
+  | "aprovada"
   | "encaminhada"
+  | "recusada"
   | "finalizada";
+
+export type PrioridadeOcorrencia = "alta" | "media" | "baixa";
 
 export interface Localizacao {
   readonly setor: string;
@@ -17,7 +21,10 @@ export interface Localizacao {
 export interface Ocorrencia {
   readonly id: string;
   readonly codigo: string;
+  readonly titulo: string;
   readonly descricao: string;
+  readonly pesoKg: number;
+  readonly prioridade: PrioridadeOcorrencia;
   readonly fotoUrl: string;
   readonly localizacao: Localizacao;
   readonly material: Material | null;
@@ -27,10 +34,13 @@ export interface Ocorrencia {
   readonly criadaEm: string;
   readonly atualizadaEm: string;
   readonly criadaPor: string;
+  readonly criadaPorNome: string;
 }
 
 export interface NovaOcorrencia {
   readonly descricao: string;
+  readonly prioridade: PrioridadeOcorrencia;
+  readonly autorNome: string;
   readonly localizacao: Localizacao;
   readonly fotoBase64: string;
 }
@@ -43,7 +53,9 @@ export interface AtualizarOcorrencia {
 
 export const ROTULOS_STATUS: Readonly<Record<StatusOcorrencia, string>> = {
   aguardando_classificacao: "Aguardando classificação",
-  classificada: "Classificada",
+  classificada: "Aguardando aprovação",
+  aprovada: "Aprovada",
   encaminhada: "Encaminhada",
+  recusada: "Recusada",
   finalizada: "Finalizada",
 };

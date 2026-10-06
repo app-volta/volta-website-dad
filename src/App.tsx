@@ -80,7 +80,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Ocorrências"
-              subtitulo="Todo o histórico de resíduos da sua unidade"
+              subtitulo="Tudo que a unidade registrou — aprove, encaminhe ou recuse"
             >
               <Ocorrencias />
             </RotaPrivada>
