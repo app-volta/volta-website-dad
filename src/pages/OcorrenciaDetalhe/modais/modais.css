@@ -146,3 +146,125 @@
   outline: none;
   box-shadow: var(--foco);
 }
+
+.segmentado {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.segmentado__opcao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 12px;
+  background: #fff;
+  color: #6f7d74;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.segmentado__opcao strong {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.segmentado__opcao small {
+  font-size: 11.5px;
+}
+
+.segmentado__opcao:hover:not(.segmentado__opcao--ativa) {
+  background: #f9fbfa;
+}
+
+.segmentado__opcao:has(.opcao-radio__input:focus-visible) {
+  box-shadow: var(--foco);
+}
+
+.segmentado__opcao--ativa.segmentado__opcao--ambar {
+  border-color: #c68a10;
+  background: #fdf3de;
+  color: #c68a10;
+}
+
+.segmentado__opcao--ativa.segmentado__opcao--rosa {
+  border-color: #e8556c;
+  background: #fdeaec;
+  color: #e8556c;
+}
+
+.segmentado__opcao--ativa.segmentado__opcao--verde {
+  border-color: #1ba463;
+  background: #e2f7ec;
+  color: #0e7c48;
+}
+
+.perigoso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #ffefe2;
+}
+
+.perigoso__icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #e8893a;
+}
+
+.perigoso__textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.perigoso__textos strong {
+  display: block;
+  color: #16211b;
+  font-size: 14px;
+}
+
+.perigoso__textos small {
+  display: block;
+  margin-top: 1px;
+  color: #6f7d74;
+  font-size: 12.5px;
+}
+
+.interruptor {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  border: 0;
+  border-radius: 999px;
+  background: #cfd8d2;
+  transition: background 0.15s ease;
+}
+
+.interruptor--ligado {
+  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+}
+
+.interruptor__bolinha {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease;
+}
+
+.interruptor--ligado .interruptor__bolinha {
+  transform: translateX(18px);
+}

@@ -11,9 +11,11 @@ import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencia } from "../../hooks/useOcorrencia";
 import {
+  alterarClassificacao,
   aprovarOcorrencia,
   recusarOcorrencia,
 } from "../../services/ocorrencias";
+import type { NovaClassificacao } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia, TipoEvento } from "../../types/ocorrencia";
 import {
@@ -30,11 +32,12 @@ import {
   categoriaDe,
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
+import { ModalClassificar } from "./modais/ModalClassificar";
 import { ModalRecusar } from "./modais/ModalRecusar";
 import { ModalSucesso } from "./modais/ModalSucesso";
 import "./styles.css";
 
-type ModalAtivo = "aprovar" | "sucesso" | "recusar" | null;
+type ModalAtivo = "aprovar" | "sucesso" | "recusar" | "classificar" | null;
 
 interface Aviso {
   readonly titulo: string;
@@ -151,6 +154,20 @@ export default function OcorrenciaDetalhe(): ReactNode {
       () => aprovarOcorrencia(ocorrencia.id, autor),
       () => setModal("sucesso"),
       "Falha ao aprovar.",
+    );
+  }
+
+  function classificar(nova: NovaClassificacao): void {
+    void executar(
+      () => alterarClassificacao(ocorrencia.id, nova, autor),
+      () => {
+        setModal(null);
+        setAviso({
+          titulo: "Classificação atualizada",
+          descricao: `Ocorrência #${numero} ficou com a nova classificação`,
+        });
+      },
+      "Falha ao salvar a classificação.",
     );
   }
 
@@ -344,7 +361,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
             <ul className="detalhe__acoes">
               <li>
-                <button type="button" className="detalhe__acao">
+                <button
+                  type="button"
+                  className="detalhe__acao"
+                  onClick={() => abrir("classificar")}
+                >
                   <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
                     <Icone nome="editar" tamanho={15} />
                   </span>
@@ -465,6 +486,15 @@ export default function OcorrenciaDetalhe(): ReactNode {
           });
         }}
       />
+      {modal === "classificar" ? (
+        <ModalClassificar
+          ocorrencia={ocorrencia}
+          salvando={salvando}
+          erro={erroAcao}
+          aoConfirmar={classificar}
+          aoFechar={() => setModal(null)}
+        />
+      ) : null}
       {modal === "recusar" ? (
         <ModalRecusar
           salvando={salvando}
