@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { useAuth } from "../../context/AuthContext";
 import { aprovarOcorrencias } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
@@ -58,6 +59,7 @@ export default function Ocorrencias(): ReactNode {
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [gavetaId, setGavetaId] = useState<string | null>(null);
   const navegar = useNavigate();
+  const { usuario } = useAuth();
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
 
@@ -118,7 +120,7 @@ export default function Ocorrencias(): ReactNode {
     setAviso(null);
     setErroAcao(null);
     try {
-      const aprovadas = await aprovarOcorrencias(ids);
+      const aprovadas = await aprovarOcorrencias(ids, usuario?.nome ?? "Equipe");
       setSelecionadas((atual) => {
         const novo = new Set(atual);
         for (const id of ids) novo.delete(id);

@@ -3,9 +3,11 @@ import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
 import type {
   AtualizarOcorrencia,
+  EventoOcorrencia,
   NovaOcorrencia,
   Ocorrencia,
   PrioridadeOcorrencia,
+  QualidadeMaterial,
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { aguardar } from "./http";
@@ -104,6 +106,58 @@ const ANTIGAS: readonly ModeloOcorrencia[] = Array.from({ length: 42 }, (_, i) =
   };
 });
 
+function eventosIniciais(
+  codigo: string,
+  autor: string,
+  tituloOuMaterial: string,
+  confianca: number,
+  em: string,
+): EventoOcorrencia[] {
+  return [
+    {
+      id: `${codigo}-e1`,
+      tipo: "registro",
+      autor,
+      texto: "registrou a ocorrência com 1 foto",
+      em,
+    },
+    {
+      id: `${codigo}-e2`,
+      tipo: "ia",
+      autor: "IA VOLTA",
+      texto: `classificou como ${tituloOuMaterial} · confiança ${Math.round(confianca * 100)}%`,
+      em,
+      rotuloTempo: "+2 min",
+    },
+  ];
+}
+
+function decisaoInicial(
+  codigo: string,
+  modelo: ModeloOcorrencia,
+): EventoOcorrencia[] {
+  const em = new Date(
+    new Date(modelo.criadaEm).getTime() + 30 * 60_000,
+  ).toISOString();
+  const base = { id: `${codigo}-e3`, autor: "Breno Gomes", em };
+  if (modelo.status === "aprovada" || modelo.status === "finalizada") {
+    return [{ ...base, tipo: "aprovacao", texto: "aprovou a ocorrência" }];
+  }
+  if (modelo.status === "encaminhada") {
+    return [{ ...base, tipo: "encaminhamento", texto: "encaminhou para Expedição" }];
+  }
+  if (modelo.status === "recusada") {
+    return [
+      {
+        ...base,
+        tipo: "recusa",
+        texto: "recusou a ocorrência · Foto não mostra o resíduo",
+      },
+    ];
+  }
+  return [];
+}
+
 function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
   const codigo = `OCC-${String(numero).padStart(4, "0")}`;
   const analisadaEm = modelo.criadaEm;
@@ -129,6 +183,24 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
     atualizadaEm: modelo.criadaEm,
     criadaPor: `op-${String(numero % 20).padStart(2, "0")}`,
     criadaPorNome: modelo.autor,
+    qualidade: "A",
+    perigoso: false,
+    setorDestino: modelo.status === "encaminhada" ? "Expedição" : null,
+    motivoRecusa:
+      modelo.status === "recusada" ? "Foto não mostra o resíduo" : null,
+    ultimaAlteracao: null,
+    historico: [
+      ...eventosIniciais(
+        codigo,
+        modelo.autor,
+        modelo.material
+          ? METADADOS_MATERIAL[modelo.material].rotulo
+          : modelo.titulo,
+        modelo.confianca,
+        modelo.criadaEm,
+      ),
+      ...decisaoInicial(codigo, modelo),
+    ],
   };
 }
 
@@ -136,6 +208,38 @@ const CATALOGO: Ocorrencia[] = [
   ...RECENTES.map((modelo, i) => montar(modelo, 483 - i)),
   ...ANTIGAS.map((modelo, i) => montar(modelo, 473 - i)),
 ];
+
+const ouvintes = new Set<() => void>();
+
+export function assinarMudancas(ouvinte: () => void): () => void {
+  ouvintes.add(ouvinte);
+  return () => {
+    ouvintes.delete(ouvinte);
+  };
+}
+
+function notificar(): void {
+  for (const ouvinte of ouvintes) ouvinte();
+}
+
+function aguardaAprovacao(status: StatusOcorrencia): boolean {
+  return status === "classificada" || status === "aguardando_classificacao";
+}
+
+export function quantidadeAguardando(): number {
+  return CATALOGO.filter((item) => aguardaAprovacao(item.status)).length;
+}
+
+export function semelhantesNaSemana(ocorrencia: Ocorrencia): number {
+  const limite = Date.now() - 7 * 86_400_000;
+  return CATALOGO.filter(
+    (item) =>
+      item.titulo === ocorrencia.titulo &&
+      item.localizacao.setor === ocorrencia.localizacao.setor &&
+      new Date(item.criadaEm).getTime() >= limite &&
+      item.criadaEm <= ocorrencia.criadaEm,
+  ).length;
+}
 
 function proximoCodigo(): string {
   const maior = Math.max(
@@ -187,8 +291,21 @@ export async function criarOcorrencia(
     atualizadaEm: agora,
     criadaPor: "user-atual",
     criadaPorNome: entrada.autorNome,
+    qualidade: "A",
+    perigoso: false,
+    setorDestino: null,
+    motivoRecusa: null,
+    ultimaAlteracao: null,
+    historico: eventosIniciais(
+      codigo,
+      entrada.autorNome,
+      METADADOS_MATERIAL[classificacao.material].rotulo,
+      classificacao.confianca,
+      agora,
+    ),
   };
   CATALOGO.unshift(nova);
+  notificar();
   return nova;
 }
 
@@ -211,28 +328,166 @@ export async function atualizarOcorrencia(
     atualizadaEm: new Date().toISOString(),
   };
   CATALOGO[indice] = atualizada;
+  notificar();
   return atualizada;
+}
+
+function localizar(id: string): number {
+  const indice = CATALOGO.findIndex((item) => item.id === id);
+  if (indice < 0) throw new Error(`Ocorrência ${id} não encontrada.`);
+  return indice;
+}
+
+function registrar(
+  indice: number,
+  mudanca: Partial<Ocorrencia>,
+  evento: Pick<EventoOcorrencia, "tipo" | "autor" | "texto">,
+): Ocorrencia {
+  const atual = CATALOGO[indice];
+  const agora = new Date().toISOString();
+  const nova: Ocorrencia = {
+    ...atual,
+    ...mudanca,
+    atualizadaEm: agora,
+    historico: [
+      ...atual.historico,
+      {
+        ...evento,
+        id: `${atual.codigo}-e${atual.historico.length + 1}`,
+        em: agora,
+      },
+    ],
+  };
+  CATALOGO[indice] = nova;
+  notificar();
+  return nova;
 }
 
 export async function aprovarOcorrencias(
   ids: readonly string[],
+  autor: string,
   sinal?: AbortSignal,
 ): Promise<number> {
   await aguardar(600, sinal);
   let aprovadas = 0;
   for (const id of ids) {
     const indice = CATALOGO.findIndex((item) => item.id === id);
-    if (indice < 0) continue;
-    const atual = CATALOGO[indice];
-    if (atual.status !== "classificada" && atual.status !== "aguardando_classificacao") {
-      continue;
-    }
-    CATALOGO[indice] = {
-      ...atual,
-      status: "aprovada",
-      atualizadaEm: new Date().toISOString(),
-    };
+    if (indice < 0 || !aguardaAprovacao(CATALOGO[indice].status)) continue;
+    registrar(
+      indice,
+      { status: "aprovada" },
+      { tipo: "aprovacao", autor, texto: "aprovou a ocorrência" },
+    );
     aprovadas += 1;
   }
   return aprovadas;
+}
+
+export async function aprovarOcorrencia(
+  id: string,
+  autor: string,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  await aguardar(600, sinal);
+  return registrar(
+    localizar(id),
+    { status: "aprovada" },
+    { tipo: "aprovacao", autor, texto: "aprovou a ocorrência" },
+  );
+}
+
+export async function recusarOcorrencia(
+  id: string,
+  motivo: string,
+  autor: string,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  await aguardar(600, sinal);
+  return registrar(
+    localizar(id),
+    { status: "recusada", motivoRecusa: motivo },
+    { tipo: "recusa", autor, texto: `recusou a ocorrência · ${motivo}` },
+  );
+}
+
+export async function encaminharOcorrencia(
+  id: string,
+  setor: string,
+  mensagem: string,
+  autor: string,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  await aguardar(600, sinal);
+  const recado = mensagem.trim();
+  return registrar(
+    localizar(id),
+    { status: "encaminhada", setorDestino: setor },
+    {
+      tipo: "encaminhamento",
+      autor,
+      texto: recado
+        ? `encaminhou para ${setor} · “${recado}”`
+        : `encaminhou para ${setor}`,
+    },
+  );
+}
+
+export async function registrarObservacao(
+  id: string,
+  texto: string,
+  autor: string,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  await aguardar(500, sinal);
+  return registrar(
+    localizar(id),
+    {},
+    {
+      tipo: "observacao",
+      autor,
+      texto: `adicionou uma observação · ${texto.trim()}`,
+    },
+  );
+}
+
+export interface NovaClassificacao {
+  readonly material: Material;
+  readonly qualidade: QualidadeMaterial;
+  readonly prioridade: PrioridadeOcorrencia;
+  readonly perigoso: boolean;
+}
+
+const PRIORIDADE_POR_EXTENSO: Readonly<Record<PrioridadeOcorrencia, string>> = {
+  alta: "alta",
+  media: "média",
+  baixa: "baixa",
+};
+
+export async function alterarClassificacao(
+  id: string,
+  nova: NovaClassificacao,
+  autor: string,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  await aguardar(600, sinal);
+  const indice = localizar(id);
+  const atual = CATALOGO[indice];
+  const antes = `${atual.material ? METADADOS_MATERIAL[atual.material].rotulo : atual.titulo} ${atual.qualidade}`;
+  const depois = `${METADADOS_MATERIAL[nova.material].rotulo} ${nova.qualidade}`;
+  const resumo = `${antes} → ${depois} · prioridade ${PRIORIDADE_POR_EXTENSO[nova.prioridade]}`;
+  return registrar(
+    indice,
+    {
+      material: nova.material,
+      qualidade: nova.qualidade,
+      prioridade: nova.prioridade,
+      perigoso: nova.perigoso,
+      ultimaAlteracao: resumo,
+    },
+    {
+      tipo: "classificacao",
+      autor,
+      texto: `alterou a classificação · ${resumo}`,
+    },
+  );
 }
