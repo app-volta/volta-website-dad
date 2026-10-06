@@ -12,6 +12,7 @@ interface ModalAcaoProps {
   readonly titulo: string;
   readonly subtitulo?: string;
   readonly icone?: NomeIcone;
+  readonly ilustracao?: ReactNode;
   readonly tom?: TomModal;
   readonly centralizado?: boolean;
   readonly bloqueado?: boolean;
@@ -29,6 +30,7 @@ export function ModalAcao({
   titulo,
   subtitulo,
   icone,
+  ilustracao,
   tom = "verde",
   centralizado = false,
   bloqueado = false,
@@ -97,6 +99,9 @@ export function ModalAcao({
         onClick={(evento) => evento.stopPropagation()}
         onKeyDown={prenderFoco}
       >
+        {ilustracao ? (
+          <div className="modal-acao__ilustracao">{ilustracao}</div>
+        ) : null}
         <header className="modal-acao__cabecalho">
           {icone ? (
             <span

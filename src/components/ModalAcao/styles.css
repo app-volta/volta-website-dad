@@ -22,6 +22,12 @@
   animation: modal-acao-entrar 0.18s ease;
 }
 
+.modal-acao__ilustracao {
+  display: flex;
+  justify-content: center;
+  margin: -6px 0 6px;
+}
+
 .modal-acao__cabecalho {
   display: flex;
   align-items: center;

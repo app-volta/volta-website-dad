@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -6,7 +7,10 @@ import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
+import { Toast } from "../../components/Toast";
+import { useAuth } from "../../context/AuthContext";
 import { useOcorrencia } from "../../hooks/useOcorrencia";
+import { aprovarOcorrencia } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia, TipoEvento } from "../../types/ocorrencia";
 import {
@@ -22,7 +26,11 @@ import {
   aguardaAprovacao,
   categoriaDe,
 } from "../../utils/statusOcorrencia";
+import { ModalAprovar } from "./modais/ModalAprovar";
+import { ModalSucesso } from "./modais/ModalSucesso";
 import "./styles.css";
+
+type ModalAtivo = "aprovar" | "sucesso" | null;
 
 type EstadoPasso = "feito" | "pendente" | "recusado";
 
@@ -61,9 +69,24 @@ function passosDe(ocorrencia: Ocorrencia): readonly {
 
 export default function OcorrenciaDetalhe(): ReactNode {
   const { id } = useParams();
-  const { dados, carregando, erro } = useOcorrencia(id);
+  const { usuario } = useAuth();
+  const [chaveRecarga, setChaveRecarga] = useState<number>(0);
+  const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
+  const [modal, setModal] = useState<ModalAtivo>(null);
+  const [salvando, setSalvando] = useState<boolean>(false);
+  const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [toastAberto, setToastAberto] = useState<boolean>(false);
 
-  if (carregando) return <Spinner rotulo="Carregando ocorrência…" />;
+  useEffect(() => {
+    if (modal !== "sucesso") return;
+    const temporizador = window.setTimeout(() => {
+      setModal(null);
+      setToastAberto(true);
+    }, 2200);
+    return () => window.clearTimeout(temporizador);
+  }, [modal]);
+
+  if (carregando && !dados) return <Spinner rotulo="Carregando ocorrência…" />;
 
   if (erro || !dados) {
     return (
@@ -81,6 +104,24 @@ export default function OcorrenciaDetalhe(): ReactNode {
     : null;
   const tipo = `${material ?? ocorrencia.titulo} (Classe ${ocorrencia.qualidade})`;
   const decidida = !aguardaAprovacao(ocorrencia.status);
+  const numero = ocorrencia.codigo.replace(/\D/g, "");
+  const autor = usuario?.nome ?? "Equipe";
+
+  async function aprovar(): Promise<void> {
+    setSalvando(true);
+    setErroAcao(null);
+    try {
+      await aprovarOcorrencia(ocorrencia.id, autor);
+      setChaveRecarga((v) => v + 1);
+      setModal("sucesso");
+    } catch (excecao) {
+      setErroAcao(
+        excecao instanceof Error ? excecao.message : "Falha ao aprovar.",
+      );
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
     <div className="detalhe">
@@ -320,7 +361,14 @@ export default function OcorrenciaDetalhe(): ReactNode {
               </p>
             ) : (
               <div className="detalhe__decidir">
-                <button type="button" className="detalhe__aprovar">
+                <button
+                  type="button"
+                  className="detalhe__aprovar"
+                  onClick={() => {
+                    setErroAcao(null);
+                    setModal("aprovar");
+                  }}
+                >
                   <Icone nome="check" tamanho={16} />
                   Aprovar ocorrência
                 </button>
@@ -351,6 +399,29 @@ export default function OcorrenciaDetalhe(): ReactNode {
           </section>
         </aside>
       </div>
+
+      <ModalAprovar
+        aberto={modal === "aprovar"}
+        numero={numero}
+        salvando={salvando}
+        erro={erroAcao}
+        aoConfirmar={aprovar}
+        aoFechar={() => setModal(null)}
+      />
+      <ModalSucesso
+        aberto={modal === "sucesso"}
+        numero={numero}
+        aoFechar={() => {
+          setModal(null);
+          setToastAberto(true);
+        }}
+      />
+      <Toast
+        aberto={toastAberto}
+        titulo={`Ocorrência #${numero} aprovada`}
+        descricao="Entrou no relatório PGRS do mês"
+        aoFechar={() => setToastAberto(false)}
+      />
     </div>
   );
 }
