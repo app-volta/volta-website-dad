@@ -268,3 +268,29 @@
 .interruptor--ligado .interruptor__bolinha {
   transform: translateX(18px);
 }
+
+.campo-modal__texto--alto {
+  min-height: 112px;
+}
+
+.sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sugestoes__chip {
+  height: 36px;
+  padding: 0 14px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 999px;
+  background: #fff;
+  color: #6f7d74;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.sugestoes__chip:hover {
+  background: #f4f7f5;
+  color: #16211b;
+}

@@ -13,7 +13,9 @@ import { useOcorrencia } from "../../hooks/useOcorrencia";
 import {
   alterarClassificacao,
   aprovarOcorrencia,
+  encaminharOcorrencia,
   recusarOcorrencia,
+  registrarObservacao,
 } from "../../services/ocorrencias";
 import type { NovaClassificacao } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
@@ -33,11 +35,20 @@ import {
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
 import { ModalClassificar } from "./modais/ModalClassificar";
+import { ModalEncaminhar } from "./modais/ModalEncaminhar";
+import { ModalObservacao } from "./modais/ModalObservacao";
 import { ModalRecusar } from "./modais/ModalRecusar";
 import { ModalSucesso } from "./modais/ModalSucesso";
 import "./styles.css";
 
-type ModalAtivo = "aprovar" | "sucesso" | "recusar" | "classificar" | null;
+type ModalAtivo =
+  | "aprovar"
+  | "sucesso"
+  | "recusar"
+  | "classificar"
+  | "encaminhar"
+  | "observacao"
+  | null;
 
 interface Aviso {
   readonly titulo: string;
@@ -168,6 +179,34 @@ export default function OcorrenciaDetalhe(): ReactNode {
         });
       },
       "Falha ao salvar a classificação.",
+    );
+  }
+
+  function encaminhar(setor: string, mensagem: string): void {
+    void executar(
+      () => encaminharOcorrencia(ocorrencia.id, setor, mensagem, autor),
+      () => {
+        setModal(null);
+        setAviso({
+          titulo: `Ocorrência #${numero} encaminhada`,
+          descricao: `O responsável de ${setor} foi avisado`,
+        });
+      },
+      "Falha ao encaminhar.",
+    );
+  }
+
+  function observar(texto: string): void {
+    void executar(
+      () => registrarObservacao(ocorrencia.id, texto, autor),
+      () => {
+        setModal(null);
+        setAviso({
+          titulo: "Observação salva",
+          descricao: "Já aparece no histórico da ocorrência",
+        });
+      },
+      "Falha ao salvar a observação.",
     );
   }
 
@@ -379,7 +418,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 </button>
               </li>
               <li>
-                <button type="button" className="detalhe__acao">
+                <button
+                  type="button"
+                  className="detalhe__acao"
+                  onClick={() => abrir("encaminhar")}
+                >
                   <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
                     <Icone nome="seta-direita" tamanho={15} />
                   </span>
@@ -393,7 +436,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 </button>
               </li>
               <li>
-                <button type="button" className="detalhe__acao">
+                <button
+                  type="button"
+                  className="detalhe__acao"
+                  onClick={() => abrir("observacao")}
+                >
                   <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
                     <Icone nome="mais" tamanho={15} />
                   </span>
@@ -492,6 +539,22 @@ export default function OcorrenciaDetalhe(): ReactNode {
           salvando={salvando}
           erro={erroAcao}
           aoConfirmar={classificar}
+          aoFechar={() => setModal(null)}
+        />
+      ) : null}
+      {modal === "encaminhar" ? (
+        <ModalEncaminhar
+          salvando={salvando}
+          erro={erroAcao}
+          aoConfirmar={encaminhar}
+          aoFechar={() => setModal(null)}
+        />
+      ) : null}
+      {modal === "observacao" ? (
+        <ModalObservacao
+          salvando={salvando}
+          erro={erroAcao}
+          aoConfirmar={observar}
           aoFechar={() => setModal(null)}
         />
       ) : null}
