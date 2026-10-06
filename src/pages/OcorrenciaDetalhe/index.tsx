@@ -10,7 +10,10 @@ import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencia } from "../../hooks/useOcorrencia";
-import { aprovarOcorrencia } from "../../services/ocorrencias";
+import {
+  aprovarOcorrencia,
+  recusarOcorrencia,
+} from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia, TipoEvento } from "../../types/ocorrencia";
 import {
@@ -27,10 +30,16 @@ import {
   categoriaDe,
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
+import { ModalRecusar } from "./modais/ModalRecusar";
 import { ModalSucesso } from "./modais/ModalSucesso";
 import "./styles.css";
 
-type ModalAtivo = "aprovar" | "sucesso" | null;
+type ModalAtivo = "aprovar" | "sucesso" | "recusar" | null;
+
+interface Aviso {
+  readonly titulo: string;
+  readonly descricao: string;
+}
 
 type EstadoPasso = "feito" | "pendente" | "recusado";
 
@@ -67,6 +76,10 @@ function passosDe(ocorrencia: Ocorrencia): readonly {
   ];
 }
 
+function numeroDe(id: string | undefined): string {
+  return (id ?? "").replace(/\D/g, "");
+}
+
 export default function OcorrenciaDetalhe(): ReactNode {
   const { id } = useParams();
   const { usuario } = useAuth();
@@ -75,16 +88,19 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const [modal, setModal] = useState<ModalAtivo>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
-  const [toastAberto, setToastAberto] = useState<boolean>(false);
+  const [aviso, setAviso] = useState<Aviso | null>(null);
 
   useEffect(() => {
     if (modal !== "sucesso") return;
     const temporizador = window.setTimeout(() => {
       setModal(null);
-      setToastAberto(true);
+      setAviso({
+        titulo: `Ocorrência #${numeroDe(id)} aprovada`,
+        descricao: "Entrou no relatório PGRS do mês",
+      });
     }, 2200);
     return () => window.clearTimeout(temporizador);
-  }, [modal]);
+  }, [modal, id]);
 
   if (carregando && !dados) return <Spinner rotulo="Carregando ocorrência…" />;
 
@@ -107,20 +123,49 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const numero = ocorrencia.codigo.replace(/\D/g, "");
   const autor = usuario?.nome ?? "Equipe";
 
-  async function aprovar(): Promise<void> {
+  async function executar(
+    acao: () => Promise<unknown>,
+    aoConcluir: () => void,
+    mensagemPadrao: string,
+  ): Promise<void> {
     setSalvando(true);
     setErroAcao(null);
     try {
-      await aprovarOcorrencia(ocorrencia.id, autor);
+      await acao();
       setChaveRecarga((v) => v + 1);
-      setModal("sucesso");
+      aoConcluir();
     } catch (excecao) {
-      setErroAcao(
-        excecao instanceof Error ? excecao.message : "Falha ao aprovar.",
-      );
+      setErroAcao(excecao instanceof Error ? excecao.message : mensagemPadrao);
     } finally {
       setSalvando(false);
     }
+  }
+
+  function abrir(destino: Exclude<ModalAtivo, null>): void {
+    setErroAcao(null);
+    setModal(destino);
+  }
+
+  function aprovar(): void {
+    void executar(
+      () => aprovarOcorrencia(ocorrencia.id, autor),
+      () => setModal("sucesso"),
+      "Falha ao aprovar.",
+    );
+  }
+
+  function recusar(motivo: string): void {
+    void executar(
+      () => recusarOcorrencia(ocorrencia.id, motivo, autor),
+      () => {
+        setModal(null);
+        setAviso({
+          titulo: `Ocorrência #${numero} recusada`,
+          descricao: "Quem registrou recebeu o motivo",
+        });
+      },
+      "Falha ao recusar.",
+    );
   }
 
   return (
@@ -364,15 +409,16 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__aprovar"
-                  onClick={() => {
-                    setErroAcao(null);
-                    setModal("aprovar");
-                  }}
+                  onClick={() => abrir("aprovar")}
                 >
                   <Icone nome="check" tamanho={16} />
                   Aprovar ocorrência
                 </button>
-                <button type="button" className="detalhe__recusar">
+                <button
+                  type="button"
+                  className="detalhe__recusar"
+                  onClick={() => abrir("recusar")}
+                >
                   <Icone nome="fechar" tamanho={15} />
                   Recusar
                 </button>
@@ -413,14 +459,25 @@ export default function OcorrenciaDetalhe(): ReactNode {
         numero={numero}
         aoFechar={() => {
           setModal(null);
-          setToastAberto(true);
+          setAviso({
+            titulo: `Ocorrência #${numero} aprovada`,
+            descricao: "Entrou no relatório PGRS do mês",
+          });
         }}
       />
+      {modal === "recusar" ? (
+        <ModalRecusar
+          salvando={salvando}
+          erro={erroAcao}
+          aoConfirmar={recusar}
+          aoFechar={() => setModal(null)}
+        />
+      ) : null}
       <Toast
-        aberto={toastAberto}
-        titulo={`Ocorrência #${numero} aprovada`}
-        descricao="Entrou no relatório PGRS do mês"
-        aoFechar={() => setToastAberto(false)}
+        aberto={aviso !== null}
+        titulo={aviso?.titulo ?? ""}
+        descricao={aviso?.descricao}
+        aoFechar={() => setAviso(null)}
       />
     </div>
   );

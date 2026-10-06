@@ -1,0 +1,148 @@
+.opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opcao-radio {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 12px;
+  background: #fff;
+  color: #16211b;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.opcao-radio:hover:not(.opcao-radio--ativa) {
+  background: #f9fbfa;
+}
+
+.opcao-radio--ativa {
+  border-color: #1ba463;
+  background: #f0fbf4;
+}
+
+.opcao-radio:has(.opcao-radio__input:focus-visible) {
+  box-shadow: var(--foco);
+}
+
+.opcao-radio__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.opcao-radio__textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.opcao-radio__textos strong {
+  display: block;
+  font-weight: 400;
+}
+
+.opcao-radio__textos small {
+  display: block;
+  margin-top: 1px;
+  color: #6f7d74;
+  font-size: 12.5px;
+}
+
+.opcao-radio__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin: 12px 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.opcao-radio:has(.opcao-radio__avatar) {
+  min-height: 60px;
+}
+
+.opcao-radio:has(.opcao-radio__avatar) .opcao-radio__textos strong {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.opcao-radio__marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid #cdd8d1;
+  border-radius: 50%;
+  color: transparent;
+}
+
+.opcao-radio--ativa .opcao-radio__marca {
+  border-color: transparent;
+  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  color: #fff;
+}
+
+.campo-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.campo-modal__rotulo {
+  padding: 0;
+  color: #16211b;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.campo-modal__opcional {
+  color: #6f7d74;
+  font-weight: 400;
+}
+
+.campo-modal__texto {
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 12px;
+  background: #fff;
+  color: #16211b;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.campo-modal__texto:focus {
+  border-color: #22c06f;
+  outline: none;
+  box-shadow: var(--foco);
+}
