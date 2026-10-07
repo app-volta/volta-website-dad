@@ -1,7 +1,12 @@
+import { useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
+import {
+  assinarMudancas,
+  quantidadeAguardando,
+} from "../../services/ocorrencias";
 import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
 import { LogoVolta } from "../LogoVolta";
@@ -12,7 +17,6 @@ interface ItemNav {
   readonly rotulo: string;
   readonly caminho: string;
   readonly icone: NomeIcone;
-  readonly contador?: number;
 }
 
 interface GrupoNav {
@@ -25,7 +29,7 @@ const GRUPOS: readonly GrupoNav[] = [
     titulo: "OPERAÇÃO",
     itens: [
       { rotulo: "Início", caminho: "/", icone: "casa" },
-      { rotulo: "Ocorrências", caminho: "/ocorrencias", icone: "grafico", contador: 4 },
+      { rotulo: "Ocorrências", caminho: "/ocorrencias", icone: "grafico" },
       { rotulo: "Registrar", caminho: "/registrar", icone: "mais" },
     ],
   },
@@ -66,6 +70,10 @@ const CHIP_PAPEL = {
 
 export function Sidebar(): ReactNode {
   const { usuario } = useAuth();
+  const aguardando = useSyncExternalStore(
+    assinarMudancas,
+    quantidadeAguardando,
+  );
   const papelChip = usuario ? CHIP_PAPEL[usuario.papel] : "GESTOR";
 
   return (
@@ -103,12 +111,12 @@ export function Sidebar(): ReactNode {
                       <span className="sidebar__link-rotulo">
                         {item.rotulo}
                       </span>
-                      {item.contador ? (
+                      {item.caminho === "/ocorrencias" && aguardando > 0 ? (
                         <span
                           className="sidebar__link-badge"
-                          aria-label={`${item.contador} pendentes`}
+                          aria-label={`${aguardando} aguardando aprovação`}
                         >
-                          {item.contador}
+                          {aguardando}
                         </span>
                       ) : null}
                     </NavLink>

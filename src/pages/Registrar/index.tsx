@@ -9,6 +9,7 @@ import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { criarOcorrencia } from "../../services/ocorrencias";
 import { METADADOS_MATERIAL } from "../../types/material";
+import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { formatarPorcentagem } from "../../utils/formatacao";
 import {
   combinar,
@@ -39,22 +40,6 @@ const SETORES: readonly string[] = [
   "Pátio Norte",
   "Laboratório",
   "Expedição",
-];
-
-interface Deteccao {
-  readonly esquerda: number;
-  readonly topo: number;
-  readonly largura: number;
-  readonly altura: number;
-  readonly acrescimo: number | null;
-  readonly rotulo: string | null;
-}
-
-// A IA é um mock: as caixas são posições ilustrativas, não detecção real.
-const DETECCOES: readonly Deteccao[] = [
-  { esquerda: 9.4, topo: 42.1, largura: 33.6, altura: 43.3, acrescimo: 6, rotulo: null },
-  { esquerda: 44.2, topo: 26.2, largura: 37.5, altura: 59, acrescimo: 3, rotulo: null },
-  { esquerda: 79, topo: 60, largura: 17.7, altura: 27.4, acrescimo: null, rotulo: "umidade" },
 ];
 
 function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
@@ -281,11 +266,7 @@ export default function Registrar(): ReactNode {
                       }}
                     >
                       <span className="registrar__deteccao-rotulo">
-                        {d.rotulo ??
-                          `${materialRotulo.toLowerCase()} · ${Math.min(
-                            99,
-                            confiancaPct + (d.acrescimo ?? 0),
-                          )}%`}
+                        {rotuloDeteccao(d, materialRotulo, confiancaPct)}
                       </span>
                     </span>
                   ))

@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useParams } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -49,6 +49,18 @@ function RotaPrivada({
   );
 }
 
+function RotaDetalheOcorrencia(): ReactNode {
+  const { id } = useParams();
+  return (
+    <RotaPrivada
+      titulo={`Ocorrência #${(id ?? "").replace(/\D/g, "")}`}
+      subtitulo="Revisão e ações do responsável"
+    >
+      <OcorrenciaDetalhe />
+    </RotaPrivada>
+  );
+}
+
 export default function App(): ReactNode {
   return (
     <Suspense fallback={<Spinner rotulo="Carregando página…" />}>
@@ -86,17 +98,7 @@ export default function App(): ReactNode {
             </RotaPrivada>
           }
         />
-        <Route
-          path="/ocorrencias/:id"
-          element={
-            <RotaPrivada
-              titulo="Detalhe da ocorrência"
-              subtitulo="Acompanhamento e ações do responsável"
-            >
-              <OcorrenciaDetalhe />
-            </RotaPrivada>
-          }
-        />
+        <Route path="/ocorrencias/:id" element={<RotaDetalheOcorrencia />} />
         <Route
           path="/cooperativas"
           element={

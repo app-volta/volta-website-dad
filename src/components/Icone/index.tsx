@@ -36,7 +36,8 @@ export type NomeIcone =
   | "engrenagem"
   | "upload"
   | "brilho"
-  | "download";
+  | "download"
+  | "alerta";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -180,6 +181,9 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   ),
   upload: (
     <path d="M12 16 V4 M6 10 L12 4 L18 10 M4 20 H20" />
+  ),
+  alerta: (
+    <path d="M12 3.5 L21.5 20 H2.5 Z M12 10 V14 M12 17 V17.2" />
   ),
   download: (
     <path d="M12 4 V16 M6 10 L12 16 L18 10 M4 20 H20" />
