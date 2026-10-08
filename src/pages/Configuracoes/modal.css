@@ -1,0 +1,58 @@
+.cfg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cfg-form__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cfg-form__rotulo {
+  color: #16211b;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.cfg-form__campo {
+  height: 49px;
+  padding: 0 18px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 14px;
+  background: #fff;
+  color: #16211b;
+  font: inherit;
+  font-size: 14.5px;
+}
+
+.cfg-form__campo:focus {
+  border-color: #22c06f;
+  outline: 0;
+  box-shadow: var(--foco);
+}
+
+.cfg-form__campo--erro {
+  border-color: #e8556c;
+}
+
+.cfg-form__erro {
+  margin: 0;
+  color: #d6334f;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.cfg-form__somente-leitura {
+  display: flex;
+  align-items: center;
+  height: 49px;
+  margin: 0;
+  padding: 0 18px;
+  border-radius: 14px;
+  background: #f6f9f7;
+  color: #6f7d74;
+  font-size: 14.5px;
+}
