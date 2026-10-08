@@ -30,6 +30,14 @@ export function formatarKm(km: number): string {
   })} km`;
 }
 
+/** Nota com uma casa e vírgula decimal: "4,9". */
+export function formatarNota(nota: number): string {
+  return nota.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+}
+
 /** Peso com separador de milhar: "1.820 kg". */
 export function formatarKg(kg: number): string {
   return `${Math.round(kg).toLocaleString("pt-BR")} kg`;
