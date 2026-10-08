@@ -93,7 +93,7 @@ export default function Cooperativas(): ReactNode {
                       <span className="coops__estrela" aria-hidden="true">
                         <Icone nome="estrela" tamanho={14} />
                       </span>
-                      <span>{c.avaliacao.toFixed(1)}</span>
+                      <span>{c.avaliacao?.toFixed(1) ?? "—"}</span>
                     </div>
                     <Link
                       to={`/cooperativas/${c.id}/chat`}

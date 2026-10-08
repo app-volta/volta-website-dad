@@ -4,7 +4,10 @@ import { listarCooperativas } from "../services/cooperativas";
 import type { EstadoRequisicao } from "../types/comum";
 import type { Cooperativa } from "../types/cooperativa";
 
-export function useCooperativas(): EstadoRequisicao<readonly Cooperativa[]> {
+/** `chaveRecarga` busca a lista de novo quando muda, sem apagar a que já está na tela. */
+export function useCooperativas(
+  chaveRecarga = 0,
+): EstadoRequisicao<readonly Cooperativa[]> {
   const [dados, setDados] = useState<readonly Cooperativa[] | null>(null);
   const [carregando, setCarregando] = useState<boolean>(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function useCooperativas(): EstadoRequisicao<readonly Cooperativa[]> {
       });
 
     return () => controle.abort();
-  }, []);
+  }, [chaveRecarga]);
 
   return { dados, carregando, erro };
 }
