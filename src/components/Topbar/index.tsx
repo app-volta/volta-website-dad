@@ -1,45 +1,60 @@
-import type { ChangeEvent, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { useNotificacoes } from "../../hooks/useNotificacoes";
 import { Icone } from "../Icone";
+import { Mascote } from "../Mascote";
+import { Notificacoes } from "../Notificacoes";
 import "./styles.css";
 
 interface TopbarProps {
   readonly titulo: string;
   readonly subtitulo?: string;
   readonly comCta?: boolean;
-  readonly notificacoes?: number;
   readonly comBusca?: boolean;
+  readonly aoAbrirAssistente?: () => void;
+  readonly aoAbrirBusca?: () => void;
 }
 
 export function Topbar({
   titulo,
   subtitulo,
   comCta = true,
-  notificacoes = 3,
   comBusca = true,
+  aoAbrirAssistente,
+  aoAbrirBusca,
 }: TopbarProps): ReactNode {
-  const inputBuscaRef = useRef<HTMLInputElement | null>(null);
-  const [termoBusca, setTermoBusca] = useState("");
+  const idNotificacoes = useId();
+  const areaSino = useRef<HTMLDivElement | null>(null);
+  const botaoSino = useRef<HTMLButtonElement | null>(null);
+  const [notificacoesAbertas, setNotificacoesAbertas] = useState<boolean>(false);
+
+  const notificacoes = useNotificacoes();
+  const naoLidas = notificacoes.filter((item) => !item.lida).length;
 
   useEffect(() => {
-    if (!comBusca) return;
-    function aoTeclar(evento: KeyboardEvent) {
-      const foiCtrlK =
-        (evento.ctrlKey || evento.metaKey) && evento.key.toLowerCase() === "k";
-      if (foiCtrlK) {
-        evento.preventDefault();
-        inputBuscaRef.current?.focus();
+    if (!notificacoesAbertas) return;
+
+    function aoPressionar(evento: MouseEvent): void {
+      if (!areaSino.current?.contains(evento.target as Node)) {
+        setNotificacoesAbertas(false);
       }
     }
-    window.addEventListener("keydown", aoTeclar);
-    return () => window.removeEventListener("keydown", aoTeclar);
-  }, [comBusca]);
+    function aoTeclar(evento: KeyboardEvent): void {
+      if (evento.key === "Escape") {
+        setNotificacoesAbertas(false);
+        botaoSino.current?.focus();
+      }
+    }
 
-  function aoDigitar(evento: ChangeEvent<HTMLInputElement>): void {
-    setTermoBusca(evento.target.value);
-  }
+    document.addEventListener("mousedown", aoPressionar);
+    document.addEventListener("keydown", aoTeclar);
+    return () => {
+      document.removeEventListener("mousedown", aoPressionar);
+      document.removeEventListener("keydown", aoTeclar);
+    };
+  }, [notificacoesAbertas]);
 
   return (
     <header className="topbar" role="banner">
@@ -49,49 +64,66 @@ export function Topbar({
       </div>
 
       {comBusca ? (
-        <label className="topbar__busca" aria-label="Buscar na plataforma">
+        <button
+          type="button"
+          className="topbar__busca"
+          aria-label="Buscar na plataforma"
+          aria-keyshortcuts="Control+K"
+          onClick={aoAbrirBusca}
+        >
           <span className="topbar__busca-lupa" aria-hidden="true">
             <Icone nome="lupa" tamanho={18} />
           </span>
-          <input
-            ref={inputBuscaRef}
-            type="search"
-            className="topbar__busca-input"
-            placeholder="Buscar ocorrência, setor, cooperativa"
-            value={termoBusca}
-            onChange={aoDigitar}
-          />
+          <span className="topbar__busca-texto">
+            Buscar ocorrência, setor, cooperativa
+          </span>
           <kbd className="topbar__busca-atalho" aria-hidden="true">
             Ctrl K
           </kbd>
-        </label>
+        </button>
       ) : null}
 
       <div className="topbar__acoes">
-        <Link
-          to="/registrar"
-          className="topbar__upload"
-          aria-label="Enviar foto de resíduo"
-        >
-          <Icone nome="upload" tamanho={18} />
-        </Link>
-
         <button
           type="button"
-          className="topbar__sino"
-          aria-label={
-            notificacoes > 0
-              ? `Notificações (${notificacoes} não lidas)`
-              : "Notificações"
-          }
+          className="topbar__assistente"
+          aria-label="Abrir assistente VOLTA"
+          onClick={aoAbrirAssistente}
         >
-          <Icone nome="sino" tamanho={20} />
-          {notificacoes > 0 ? (
-            <span className="topbar__badge" aria-hidden="true">
-              {notificacoes}
-            </span>
-          ) : null}
+          <Mascote tamanho={18} altura={28} rotulo="" />
         </button>
+
+        <div ref={areaSino} className="topbar__sino-area">
+          <button
+            ref={botaoSino}
+            type="button"
+            className="topbar__sino"
+            aria-haspopup="dialog"
+            aria-expanded={notificacoesAbertas}
+            aria-controls={notificacoesAbertas ? idNotificacoes : undefined}
+            aria-label={
+              naoLidas > 0
+                ? `Notificações (${naoLidas} não lidas)`
+                : "Notificações"
+            }
+            onClick={() => setNotificacoesAbertas((aberto) => !aberto)}
+          >
+            <Icone nome="sino" tamanho={20} />
+            {naoLidas > 0 ? (
+              <span className="topbar__badge" aria-hidden="true">
+                {naoLidas}
+              </span>
+            ) : null}
+          </button>
+          {notificacoesAbertas ? (
+            <div id={idNotificacoes}>
+              <Notificacoes
+                notificacoes={notificacoes}
+                aoNavegar={() => setNotificacoesAbertas(false)}
+              />
+            </div>
+          ) : null}
+        </div>
 
         {comCta ? (
           <Link to="/registrar" className="topbar__cta">
