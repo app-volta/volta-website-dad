@@ -128,8 +128,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Relatórios PGRS"
-              subtitulo="Gere relatórios por período, setor e material"
-              comCta={false}
+              subtitulo="Indicadores e relatório do plano de resíduos"
             >
               <Relatorios />
             </RotaPrivada>
