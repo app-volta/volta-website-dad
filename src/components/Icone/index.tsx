@@ -37,7 +37,13 @@ export type NomeIcone =
   | "upload"
   | "brilho"
   | "download"
-  | "alerta";
+  | "alerta"
+  | "ciclo"
+  | "relogio"
+  | "escudo"
+  | "predio"
+  | "documento"
+  | "email";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -190,6 +196,28 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   ),
   brilho: (
     <path d="M12 3 C12.7 8.3 15.7 10.3 21 11 C15.7 11.7 12.7 13.7 12 19 C11.3 13.7 8.3 11.7 3 11 C8.3 10.3 11.3 8.3 12 3 Z" />
+  ),
+  ciclo: <path d="M21 4 V10 H15 M20 14 A8 8 0 1 1 17.7 6.3 L21 10" />,
+  relogio: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7 V12 L15 14" />
+    </>
+  ),
+  escudo: (
+    <path d="M12 3 L19.5 6 V11.5 C19.5 16 16.5 19.5 12 21 C7.5 19.5 4.5 16 4.5 11.5 V6 Z M8.5 12 L11 14.5 L15.5 9.5" />
+  ),
+  predio: (
+    <path d="M5 21 V4 A1 1 0 0 1 6 3 H14 A1 1 0 0 1 15 4 V21 M15 9 H19 A1 1 0 0 1 20 10 V21 M3 21 H21 M9 7 H11 M9 11 H11 M9 15 H11" />
+  ),
+  documento: (
+    <path d="M14 3 H7 A1 1 0 0 0 6 4 V20 A1 1 0 0 0 7 21 H17 A1 1 0 0 0 18 20 V7 Z M14 3 V7 H18 M9 12 H15 M9 16 H15" />
+  ),
+  email: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3.5 7 L12 13 L20.5 7" />
+    </>
   ),
 };
 

@@ -104,7 +104,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Cooperativas"
-              subtitulo="Parceiras próximas da sua unidade"
+              subtitulo="Parcerias, homologação e licenças ambientais"
             >
               <Cooperativas />
             </RotaPrivada>
