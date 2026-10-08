@@ -1,0 +1,149 @@
+.notif {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: -20px;
+  z-index: 60;
+  width: 384px;
+  overflow: hidden;
+  border: 0.8px solid #e8ede9;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(5, 43, 26, 0.22);
+}
+
+.notif__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 56px;
+  padding: 0 19px;
+  border-bottom: 0.8px solid #e8ede9;
+}
+
+.notif__titulo {
+  margin: 0;
+  color: #16211b;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.notif__marcar {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0e7c48;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.notif__marcar:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.notif__marcar:disabled {
+  color: #9aa8a0;
+  cursor: default;
+}
+
+.notif__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notif__lista li + li {
+  border-top: 0.8px solid #e8ede9;
+}
+
+.notif__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 19px;
+  color: #16211b;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.notif__item:hover,
+.notif__item:focus-visible {
+  outline: 0;
+  background: #f6f9f7;
+}
+
+.notif__item:focus-visible {
+  box-shadow: inset var(--foco);
+}
+
+.notif__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.notif__icone--verde {
+  background: #e2f7ec;
+  color: #0e7c48;
+}
+
+.notif__icone--laranja {
+  background: #ffefe2;
+  color: #e8893a;
+}
+
+.notif__icone--ambar {
+  background: #fdf3de;
+  color: #c68a10;
+}
+
+.notif__icone--roxo {
+  background: #efeafb;
+  color: #8b6fe0;
+}
+
+.notif__textos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.notif__texto {
+  font-size: 13px;
+  line-height: 17px;
+}
+
+.notif__texto strong {
+  font-weight: 800;
+}
+
+.notif__quando {
+  color: #9aa8a0;
+  font-size: 12px;
+}
+
+.notif__item--nova .notif__quando::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #22c06f;
+  vertical-align: 1px;
+}
+
+@media (max-width: 560px) {
+  .notif {
+    position: fixed;
+    top: 74px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
