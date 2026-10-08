@@ -140,8 +140,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Equipe"
-              subtitulo="Responsáveis e permissões da sua unidade"
-              comCta={false}
+              subtitulo="Quem registra, revisa e aprova na unidade"
             >
               <Equipe />
             </RotaPrivada>
