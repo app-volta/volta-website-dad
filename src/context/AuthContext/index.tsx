@@ -38,8 +38,12 @@ interface ValorAuthContext {
   readonly entrar: (credenciais: CredenciaisLogin) => Promise<void>;
   readonly cadastrarNovo: (dados: DadosCadastro) => Promise<void>;
   readonly sair: () => void;
+  readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => void;
   readonly limparErro: () => void;
 }
+
+/** O que a própria pessoa pode alterar no perfil. */
+export type AlteracoesUsuario = Partial<Pick<Usuario, "nome">>;
 
 const AuthContext = createContext<ValorAuthContext | null>(null);
 
@@ -109,6 +113,12 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     setErro(null);
   }, []);
 
+  const atualizarUsuario = useCallback((alteracoes: AlteracoesUsuario) => {
+    setSessao((atual) =>
+      atual ? { ...atual, usuario: { ...atual.usuario, ...alteracoes } } : atual,
+    );
+  }, []);
+
   const limparErro = useCallback(() => setErro(null), []);
 
   const valor = useMemo<ValorAuthContext>(
@@ -120,9 +130,19 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       entrar,
       cadastrarNovo,
       sair,
+      atualizarUsuario,
       limparErro,
     }),
-    [sessao, carregando, erro, entrar, cadastrarNovo, sair, limparErro],
+    [
+      sessao,
+      carregando,
+      erro,
+      entrar,
+      cadastrarNovo,
+      sair,
+      atualizarUsuario,
+      limparErro,
+    ],
   );
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
