@@ -1,0 +1,242 @@
+.coops-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.coops-form__grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.coops-form__rotulo {
+  padding: 0;
+  color: #16211b;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.coops-form__campo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 49px;
+  padding: 0 18px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 14px;
+  background: #fff;
+  color: #6f7d74;
+}
+
+.coops-form__campo:focus-within {
+  border-color: #22c06f;
+  box-shadow: var(--foco);
+}
+
+.coops-form__campo--erro {
+  border-color: #e8556c;
+}
+
+.coops-form__campo-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.coops-form__campo input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #16211b;
+  font: inherit;
+  font-size: 14.5px;
+}
+
+.coops-form__campo input::placeholder {
+  color: #8a978f;
+}
+
+.coops-form__erro {
+  margin: 0;
+  color: #d6334f;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.coops-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.coops-form__chip {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.coops-form__chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.coops-form__chip span {
+  display: inline-flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 14px;
+  border: 0.8px solid #e8ede9;
+  border-radius: 999px;
+  background: #fff;
+  color: #6f7d74;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.coops-form__chip:hover input:not(:checked) + span {
+  background: #f4f7f5;
+}
+
+.coops-form__chip input:checked + span {
+  border-color: #0e7c48;
+  background: #0e7c48;
+  color: #fff;
+}
+
+.coops-form__chip:has(input:focus-visible) span {
+  box-shadow: var(--foco);
+}
+
+.coops-form__drop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  min-height: 110px;
+  padding: 16px;
+  border: 1.6px dashed rgba(27, 164, 99, 0.45);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.coops-form__drop:hover,
+.coops-form__drop--ativa {
+  border-color: #1ba463;
+  background: #effaf4;
+}
+
+.coops-form__drop:has(input:focus-visible) {
+  box-shadow: var(--foco);
+}
+
+.coops-form__drop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.coops-form__drop-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #e2f7ec;
+  color: #0e7c48;
+}
+
+.coops-form__drop-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.coops-form__drop-textos strong {
+  overflow: hidden;
+  color: #16211b;
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.coops-form__drop-textos small {
+  color: #6f7d74;
+  font-size: 12.5px;
+}
+
+.coops-form__remover {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #6f7d74;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.coops-form__remover:hover {
+  color: #16211b;
+}
+
+.coops-docs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coops-docs__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f6f9f7;
+}
+
+.coops-docs__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #e4efff;
+  color: #3b82f6;
+}
+
+.coops-docs__titulo {
+  margin: 0;
+  color: #16211b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.coops-docs__texto {
+  margin: 2px 0 0;
+  color: #6f7d74;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
