@@ -12,9 +12,9 @@ import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
-import { aprovarOcorrencia } from "../../services/ocorrencias";
 import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
+import { aprovarOcorrencia } from "../../services/ocorrencias";
 import "./styles.css";
 
 type Prioridade = "alta" | "media" | "baixa";
