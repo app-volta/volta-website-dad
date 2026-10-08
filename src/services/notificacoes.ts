@@ -69,7 +69,10 @@ export function montarNotificacoes(
   idsLidos: ReadonlySet<string>,
   pendentes: number,
 ): readonly Notificacao[] {
-  return MODELOS.map((modelo) => ({
+  return MODELOS.filter(
+    // Sem nada para aprovar, o aviso da fila perde o sentido.
+    (modelo) => modelo.id !== "fila-aguardando" || pendentes > 0,
+  ).map((modelo) => ({
     ...modelo,
     trechos: modelo.trechos(pendentes),
     lida: idsLidos.has(modelo.id),
