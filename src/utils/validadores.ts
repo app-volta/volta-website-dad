@@ -42,6 +42,34 @@ export function validarFoto(valor: string | null): string | null {
   return null;
 }
 
+const PESOS_CNPJ: readonly (readonly number[])[] = [
+  [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+  [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+];
+
+function digitosVerificadoresCnpj(base: readonly number[]): readonly number[] {
+  const digitos = [...base];
+  for (const pesos of PESOS_CNPJ) {
+    const soma = pesos.reduce((total, peso, i) => total + peso * digitos[i], 0);
+    const resto = soma % 11;
+    digitos.push(resto < 2 ? 0 : 11 - resto);
+  }
+  return digitos.slice(12);
+}
+
+export function validarCnpj(valor: string): string | null {
+  const digitos = valor.replace(/\D/g, "");
+  if (!digitos) return "Informe o CNPJ.";
+  if (digitos.length !== 14) return "O CNPJ tem 14 dígitos.";
+  if (/^(\d)\1{13}$/.test(digitos)) return "CNPJ inválido.";
+  const numeros = digitos.split("").map(Number);
+  const esperados = digitosVerificadoresCnpj(numeros.slice(0, 12));
+  if (esperados[0] !== numeros[12] || esperados[1] !== numeros[13]) {
+    return "CNPJ inválido. Confira os números.";
+  }
+  return null;
+}
+
 export function combinar(
   entradas: Readonly<Record<string, string | null>>,
 ): ResultadoValidacao {
