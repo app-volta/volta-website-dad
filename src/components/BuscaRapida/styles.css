@@ -1,0 +1,158 @@
+.busca__fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 108px 16px 16px;
+  background: rgba(6, 24, 15, 0.35);
+  animation: busca-fundo 0.14s ease;
+}
+
+.busca {
+  display: flex;
+  flex-direction: column;
+  width: 626px;
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 30px 80px rgba(5, 23, 15, 0.3);
+  animation: busca-entrar 0.16s ease;
+}
+
+.busca__campo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 57px;
+  padding: 0 21px;
+  border-bottom: 0.8px solid #e8ede9;
+  color: #6f7d74;
+}
+
+.busca__lupa {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.busca__campo input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #16211b;
+  font: inherit;
+  font-size: 17px;
+}
+
+.busca__campo input::placeholder {
+  color: #9aa8a0;
+}
+
+.busca__lista {
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.busca__grupo {
+  padding: 13px 8px 6px;
+}
+
+.busca__grupo-titulo {
+  margin: 0 0 4px;
+  padding: 0 12px;
+  color: #9aa8a0;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.busca__itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.busca__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 37px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: #16211b;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+
+.busca__item--ativo {
+  background: #effaf4;
+}
+
+.busca__item-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #16211b;
+}
+
+.busca__item-rotulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.busca__item-apoio {
+  flex-shrink: 0;
+  color: #9aa8a0;
+  font-size: 12.5px;
+}
+
+.busca__vazio {
+  margin: 0;
+  padding: 22px 21px 26px;
+  color: #6f7d74;
+  font-size: 14px;
+}
+
+.busca__lista:empty + .busca__vazio {
+  border-top: 0;
+}
+
+@keyframes busca-fundo {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes busca-entrar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busca__fundo,
+  .busca {
+    animation: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .busca__fundo {
+    padding-top: 72px;
+  }
+
+  .busca__item-apoio {
+    display: none;
+  }
+}
