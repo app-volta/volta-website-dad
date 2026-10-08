@@ -43,7 +43,12 @@ export type NomeIcone =
   | "escudo"
   | "predio"
   | "documento"
-  | "email";
+  | "email"
+  | "bandeira"
+  | "check-circulo"
+  | "alvo"
+  | "reticencias"
+  | "lixeira";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -218,6 +223,30 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M3.5 7 L12 13 L20.5 7" />
     </>
+  ),
+  bandeira: <path d="M5 21 V4 M5 4 H17 L14.5 8.5 L17 13 H5" />,
+  "check-circulo": (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.5 L11 15.5 L16 9.5" />
+    </>
+  ),
+  alvo: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" />
+    </>
+  ),
+  reticencias: (
+    <>
+      <circle cx="5.5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="18.5" cy="12" r="1.2" />
+    </>
+  ),
+  lixeira: (
+    <path d="M4 7 H20 M10 7 V4 H14 V7 M6 7 L7 20 H17 L18 7 M10 11 V16 M14 11 V16" />
   ),
 };
 
