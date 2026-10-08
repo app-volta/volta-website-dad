@@ -31,15 +31,6 @@ export function formatarAtividade(iso: string, agora: Date = new Date()): string
   return `há ${dias} dias`;
 }
 
-/** Iniciais de duas letras: "Ana Souza" vira "AS". */
-export function iniciais(nome: string): string {
-  const partes = nome.trim().split(/\s+/).filter(Boolean);
-  if (partes.length === 0) return "?";
-  const primeira = partes[0][0];
-  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
-  return `${primeira}${ultima}`.toUpperCase();
-}
-
 /** Deriva um nome legível da parte local do e-mail: "joana.silva@x" vira "Joana Silva". */
 export function nomeDoEmail(email: string): string {
   const local = email.split("@")[0] ?? "";

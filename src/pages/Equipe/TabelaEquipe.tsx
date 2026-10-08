@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
 
 import type { MembroEquipe } from "../../types/equipe";
-import {
-  formatarAtividade,
-  iniciais,
-  ROTULOS_PAPEL,
-} from "../../utils/equipe";
+import { formatarAtividade, ROTULOS_PAPEL } from "../../utils/equipe";
+import { iniciais } from "../../utils/pessoa";
 import { MenuAcoes } from "./MenuAcoes";
 import type { ItemMenuAcao } from "./MenuAcoes";
 
