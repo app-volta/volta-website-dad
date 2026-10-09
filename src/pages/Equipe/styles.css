@@ -1,0 +1,358 @@
+.eq {
+  --eq-texto: #16211b;
+  --eq-mudo: #6f7d74;
+  --eq-borda: #e8ede9;
+  --eq-verde: #0e7c48;
+  --eq-sombra:
+    0 1px 2px rgba(5, 43, 26, 0.04), 0 8px 24px rgba(5, 43, 26, 0.05);
+
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+}
+
+/* Busca e convite */
+.eq__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: -7px;
+}
+
+.eq__busca {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 279px;
+  max-width: 100%;
+  height: 43px;
+  padding: 0 18px;
+  border: 0.8px solid var(--eq-borda);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--eq-mudo);
+}
+
+.eq__busca:focus-within {
+  border-color: #22c06f;
+  box-shadow: var(--foco);
+}
+
+.eq__busca-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.eq__busca input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--eq-texto);
+  font: inherit;
+  font-size: 14.5px;
+}
+
+.eq__busca input::placeholder {
+  color: #757575;
+}
+
+.eq__botao-principal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  height: 42px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.eq__botao-principal:hover {
+  background: linear-gradient(186deg, #28cc79 30%, #0e7c48 100%);
+}
+
+/* Tabela */
+.eq__tabela-card {
+  overflow: hidden;
+  padding-top: 14px;
+  border: 0.8px solid var(--eq-borda);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--eq-sombra);
+}
+
+.eq__rolagem {
+  position: relative;
+  overflow-x: auto;
+}
+
+.eq__rolagem:focus-visible {
+  outline: 0;
+  box-shadow: inset var(--foco);
+}
+
+.eq__tabela {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.eq__tabela th {
+  height: 28px;
+  padding: 0 16px;
+  border-bottom: 0.8px solid var(--eq-borda);
+  color: #9aa8a0;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.eq__tabela th:nth-child(1) {
+  width: 29%;
+}
+
+.eq__tabela th:nth-child(2) {
+  width: 19%;
+}
+
+.eq__tabela th:nth-child(3) {
+  width: 13%;
+}
+
+.eq__tabela th:nth-child(4) {
+  width: 17%;
+}
+
+.eq__tabela th:nth-child(5) {
+  width: 17%;
+}
+
+.eq__tabela th:nth-child(6) {
+  width: 5%;
+}
+
+.eq__tabela td {
+  padding: 12px 16px;
+  border-bottom: 0.8px solid var(--eq-borda);
+  vertical-align: middle;
+}
+
+.eq__tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.eq__tabela tbody tr:hover {
+  background: #f6f9f7;
+}
+
+.eq__pessoa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.eq__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.eq__avatar--pendente {
+  background: #e3e9e5;
+  color: var(--eq-mudo);
+}
+
+.eq__nome {
+  margin: 0;
+  overflow: hidden;
+  color: var(--eq-texto);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eq__email {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--eq-mudo);
+  font-size: 12px;
+  line-height: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eq__papel {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.eq__papel--gestor {
+  background: var(--eq-verde);
+  color: #fff;
+}
+
+.eq__papel--responsavel_tecnico {
+  background: #e4efff;
+  color: #3b82f6;
+}
+
+.eq__papel--colaborador {
+  background: #eef1ef;
+  color: var(--eq-mudo);
+}
+
+.eq__setor {
+  color: var(--eq-texto);
+  font-size: 14px;
+}
+
+.eq__registros {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.eq__registros b {
+  min-width: 18px;
+  color: var(--eq-texto);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.eq__trilho {
+  display: block;
+  flex-shrink: 0;
+  width: 90px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2ee;
+}
+
+.eq__trilho > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+}
+
+.eq__atividade {
+  color: var(--eq-mudo);
+  font-size: 14px;
+}
+
+.eq__selo-convite {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #fdf3de;
+  color: #c68a10;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.eq__acoes {
+  text-align: center;
+}
+
+/* Menu de ações da linha */
+.eq__menu-gatilho {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--eq-texto);
+}
+
+.eq__menu-gatilho:hover,
+.eq__menu-gatilho[aria-expanded="true"] {
+  background: #eef2ef;
+}
+
+.eq__menu {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 6px;
+  border: 0.8px solid var(--eq-borda);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(5, 43, 26, 0.18);
+}
+
+.eq__menu-item {
+  height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--eq-texto);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.eq__menu-item:hover,
+.eq__menu-item:focus-visible {
+  outline: 0;
+  background: #f1f6f3;
+}
+
+.eq__menu-item--perigo {
+  color: #e8556c;
+}
+
+.eq__menu-item--perigo:hover,
+.eq__menu-item--perigo:focus-visible {
+  background: #fdeaec;
+}
+
+@media (max-width: 520px) {
+  .eq__busca {
+    width: 100%;
+  }
+
+  .eq__botao-principal {
+    width: 100%;
+  }
+}
