@@ -237,8 +237,8 @@
 
 /* Notificações */
 .cfg__interruptores {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-top: 16px;
 }
@@ -257,6 +257,11 @@
 .cfg__insights-mascote {
   flex-shrink: 0;
   line-height: 0;
+}
+
+.cfg__insights > div:last-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .cfg__insights-titulo {

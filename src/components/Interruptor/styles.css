@@ -4,20 +4,31 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
   min-height: 26px;
   color: #16211b;
   font-size: 14px;
   cursor: pointer;
 }
 
+.interruptor__rotulo {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+}
+
 .interruptor__entrada {
+  -webkit-appearance: none;
+  appearance: none;
   position: absolute;
   right: 0;
+  top: 0;
   width: 44px;
   height: 26px;
   margin: 0;
   opacity: 0;
   cursor: pointer;
+  z-index: 1;
 }
 
 .interruptor__trilho {
@@ -61,6 +72,10 @@
   gap: 10px;
   flex-direction: row-reverse;
   width: fit-content;
+}
+
+.interruptor--compacto .interruptor__rotulo {
+  flex: 0 0 auto;
 }
 
 .interruptor--compacto .interruptor__entrada {
