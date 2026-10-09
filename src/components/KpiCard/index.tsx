@@ -36,7 +36,7 @@ export function KpiCard({
         <p className="kpi-card__valor">{valor}</p>
         {sparkline ? (
           <div className="kpi-card__spark" aria-hidden="true">
-            <MiniSparkline pontos={sparkline} largura={120} altura={36} />
+            <MiniSparkline pontos={sparkline} largura={84} altura={26} />
           </div>
         ) : null}
       </div>

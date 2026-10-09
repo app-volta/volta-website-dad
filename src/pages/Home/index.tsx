@@ -9,11 +9,13 @@ import { Icone } from "../../components/Icone";
 import { KpiCard } from "../../components/KpiCard";
 import { Mascote } from "../../components/Mascote";
 import { SkeletonList } from "../../components/SkeletonList";
+import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { metaRecuperacaoAtual } from "../../services/configuracoes";
 import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
+import { aprovarOcorrencia } from "../../services/ocorrencias";
 import "./styles.css";
 
 type Prioridade = "alta" | "media" | "baixa";
@@ -148,11 +150,23 @@ const ATIVIDADES: readonly AtividadeEquipe[] = [
   },
 ];
 
+/** Frase da saudação sobre a fila: muda quando não sobra nada para aprovar. */
+function tituloDaFila(carregou: boolean, pendentes: number): string {
+  if (!carregou) return "Veja como está a sua unidade hoje.";
+  if (pendentes === 0) return "Tudo aprovado por aqui.";
+  return pendentes === 1
+    ? "Tem 1 ocorrência esperando você."
+    : `Tem ${pendentes} ocorrências esperando você.`;
+}
+
 export default function Home(): ReactNode {
   const { usuario } = useAuth();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [janela, setJanela] = useState<JanelaGrafico>("semanas");
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
+  const [aprovandoId, setAprovandoId] = useState<string | null>(null);
+  const [erroAprovacao, setErroAprovacao] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   const primeiroNome = usuario?.nome.split(" ")[0] ?? "você";
 
@@ -164,7 +178,6 @@ export default function Home(): ReactNode {
           o.status === "classificada" ||
           o.status === "aguardando_classificacao",
       )
-      .slice(0, 4)
       .map((o) => ({
         id: o.id,
         titulo: o.descricao.split(".")[0] ?? o.descricao,
@@ -178,6 +191,22 @@ export default function Home(): ReactNode {
   const totalMes = MATERIAIS_MES.reduce((acc, m) => acc + m.kg, 0);
   const metaMes = metaRecuperacaoAtual();
   const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
+
+  async function aprovar(id: string, titulo: string): Promise<void> {
+    setAprovandoId(id);
+    setErroAprovacao(null);
+    try {
+      await aprovarOcorrencia(id, usuario?.nome ?? "Equipe");
+      setChaveRecarga((v) => v + 1);
+      setAviso(`#${id.slice(-4)} · ${titulo}`);
+    } catch (excecao: unknown) {
+      setErroAprovacao(
+        excecao instanceof Error ? excecao.message : "Falha ao aprovar a ocorrência.",
+      );
+    } finally {
+      setAprovandoId(null);
+    }
+  }
 
   const fatiasDonut = MATERIAIS_MES.map((m) => ({
     rotulo: m.rotulo,
@@ -214,8 +243,7 @@ export default function Home(): ReactNode {
         </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
-            {saudacao()}, {primeiroNome}! Tem {pendentes || 4} ocorrências
-            esperando você.
+            {saudacao()}, {primeiroNome}! {tituloDaFila(dados !== null, pendentes)}
           </h2>
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
@@ -258,7 +286,7 @@ export default function Home(): ReactNode {
           <KpiCard
             icone="sino"
             rotulo="Aguardando aprovação"
-            valor={pendentes || 4}
+            valor={dados ? pendentes : "—"}
             delta="média de 2,4 h pra aprovar"
             direcao="neutro"
             sparkline={[6, 4, 7, 5, 8, 3, 4]}
@@ -408,7 +436,7 @@ export default function Home(): ReactNode {
                 Fila de aprovação
               </h2>
               <span className="home-painel__contador">
-                {pendentes || 4} PENDENTES
+                {dados ? pendentes : "—"} {pendentes === 1 ? "PENDENTE" : "PENDENTES"}
               </span>
             </div>
             <Link to="/ocorrencias" className="home-painel__link">
@@ -434,11 +462,17 @@ export default function Home(): ReactNode {
             </Alerta>
           ) : null}
 
+          {erroAprovacao ? (
+            <Alerta variante="erro" titulo="Aprovação não concluída">
+              {erroAprovacao}
+            </Alerta>
+          ) : null}
+
           {carregando ? (
             <SkeletonList quantidade={4} rotulo="Carregando fila de aprovação" />
           ) : fila.length > 0 ? (
             <ul className="home-fila">
-              {fila.map((item) => (
+              {fila.slice(0, 4).map((item) => (
                 <li key={item.id} className="home-fila__item">
                   <span
                     className="home-fila__material"
@@ -476,9 +510,11 @@ export default function Home(): ReactNode {
                     <button
                       type="button"
                       className="home-fila__botao home-fila__botao--primario"
+                      disabled={aprovandoId !== null}
+                      onClick={() => void aprovar(item.id, item.titulo)}
                     >
                       <Icone nome="check" tamanho={14} />
-                      Aprovar
+                      {aprovandoId === item.id ? "Aprovando…" : "Aprovar"}
                     </button>
                   </div>
                 </li>
@@ -486,7 +522,13 @@ export default function Home(): ReactNode {
             </ul>
           ) : (
             !erro && (
-              <p className="lista-vazia">Nenhuma ocorrência aguardando aprovação.</p>
+              <div className="home-fila-vazia">
+                <Mascote tamanho={78} altura={130} />
+                <p className="home-fila-vazia__titulo">Fila zerada!</p>
+                <p className="home-fila-vazia__texto">
+                  Todas as ocorrências foram revisadas.
+                </p>
+              </div>
             )
           )}
         </section>
@@ -533,6 +575,13 @@ export default function Home(): ReactNode {
           </div>
         </aside>
       </div>
+
+      <Toast
+        aberto={aviso !== null}
+        titulo="Ocorrência aprovada"
+        descricao={aviso ?? undefined}
+        aoFechar={() => setAviso(null)}
+      />
     </div>
   );
 }
