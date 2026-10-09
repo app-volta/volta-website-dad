@@ -59,7 +59,7 @@
   --topbar-altura: 84px;
 
   /* Shell V2 — sidebar verde em gradiente (Figma, frame 23 · side) */
-  --sidebar-bg: linear-gradient(170deg, #0F6B41 0%, #0B4A2C 55%, #062B19 100%);
+  --sidebar-bg: linear-gradient(170deg, #0F6B41 0%, #0D5B37 55%, #0A4A2D 100%);
   --sidebar-fg: rgba(230, 244, 236, 0.82);
   --sidebar-fg-forte: #FFFFFF;
   --sidebar-grupo-titulo: rgba(230, 244, 236, 0.45);
