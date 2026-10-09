@@ -68,7 +68,11 @@ const CHIP_PAPEL = {
   operador: "OPERADOR",
 } as const;
 
-export function Sidebar(): ReactNode {
+interface SidebarProps {
+  readonly aoAbrirAssistente?: () => void;
+}
+
+export function Sidebar({ aoAbrirAssistente }: SidebarProps): ReactNode {
   const { usuario } = useAuth();
   const aguardando = useSyncExternalStore(
     assinarMudancas,
@@ -135,7 +139,11 @@ export function Sidebar(): ReactNode {
           <p className="sidebar__ajuda-texto">
             Pergunte ao VOLTA sobre a unidade.
           </p>
-          <button type="button" className="sidebar__ajuda-botao">
+          <button
+            type="button"
+            className="sidebar__ajuda-botao"
+            onClick={aoAbrirAssistente}
+          >
             <Icone nome="estrela" tamanho={14} />
             <span>Abrir assistente</span>
           </button>
