@@ -150,9 +150,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Configurações"
-              subtitulo="Preferências de notificação e integração"
-              comCta={false}
-              comBusca={false}
+              subtitulo="Seu perfil, a unidade e as metas"
             >
               <Configuracoes />
             </RotaPrivada>

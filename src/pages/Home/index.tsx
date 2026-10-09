@@ -11,6 +11,7 @@ import { Mascote } from "../../components/Mascote";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { metaRecuperacaoAtual } from "../../services/configuracoes";
 import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import "./styles.css";
@@ -175,7 +176,7 @@ export default function Home(): ReactNode {
 
   const pendentes = fila.length;
   const totalMes = MATERIAIS_MES.reduce((acc, m) => acc + m.kg, 0);
-  const metaMes = 1500;
+  const metaMes = metaRecuperacaoAtual();
   const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
 
   const fatiasDonut = MATERIAIS_MES.map((m) => ({
