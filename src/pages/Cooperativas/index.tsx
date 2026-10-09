@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
+import { CartoesResumo } from "../../components/CartoesResumo";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
@@ -9,9 +10,9 @@ import { useCooperativas } from "../../hooks/useCooperativas";
 import { adicionarCooperativa } from "../../services/cooperativas";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
-import { CartoesResumo } from "./CartoesResumo";
 import { ModalAdicionar } from "./ModalAdicionar";
 import { ModalDocumentos } from "./ModalDocumentos";
+import { montarCartoes } from "./cartoes";
 import { PainelCooperativa } from "./PainelCooperativa";
 import { TabelaCooperativas } from "./TabelaCooperativas";
 import "./styles.css";
@@ -89,7 +90,10 @@ export default function Cooperativas(): ReactNode {
         <SkeletonList quantidade={4} rotulo="Carregando cooperativas" />
       ) : dados ? (
         <>
-          <CartoesResumo resumo={resumirCooperativas(todas)} />
+          <CartoesResumo
+            rotulo="Resumo das cooperativas"
+            cartoes={montarCartoes(resumirCooperativas(todas))}
+          />
 
           <div className="coops__barra">
             <div className="coops__filtros" role="group" aria-label="Filtrar por situação">
