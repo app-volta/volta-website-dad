@@ -55,22 +55,24 @@
   --sombra-hover: 0 4px 16px rgba(14, 59, 46, 0.10);
   --foco: 0 0 0 3px rgba(47, 178, 90, 0.35);
 
-  --sidebar-largura: 256px;
+  --sidebar-largura: 264px;
   --topbar-altura: 84px;
 
-  /* Shell V2 — sidebar escura (SCRUM-1954) */
-  --sidebar-bg: #0E3B2E;
-  --sidebar-fg: rgba(255, 255, 255, 0.72);
+  /* Shell V2 — sidebar verde em gradiente (Figma, frame 23 · side) */
+  --sidebar-bg: linear-gradient(170deg, #0F6B41 0%, #0B4A2C 55%, #062B19 100%);
+  --sidebar-fg: rgba(230, 244, 236, 0.82);
   --sidebar-fg-forte: #FFFFFF;
-  --sidebar-grupo-titulo: rgba(255, 255, 255, 0.45);
-  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.06);
-  --sidebar-link-ativo-bg: rgba(47, 178, 90, 0.18);
+  --sidebar-grupo-titulo: rgba(230, 244, 236, 0.45);
+  --sidebar-link-hover-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-link-ativo-bg: rgba(255, 255, 255, 0.14);
   --sidebar-divisor: rgba(255, 255, 255, 0.10);
-  --sidebar-ajuda-bg: rgba(255, 255, 255, 0.06);
+  --sidebar-ajuda-bg: rgba(255, 255, 255, 0.08);
+  --sidebar-destaque: #6FF2A8;
+  --sidebar-acao: #0E7C48;
   --chip-gestor-bg: rgba(255, 255, 255, 0.14);
-  --chip-gestor-fg: #FFFFFF;
-  --badge-contador-bg: #2FB25A;
-  --badge-contador-fg: #FFFFFF;
+  --chip-gestor-fg: #E6F4EC;
+  --badge-contador-bg: #6FF2A8;
+  --badge-contador-fg: #062B19;
 
   --fonte:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,

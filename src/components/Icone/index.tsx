@@ -48,7 +48,8 @@ export type NomeIcone =
   | "check-circulo"
   | "alvo"
   | "reticencias"
-  | "lixeira";
+  | "lixeira"
+  | "lista";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -247,6 +248,14 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   ),
   lixeira: (
     <path d="M4 7 H20 M10 7 V4 H14 V7 M6 7 L7 20 H17 L18 7 M10 11 V16 M14 11 V16" />
+  ),
+  lista: (
+    <>
+      <path d="M9.5 6 H20 M9.5 12 H20 M9.5 18 H20" />
+      <circle cx="4.8" cy="6" r="0.9" />
+      <circle cx="4.8" cy="12" r="0.9" />
+      <circle cx="4.8" cy="18" r="0.9" />
+    </>
   ),
 };
 
