@@ -1,6 +1,6 @@
 .coops {
   --coop-texto: #16211b;
-  --coop-mudo: #6f7d74;
+  --coop-mudo: #5d6961;
   --coop-borda: #e8ede9;
   --coop-verde: #0e7c48;
   --coop-sombra:
@@ -15,25 +15,25 @@
 .coops [data-cor="verde"] {
   --coop-bg: #e2f7ec;
   --coop-fg: #0e7c48;
-  --coop-pino: #1ba463;
+  --coop-pino: #0f7d47;
 }
 
 .coops [data-cor="ambar"] {
   --coop-bg: #fdf3de;
-  --coop-fg: #c68a10;
-  --coop-pino: #c68a10;
+  --coop-fg: #92660c;
+  --coop-pino: #92660c;
 }
 
 .coops [data-cor="azul"] {
   --coop-bg: #e4efff;
-  --coop-fg: #3b82f6;
-  --coop-pino: #3b82f6;
+  --coop-fg: #0b60ec;
+  --coop-pino: #0b60ec;
 }
 
 .coops [data-cor="roxo"] {
   --coop-bg: #efeafb;
-  --coop-fg: #8b6fe0;
-  --coop-pino: #8b6fe0;
+  --coop-fg: #7250d9;
+  --coop-pino: #7250d9;
 }
 
 .coops [data-cor="turquesa"] {
@@ -98,7 +98,7 @@
 }
 
 .coops__botao--primario {
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
   color: #fff;
 }
@@ -168,7 +168,7 @@
   height: 28px;
   padding: 0 12px;
   border-bottom: 0.8px solid var(--coop-borda);
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 11px;
   font-weight: 700;
   text-align: left;
@@ -276,7 +276,7 @@
 }
 
 .coops__sub-homologacao {
-  color: #3b82f6;
+  color: #0b60ec;
   font-weight: 700;
 }
 
@@ -342,7 +342,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
 }
 
 .coops__lic {
@@ -363,16 +363,16 @@
 }
 
 .coops__lic--vencendo {
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .coops__lic--vencida {
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .coops__lic--em_analise,
 .coops__lic--sem_licenca {
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 /* Painel da cooperativa selecionada */
@@ -547,16 +547,16 @@
 }
 
 .coops__kv-item dd.coops__kv-licenca--vencendo {
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .coops__kv-item dd.coops__kv-licenca--vencida {
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .coops__kv-item dd.coops__kv-licenca--em_analise,
 .coops__kv-item dd.coops__kv-licenca--sem_licenca {
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .coops__grafico-titulo {
@@ -591,7 +591,7 @@
 }
 
 .coops__barra-volume--atual {
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
 }
 
 .coops__grafico-mes {

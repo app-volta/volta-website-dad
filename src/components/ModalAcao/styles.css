@@ -46,22 +46,22 @@
 
 .modal-acao__icone--ambar {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .modal-acao__icone--azul {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .modal-acao__icone--roxo {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .modal-acao__icone--rosa {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .modal-acao__icone--verde {
@@ -79,7 +79,7 @@
 
 .modal-acao__subtitulo {
   margin: 4px 0 0;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 14.5px;
   line-height: 1.35;
 }
@@ -149,7 +149,7 @@
 }
 
 .modal-acao__botao--primario {
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
   color: #fff;
 }
@@ -161,7 +161,7 @@
 .modal-acao__botao--perigo {
   border-color: #f4c9d1;
   background: #fff;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .modal-acao__botao--perigo:hover:not(:disabled) {

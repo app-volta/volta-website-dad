@@ -1,6 +1,6 @@
 .cfg {
   --cfg-texto: #16211b;
-  --cfg-mudo: #6f7d74;
+  --cfg-mudo: #5d6961;
   --cfg-borda: #e8ede9;
   --cfg-verde: #0e7c48;
   --cfg-sombra:
@@ -79,7 +79,7 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   color: #fff;
   font-size: 24px;
   font-weight: 800;
@@ -182,7 +182,7 @@
 }
 
 .cfg__meta-campo--erro {
-  border-color: #e8556c;
+  border-color: #cf1c38;
 }
 
 .cfg__meta-icone {
@@ -231,7 +231,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   transition: width 0.25s ease;
 }
 
@@ -289,7 +289,7 @@
   border: 0.8px solid #f6d3d9;
   border-radius: 12px;
   background: #fff;
-  color: #e8556c;
+  color: #cf1c38;
   font-size: 14px;
   font-weight: 700;
 }

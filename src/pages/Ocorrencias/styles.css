@@ -1,6 +1,6 @@
 .ocorrencias {
   --oc-texto: #16211b;
-  --oc-mudo: #6f7d74;
+  --oc-mudo: #5d6961;
   --oc-borda: #e8ede9;
   --oc-verde: #0e7c48;
 
@@ -88,7 +88,7 @@
 }
 
 .ocorrencias__chip--ativo .ocorrencias__contagem {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.22);
 }
 
 .ocorrencias__acoes {
@@ -139,7 +139,7 @@
   height: 47px;
   padding: 0 16px;
   border-bottom: 0.8px solid var(--oc-borda);
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -209,22 +209,22 @@
   height: 36px;
   border-radius: 10px;
   background: #ffefe2;
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .ocorrencias__tile[data-material="papelao"] {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .ocorrencias__tile[data-material="plastico"] {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .ocorrencias__tile[data-material="metal"] {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .ocorrencias__tile[data-material="vidro"] {
@@ -270,7 +270,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
 }
 
 .ocorrencias__pill {
@@ -288,13 +288,13 @@
 .ocorrencias__pill--alta,
 .ocorrencias__status--recusadas {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .ocorrencias__pill--media,
 .ocorrencias__status--aguardando {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .ocorrencias__pill--baixa,
@@ -305,7 +305,7 @@
 
 .ocorrencias__status--encaminhadas {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .ocorrencias__registro {
@@ -401,7 +401,7 @@
 .ocorrencias__check input:checked + .ocorrencias__check-caixa,
 .ocorrencias__check input:indeterminate + .ocorrencias__check-caixa {
   border-color: transparent;
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
   color: #fff;
 }
 
@@ -457,7 +457,7 @@
   padding: 0 16px;
   border: 0;
   border-radius: 10px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
   color: #fff;
   font-size: 13px;
