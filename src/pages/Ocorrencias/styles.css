@@ -125,6 +125,7 @@
 }
 
 .ocorrencias__rolagem {
+  position: relative;
   overflow-x: auto;
 }
 
