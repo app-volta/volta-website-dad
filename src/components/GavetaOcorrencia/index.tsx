@@ -80,7 +80,13 @@ export function GavetaOcorrencia({
 
   return (
     <>
-      <div className="gaveta__fundo" onClick={aoFechar} aria-hidden="true" />
+      <button
+        type="button"
+        className="gaveta__fundo"
+        onClick={aoFechar}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div
         ref={painel}
         className="gaveta"
