@@ -1,6 +1,6 @@
 .detalhe {
   --d-texto: #16211b;
-  --d-mudo: #6f7d74;
+  --d-mudo: #5d6961;
   --d-borda: #e8ede9;
   --d-verde: #0e7c48;
 
@@ -87,7 +87,7 @@
 
 .detalhe__status--aguardando {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .detalhe__status--aprovadas {
@@ -97,12 +97,12 @@
 
 .detalhe__status--encaminhadas {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .detalhe__status--recusadas {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .detalhe__pill--neutro {
@@ -133,7 +133,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: 2px solid #1ba463;
+  border: 2px solid #0f7d47;
   border-radius: 50%;
   background: #fff;
   color: #fff;
@@ -146,7 +146,7 @@
 
 .detalhe__passo--feito .detalhe__bolinha {
   border-color: transparent;
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
 }
 
 .detalhe__passo--feito .detalhe__passo-rotulo {
@@ -155,13 +155,13 @@
 }
 
 .detalhe__passo--recusado .detalhe__bolinha {
-  border-color: #e8556c;
+  border-color: #cf1c38;
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .detalhe__passo--recusado .detalhe__passo-rotulo {
-  color: #e8556c;
+  color: #cf1c38;
   font-weight: 700;
 }
 
@@ -174,7 +174,7 @@
 }
 
 .detalhe__linha-passo--feita {
-  background: linear-gradient(90deg, #22c06f, #0e7c48);
+  background: linear-gradient(90deg, #15874c, #0e7c48);
 }
 
 .detalhe__analise {
@@ -299,7 +299,7 @@
 
 .detalhe__card--tipo {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .detalhe__card--contaminacao {
@@ -309,12 +309,12 @@
 
 .detalhe__card--quantidade {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .detalhe__card--prioridade {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .detalhe__relatorio-titulo {
@@ -375,22 +375,22 @@
 
 .detalhe__tom--azul {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .detalhe__tom--ambar {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .detalhe__tom--roxo {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .detalhe__tom--rosa {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .detalhe__evento-texto {
@@ -402,7 +402,7 @@
 
 .detalhe__evento-tempo {
   margin: 2px 0 0;
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 12.5px;
 }
 
@@ -473,7 +473,7 @@
 .detalhe__aprovar {
   min-height: 52px;
   border: 0;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
   color: #fff;
 }
@@ -486,7 +486,7 @@
   min-height: 42px;
   border: 0.8px solid #f4c9d1;
   background: #fff;
-  color: #e8556c;
+  color: #cf1c38;
   font-size: 14px;
 }
 
@@ -517,13 +517,13 @@
 .detalhe__decisao--encaminhadas {
   border: 0.8px solid #cfe0ff;
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .detalhe__decisao--recusadas {
   border: 0.8px solid #f4c9d1;
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .detalhe__recomenda {

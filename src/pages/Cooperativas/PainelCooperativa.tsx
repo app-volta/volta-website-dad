@@ -29,7 +29,7 @@ export function PainelCooperativa({
   aoAbrirDocumentos,
 }: PainelCooperativaProps): ReactNode {
   return (
-    <aside className="coops__painel" aria-label="Detalhes da cooperativa">
+    <section className="coops__painel" aria-label="Detalhes da cooperativa">
       <MapaCooperativas
         todas={todas}
         selecionadaId={selecionada?.id ?? null}
@@ -46,7 +46,7 @@ export function PainelCooperativa({
           Escolha uma cooperativa para ver os detalhes.
         </p>
       )}
-    </aside>
+    </section>
   );
 }
 
@@ -69,7 +69,7 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
           <span />
         </span>
         <div>
-          <h3 className="coops__detalhe-nome">{coop.nome}</h3>
+          <h2 className="coops__detalhe-nome">{coop.nome}</h2>
           <p className="coops__sub">{contato || "Contato ainda não informado"}</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
         </div>
       </dl>
 
-      <h4 className="coops__grafico-titulo">Volume destinado (últimos 5 meses)</h4>
+      <h3 className="coops__grafico-titulo">Volume destinado (últimos 5 meses)</h3>
       <ul className="coops__grafico" aria-label="Volume destinado por mês">
         {coop.volumeMensalKg.map((kg, indice) => {
           const altura =

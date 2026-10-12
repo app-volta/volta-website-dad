@@ -261,11 +261,11 @@ export default function Home(): ReactNode {
             </Link>
           </div>
         </div>
-        <aside className="home-hero__dica" aria-label="Dica do assistente VOLTA">
+        <div className="home-hero__dica" role="note" aria-label="Dica do assistente VOLTA">
           <p>
             <strong>VOLTA notou:</strong> o Setor B2 registrou papelão molhado 3 vezes essa semana. Que tal uma área coberta perto da câmara fria?
           </p>
-        </aside>
+        </div>
         <div className="home-hero__mascote" aria-hidden="true">
           <Mascote tamanho={122} altura={182} />
         </div>
@@ -415,6 +415,7 @@ export default function Home(): ReactNode {
             <div
               className="home-meta__barra"
               role="progressbar"
+              aria-label="Progresso da meta de recuperação do mês"
               aria-valuenow={Math.round(progressoMeta)}
               aria-valuemin={0}
               aria-valuemax={100}

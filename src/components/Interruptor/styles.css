@@ -55,7 +55,7 @@
 }
 
 .interruptor__entrada:checked + .interruptor__trilho {
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
 }
 
 .interruptor__entrada:checked + .interruptor__trilho::after {

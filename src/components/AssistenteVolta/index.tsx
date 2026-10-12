@@ -85,7 +85,7 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
       aria-modal="false"
       aria-labelledby={idTitulo}
     >
-      <header className="assist__topo">
+      <div className="assist__topo">
         <svg
           className="assist__seta"
           viewBox="0 0 226.493 235.874"
@@ -134,7 +134,7 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
         >
           <Icone nome="fechar" tamanho={14} />
         </button>
-      </header>
+      </div>
 
       <div className="assist__conversa" role="log" aria-live="polite" aria-label="Conversa">
         {mensagens.map((mensagem) =>

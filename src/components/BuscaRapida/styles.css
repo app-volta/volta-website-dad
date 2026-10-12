@@ -30,7 +30,7 @@
   height: 57px;
   padding: 0 21px;
   border-bottom: 0.8px solid #e8ede9;
-  color: #6f7d74;
+  color: #5d6961;
 }
 
 .busca__lupa {
@@ -50,7 +50,7 @@
 }
 
 .busca__campo input::placeholder {
-  color: #9aa8a0;
+  color: #63736a;
 }
 
 .busca__lista {
@@ -67,7 +67,7 @@
 .busca__grupo-titulo {
   margin: 0 0 4px;
   padding: 0 12px;
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -112,14 +112,14 @@
 
 .busca__item-apoio {
   flex-shrink: 0;
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 12.5px;
 }
 
 .busca__vazio {
   margin: 0;
   padding: 22px 21px 26px;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 14px;
 }
 

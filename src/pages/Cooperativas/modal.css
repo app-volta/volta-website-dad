@@ -31,7 +31,7 @@
   border: 0.8px solid #e8ede9;
   border-radius: 14px;
   background: #fff;
-  color: #6f7d74;
+  color: #5d6961;
 }
 
 .coops-form__campo:focus-within {
@@ -40,7 +40,7 @@
 }
 
 .coops-form__campo--erro {
-  border-color: #e8556c;
+  border-color: #cf1c38;
 }
 
 .coops-form__campo-icone {
@@ -97,7 +97,7 @@
   border: 0.8px solid #e8ede9;
   border-radius: 999px;
   background: #fff;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 13px;
   font-weight: 700;
   transition: background 0.15s ease, color 0.15s ease;
@@ -134,7 +134,7 @@
 
 .coops-form__drop:hover,
 .coops-form__drop--ativa {
-  border-color: #1ba463;
+  border-color: #0f7d47;
   background: #effaf4;
 }
 
@@ -178,7 +178,7 @@
 }
 
 .coops-form__drop-textos small {
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 12.5px;
 }
 
@@ -187,7 +187,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 12.5px;
   font-weight: 700;
   text-decoration: underline;
@@ -224,7 +224,7 @@
   height: 38px;
   border-radius: 12px;
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .coops-docs__titulo {
@@ -236,7 +236,7 @@
 
 .coops-docs__texto {
   margin: 2px 0 0;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 13px;
   overflow-wrap: anywhere;
 }

@@ -26,7 +26,7 @@ export function CartaoPerfil({
         {iniciais(nome)}
       </span>
       <div className="cfg__perfil-textos">
-        <h3 className="cfg__perfil-nome">{nome}</h3>
+        <h2 className="cfg__perfil-nome">{nome}</h2>
         <p className="cfg__perfil-papel">{papel}</p>
       </div>
       <button type="button" className="cfg__botao-contorno" onClick={aoEditar}>
@@ -51,9 +51,9 @@ export function CartaoUnidade({ unidade }: CartaoUnidadeProps): ReactNode {
 
   return (
     <section className="cfg__cartao" aria-labelledby="cfg-unidade-titulo">
-      <h3 id="cfg-unidade-titulo" className="cfg__titulo">
+      <h2 id="cfg-unidade-titulo" className="cfg__titulo">
         Unidade
-      </h3>
+      </h2>
       <dl className="cfg__kv">
         {dados.map((item) => (
           <div key={item.rotulo} className="cfg__kv-item">
@@ -87,9 +87,9 @@ export function CartaoNotificacoes({
 }: CartaoNotificacoesProps): ReactNode {
   return (
     <section className="cfg__cartao" aria-labelledby="cfg-notificacoes-titulo">
-      <h3 id="cfg-notificacoes-titulo" className="cfg__titulo">
+      <h2 id="cfg-notificacoes-titulo" className="cfg__titulo">
         Notificações
-      </h3>
+      </h2>
       <div className="cfg__interruptores">
         {OPCOES_NOTIFICACAO.map((opcao) => (
           <Interruptor
@@ -119,10 +119,10 @@ export function CartaoInsights({
         <Mascote tamanho={49} altura={85} />
       </div>
       <div>
-        <h3 id="cfg-insights-titulo" className="cfg__insights-titulo">
+        <h2 id="cfg-insights-titulo" className="cfg__insights-titulo">
           <Icone nome="brilho" tamanho={13} />
           Insights do VOLTA
-        </h3>
+        </h2>
         <p className="cfg__insights-texto">
           Deixe o mascote sugerir ações no painel com base nos registros da
           unidade.

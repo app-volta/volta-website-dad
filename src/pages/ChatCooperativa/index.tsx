@@ -105,7 +105,7 @@ export default function ChatCooperativa(): ReactNode {
             {cooperativa.nome.substring(0, 2).toUpperCase()}
           </span>
           <div className="chat-tela__destaque-info">
-            <h3 className="chat-tela__destaque-nome">{cooperativa.nome}</h3>
+            <h2 className="chat-tela__destaque-nome">{cooperativa.nome}</h2>
             <span className="chip chat-tela__badge">Parceira J&amp;F</span>
             <p className="chat-tela__destaque-desc">
               Responde rápido · {cooperativa.distanciaKm.toFixed(1)} km · coleta

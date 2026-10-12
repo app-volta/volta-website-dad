@@ -46,9 +46,9 @@ export function CartaoPgrs({
       </svg>
 
       <div className="rel__pgrs-conteudo">
-        <h3 id="rel-pgrs-titulo" className="rel__pgrs-titulo">
+        <h2 id="rel-pgrs-titulo" className="rel__pgrs-titulo">
           Relatório PGRS {TEXTO_PERIODO[periodo]}
-        </h3>
+        </h2>
         <p className="rel__pgrs-texto">
           Consolida ocorrências aprovadas, destinação por cooperativa e
           evidências fotográficas — pronto pro órgão ambiental.

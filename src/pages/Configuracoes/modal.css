@@ -35,7 +35,7 @@
 }
 
 .cfg-form__campo--erro {
-  border-color: #e8556c;
+  border-color: #cf1c38;
 }
 
 .cfg-form__erro {
@@ -53,6 +53,6 @@
   padding: 0 18px;
   border-radius: 14px;
   background: #f6f9f7;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 14.5px;
 }

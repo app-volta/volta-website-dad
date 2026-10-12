@@ -19,7 +19,7 @@
   height: 200px;
   padding: 24px;
   overflow: hidden;
-  background: linear-gradient(180deg, #22c06f 0%, #0e6b41 100%);
+  background: linear-gradient(180deg, #15874c 0%, #0e6b41 100%);
   color: #fff;
 }
 
@@ -167,7 +167,7 @@
 .assist__balao--usuario {
   border: 0;
   border-radius: 16px 16px 6px 16px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   color: #fff;
 }
 
@@ -181,7 +181,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #9aa8a0;
+  background: #63736a;
   animation: assist-ponto 1s infinite ease-in-out;
 }
 
@@ -277,7 +277,7 @@
   height: 44px;
   border: 0;
   border-radius: 14px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 8px 18px rgba(13, 125, 71, 0.4);
   color: #fff;
 }

@@ -28,7 +28,7 @@
 }
 
 .opcao-radio--ativa {
-  border-color: #1ba463;
+  border-color: #0f7d47;
   background: #f0fbf4;
 }
 
@@ -60,7 +60,7 @@
 .opcao-radio__textos small {
   display: block;
   margin-top: 1px;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 12.5px;
 }
 
@@ -73,7 +73,7 @@
   height: 36px;
   margin: 12px 0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -102,7 +102,7 @@
 
 .opcao-radio--ativa .opcao-radio__marca {
   border-color: transparent;
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
   color: #fff;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .campo-modal__opcional {
-  color: #6f7d74;
+  color: #5d6961;
   font-weight: 400;
 }
 
@@ -165,7 +165,7 @@
   border: 0.8px solid #e8ede9;
   border-radius: 12px;
   background: #fff;
-  color: #6f7d74;
+  color: #5d6961;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -188,19 +188,19 @@
 }
 
 .segmentado__opcao--ativa.segmentado__opcao--ambar {
-  border-color: #c68a10;
+  border-color: #92660c;
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .segmentado__opcao--ativa.segmentado__opcao--rosa {
-  border-color: #e8556c;
+  border-color: #cf1c38;
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .segmentado__opcao--ativa.segmentado__opcao--verde {
-  border-color: #1ba463;
+  border-color: #0f7d47;
   background: #e2f7ec;
   color: #0e7c48;
 }
@@ -217,7 +217,7 @@
 .perigoso__icone {
   display: inline-flex;
   flex-shrink: 0;
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .perigoso__textos {
@@ -234,7 +234,7 @@
 .perigoso__textos small {
   display: block;
   margin-top: 1px;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 12.5px;
 }
 
@@ -250,7 +250,7 @@
 }
 
 .interruptor--ligado {
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
 }
 
 .interruptor__bolinha {
@@ -285,7 +285,7 @@
   border: 0.8px solid #e8ede9;
   border-radius: 999px;
   background: #fff;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 13.5px;
   font-weight: 700;
 }

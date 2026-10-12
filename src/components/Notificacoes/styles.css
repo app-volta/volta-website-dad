@@ -42,7 +42,7 @@
 }
 
 .notif__marcar:disabled {
-  color: #9aa8a0;
+  color: #63736a;
   cursor: default;
 }
 
@@ -93,17 +93,17 @@
 
 .notif__icone--laranja {
   background: #ffefe2;
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .notif__icone--ambar {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .notif__icone--roxo {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .notif__textos {
@@ -123,7 +123,7 @@
 }
 
 .notif__quando {
-  color: #9aa8a0;
+  color: #63736a;
   font-size: 12px;
 }
 

@@ -40,26 +40,26 @@
 
 .resumo__icone--azul {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .resumo__icone--roxo {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .resumo__icone--laranja {
   background: #ffefe2;
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .resumo__icone--ambar {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .resumo__rotulo {
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 13px;
 }
 
@@ -75,7 +75,7 @@
 }
 
 .resumo__unidade {
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 14px;
   font-weight: 400;
   line-height: 1;

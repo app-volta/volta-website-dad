@@ -1,6 +1,6 @@
 .rel {
   --rel-texto: #16211b;
-  --rel-mudo: #6f7d74;
+  --rel-mudo: #5d6961;
   --rel-borda: #e8ede9;
   --rel-verde: #0e7c48;
   --rel-sombra:
@@ -18,17 +18,17 @@
 
 .rel [data-cor="ambar"] {
   --rel-bg: #fdf3de;
-  --rel-fg: #c68a10;
+  --rel-fg: #92660c;
 }
 
 .rel [data-cor="azul"] {
   --rel-bg: #e4efff;
-  --rel-fg: #3b82f6;
+  --rel-fg: #0b60ec;
 }
 
 .rel [data-cor="roxo"] {
   --rel-bg: #efeafb;
-  --rel-fg: #8b6fe0;
+  --rel-fg: #7250d9;
 }
 
 .rel [data-cor="turquesa"] {
@@ -174,7 +174,7 @@
 }
 
 .rel__barra[data-material="papelao"] {
-  background: linear-gradient(#f0b429, #c68a10);
+  background: linear-gradient(#f0b429, #92660c);
 }
 
 .rel__barra[data-material="plastico"] {
@@ -203,7 +203,7 @@
   padding: 26px 24px 24px;
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(160deg, #22c06f 0%, #0e6b41 100%);
+  background: linear-gradient(160deg, #15874c 0%, #0e6b41 100%);
   box-shadow: var(--rel-sombra);
   color: #fff;
 }
@@ -350,7 +350,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
 }
 
 /* Destinação por cooperativa */

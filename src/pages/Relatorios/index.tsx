@@ -157,9 +157,9 @@ export default function Relatorios(): ReactNode {
 
           <div className="rel__linha">
             <section className="rel__cartao" aria-labelledby="rel-materiais">
-              <h3 id="rel-materiais" className="rel__cartao-titulo">
+              <h2 id="rel-materiais" className="rel__cartao-titulo">
                 Recuperado por material {TEXTO_PERIODO[dados.periodo]}
-              </h3>
+              </h2>
               <GraficoMateriais itens={dados.porMaterial} />
             </section>
             <CartaoPgrs
@@ -173,15 +173,15 @@ export default function Relatorios(): ReactNode {
 
           <div className="rel__linha rel__linha--base">
             <section className="rel__cartao" aria-labelledby="rel-setores">
-              <h3 id="rel-setores" className="rel__cartao-titulo">
+              <h2 id="rel-setores" className="rel__cartao-titulo">
                 Setores que mais geram resíduo
-              </h3>
+              </h2>
               <RankingSetores setores={dados.setores} />
             </section>
             <section className="rel__cartao rel__cartao--destino" aria-labelledby="rel-destino">
-              <h3 id="rel-destino" className="rel__cartao-titulo">
+              <h2 id="rel-destino" className="rel__cartao-titulo">
                 Destinação por cooperativa
-              </h3>
+              </h2>
               <DestinacaoCooperativas destinos={dados.destinacao} />
             </section>
           </div>
