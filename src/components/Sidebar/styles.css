@@ -198,7 +198,6 @@
   font-size: 0.781rem;
   line-height: 15px;
   color: var(--sidebar-fg);
-  opacity: 0.85;
   margin: 2px 0 12px;
 }
 
@@ -270,7 +269,6 @@
 
 .sidebar__usuario-papel {
   color: var(--sidebar-fg);
-  opacity: 0.75;
   font-size: 0.75rem;
   line-height: 15px;
   overflow: hidden;

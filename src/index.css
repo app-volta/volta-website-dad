@@ -62,7 +62,7 @@
   --sidebar-bg: linear-gradient(170deg, #0F6B41 0%, #0D5B37 55%, #0A4A2D 100%);
   --sidebar-fg: rgba(230, 244, 236, 0.82);
   --sidebar-fg-forte: #FFFFFF;
-  --sidebar-grupo-titulo: rgba(230, 244, 236, 0.45);
+  --sidebar-grupo-titulo: rgba(230, 244, 236, 0.84);
   --sidebar-link-hover-bg: rgba(255, 255, 255, 0.07);
   --sidebar-link-ativo-bg: rgba(255, 255, 255, 0.14);
   --sidebar-divisor: rgba(255, 255, 255, 0.10);
@@ -70,7 +70,7 @@
   --sidebar-destaque: #6FF2A8;
   --sidebar-acao: #0E7C48;
   --chip-gestor-bg: rgba(255, 255, 255, 0.14);
-  --chip-gestor-fg: #E6F4EC;
+  --chip-gestor-fg: #FFFFFF;
   --badge-contador-bg: #6FF2A8;
   --badge-contador-fg: #062B19;
 
