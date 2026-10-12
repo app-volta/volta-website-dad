@@ -10,7 +10,17 @@
   animation: modal-acao-fundo 0.15s ease;
 }
 
+.modal-acao__fundo-fechar {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .modal-acao {
+  position: relative;
   width: 100%;
   max-height: calc(100vh - 32px);
   padding: 28px;

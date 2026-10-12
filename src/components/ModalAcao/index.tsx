@@ -80,12 +80,15 @@ export function ModalAcao({
   }
 
   return (
-    <div
-      className="modal-acao__fundo"
-      onClick={() => {
-        if (!bloqueado) aoFechar();
-      }}
-    >
+    <div className="modal-acao__fundo">
+      <button
+        type="button"
+        className="modal-acao__fundo-fechar"
+        onClick={aoFechar}
+        disabled={bloqueado}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div
         ref={painel}
         className={
@@ -96,7 +99,6 @@ export function ModalAcao({
         aria-modal="true"
         aria-labelledby={idTitulo}
         tabIndex={-1}
-        onClick={(evento) => evento.stopPropagation()}
         onKeyDown={prenderFoco}
       >
         {ilustracao ? (

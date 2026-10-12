@@ -12,7 +12,7 @@ export function SkeletonList({
   quantidade = 3,
   rotulo = "Carregando lista",
 }: SkeletonListProps): ReactNode {
-  const itens = Array.from({ length: quantidade }, (_, indice) => indice);
+  const itens = Array.from({ length: quantidade }, (_, indice) => `esqueleto-${indice}`);
   return (
     <div
       className="skeleton-lista"
@@ -20,8 +20,8 @@ export function SkeletonList({
       aria-live="polite"
       aria-label={rotulo}
     >
-      {itens.map((indice) => (
-        <div key={indice} className="skeleton-lista__item" aria-hidden="true">
+      {itens.map((chave) => (
+        <div key={chave} className="skeleton-lista__item" aria-hidden="true">
           <div className="skeleton-lista__foto" />
           <div className="skeleton-lista__linhas">
             <span className="skeleton-lista__linha skeleton-lista__linha--curta" />

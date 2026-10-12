@@ -18,7 +18,7 @@ function dataEmDias(dias: number): string {
   return `${data.getFullYear()}-${mes}-${dia}`;
 }
 
-const catalogo: Cooperativa[] = [
+let catalogo: readonly Cooperativa[] = [
   {
     id: "coop-jbs-ambiental",
     nome: "JBS Ambiental",
@@ -196,6 +196,6 @@ export async function adicionarCooperativa(
     volumeMensalKg: [0, 0, 0, 0, 0],
     posicaoMapa: { x: 14 + ((semente * 7) % 72), y: 28 + ((semente * 11) % 58) },
   };
-  catalogo.push(nova);
+  catalogo = [...catalogo, nova];
   return nova;
 }

@@ -204,7 +204,7 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
   };
 }
 
-const CATALOGO: Ocorrencia[] = [
+let CATALOGO: readonly Ocorrencia[] = [
   ...RECENTES.map((modelo, i) => montar(modelo, 483 - i)),
   ...ANTIGAS.map((modelo, i) => montar(modelo, 473 - i)),
 ];
@@ -304,7 +304,7 @@ export async function criarOcorrencia(
       agora,
     ),
   };
-  CATALOGO.unshift(nova);
+  CATALOGO = [nova, ...CATALOGO];
   notificar();
   return nova;
 }
@@ -327,7 +327,7 @@ export async function atualizarOcorrencia(
     status: entrada.status ?? anterior.status,
     atualizadaEm: new Date().toISOString(),
   };
-  CATALOGO[indice] = atualizada;
+  CATALOGO = CATALOGO.map((item, posicao) => (posicao === indice ? atualizada : item));
   notificar();
   return atualizada;
 }
@@ -358,7 +358,7 @@ function registrar(
       },
     ],
   };
-  CATALOGO[indice] = nova;
+  CATALOGO = CATALOGO.map((item, posicao) => (posicao === indice ? nova : item));
   notificar();
   return nova;
 }

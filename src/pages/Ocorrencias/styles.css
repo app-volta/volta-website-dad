@@ -314,6 +314,8 @@
 }
 
 .ocorrencias__seta {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   padding: 6px;
   border: 0;
@@ -322,7 +324,15 @@
 }
 
 .ocorrencias__tabela tbody tr {
+  position: relative;
   cursor: pointer;
+}
+
+/* A linha inteira abre a gaveta pelo botão do título: o ::after cobre a linha. */
+.ocorrencias__titulo-botao::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 .ocorrencias__vazio {
@@ -372,6 +382,7 @@
 
 .ocorrencias__check {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   cursor: pointer;
 }

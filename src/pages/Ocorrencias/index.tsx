@@ -299,10 +299,6 @@ export default function Ocorrencias(): ReactNode {
                     return (
                       <tr
                         key={o.id}
-                        onClick={(evento) => {
-                          const alvo = evento.target as HTMLElement;
-                          if (!alvo.closest("label, button")) setGavetaId(o.id);
-                        }}
                         className={
                           selecionadas.has(o.id)
                             ? "ocorrencias__linha ocorrencias__linha--selecionada"

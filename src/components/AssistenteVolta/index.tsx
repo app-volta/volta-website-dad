@@ -13,6 +13,7 @@ import {
 import type { MensagemAssistente } from "../../types/assistente";
 import { Icone } from "../Icone";
 import { Mascote } from "../Mascote";
+import { TextoComDestaque } from "../TextoComDestaque";
 import "./styles.css";
 
 interface AssistenteVoltaProps {
@@ -20,13 +21,7 @@ interface AssistenteVoltaProps {
 }
 
 function Texto({ mensagem }: { readonly mensagem: MensagemAssistente }): ReactNode {
-  return mensagem.trechos.map((trecho, indice) =>
-    trecho.destaque ? (
-      <strong key={indice}>{trecho.texto}</strong>
-    ) : (
-      <span key={indice}>{trecho.texto}</span>
-    ),
-  );
+  return <TextoComDestaque trechos={mensagem.trechos} />;
 }
 
 /** Painel lateral de conversa com o assistente; a conversa dura até recarregar a página. */

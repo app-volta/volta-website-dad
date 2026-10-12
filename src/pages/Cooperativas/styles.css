@@ -207,6 +207,7 @@
 }
 
 .coops__linha {
+  position: relative;
   cursor: pointer;
   transition: background 0.15s ease;
 }
@@ -261,6 +262,13 @@
   font-weight: 800;
   line-height: 17px;
   text-align: left;
+}
+
+/* A linha inteira seleciona a cooperativa pelo botão do nome. */
+.coops__nome::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 }
 
 .coops__nome:focus-visible {

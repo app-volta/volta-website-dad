@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
@@ -89,15 +89,9 @@ function Linha({ coop, cor, selecionada, aoSelecionar }: LinhaProps): ReactNode 
     Math.round((coop.usadoMesKg / coop.capacidadeMesKg) * 100),
   );
 
-  function selecionarPeloBotao(evento: MouseEvent): void {
-    evento.stopPropagation();
-    aoSelecionar(coop.id);
-  }
-
   return (
     <tr
       className={`coops__linha${selecionada ? " coops__linha--selecionada" : ""}`}
-      onClick={() => aoSelecionar(coop.id)}
     >
       <td>
         <div className="coops__ident">
@@ -109,7 +103,7 @@ function Linha({ coop, cor, selecionada, aoSelecionar }: LinhaProps): ReactNode 
               type="button"
               className="coops__nome"
               aria-current={selecionada ? "true" : undefined}
-              onClick={selecionarPeloBotao}
+              onClick={() => aoSelecionar(coop.id)}
             >
               {coop.nome}
             </button>
