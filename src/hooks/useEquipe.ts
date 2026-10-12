@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { listarEquipe } from "../services/equipe";
+import {
+  cancelarConvite,
+  convidarPessoa,
+  listarEquipe,
+  reenviarConvite,
+} from "../services/equipe";
 import type { EstadoRequisicao } from "../types/comum";
 import type { MembroEquipe } from "../types/equipe";
 
@@ -49,4 +54,20 @@ export function useEquipe(
     carregando: !atual,
     erro: atual ? (resultado?.erro ?? null) : null,
   };
+}
+
+interface AcoesEquipe {
+  readonly convidar: typeof convidarPessoa;
+  readonly reenviar: typeof reenviarConvite;
+  readonly cancelar: typeof cancelarConvite;
+}
+
+const ACOES: AcoesEquipe = {
+  convidar: convidarPessoa,
+  reenviar: reenviarConvite,
+  cancelar: cancelarConvite,
+};
+
+export function useAcoesEquipe(): AcoesEquipe {
+  return ACOES;
 }
