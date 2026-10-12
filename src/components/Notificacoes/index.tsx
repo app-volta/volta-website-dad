@@ -8,6 +8,7 @@ import {
 import type { Notificacao, TipoNotificacao } from "../../types/notificacao";
 import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
+import { TextoComDestaque } from "../TextoComDestaque";
 import "./styles.css";
 
 const ICONE: Readonly<Record<TipoNotificacao, NomeIcone>> = {
@@ -67,13 +68,7 @@ export function Notificacoes({
               </span>
               <span className="notif__textos">
                 <span className="notif__texto">
-                  {item.trechos.map((trecho, indice) =>
-                    trecho.destaque ? (
-                      <strong key={indice}>{trecho.texto}</strong>
-                    ) : (
-                      <span key={indice}>{trecho.texto}</span>
-                    ),
-                  )}
+                  <TextoComDestaque trechos={item.trechos} />
                 </span>
                 <span className="notif__quando">
                   {item.lida ? null : <span className="sr-only">Não lida. </span>}
