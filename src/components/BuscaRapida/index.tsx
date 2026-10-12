@@ -2,8 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { listarCooperativas } from "../../services/cooperativas";
-import { listarOcorrencias } from "../../services/ocorrencias";
+import { useBaseBusca } from "../../hooks/useBaseBusca";
 import { filtrarBusca } from "../../utils/busca";
 import type { BaseBusca, ResultadoBusca } from "../../utils/busca";
 import { Icone } from "../Icone";
@@ -23,27 +22,13 @@ export function BuscaRapida({ aoFechar }: BuscaRapidaProps): ReactNode {
   const entrada = useRef<HTMLInputElement | null>(null);
 
   const [consulta, setConsulta] = useState<string>("");
-  const [base, setBase] = useState<BaseBusca | null>(null);
+  const base = useBaseBusca();
   const [indiceAtivo, setIndiceAtivo] = useState<number>(0);
 
   useEffect(() => {
     const anterior = document.activeElement as HTMLElement | null;
     entrada.current?.focus();
     return () => anterior?.focus();
-  }, []);
-
-  useEffect(() => {
-    let ativo = true;
-    Promise.all([listarOcorrencias(), listarCooperativas()])
-      .then(([ocorrencias, cooperativas]) => {
-        if (ativo) setBase({ ocorrencias, cooperativas });
-      })
-      .catch(() => {
-        if (ativo) setBase(BASE_VAZIA);
-      });
-    return () => {
-      ativo = false;
-    };
   }, []);
 
   const grupos = useMemo(
