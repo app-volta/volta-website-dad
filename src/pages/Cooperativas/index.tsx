@@ -6,8 +6,10 @@ import { CartoesResumo } from "../../components/CartoesResumo";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
-import { useCooperativas } from "../../hooks/useCooperativas";
-import { adicionarCooperativa } from "../../services/cooperativas";
+import {
+  useAcoesCooperativas,
+  useCooperativas,
+} from "../../hooks/useCooperativas";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
 import { ModalAdicionar } from "./ModalAdicionar";
@@ -33,6 +35,7 @@ interface Aviso {
 export default function Cooperativas(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useCooperativas(chaveRecarga);
+  const acoes = useAcoesCooperativas();
 
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
@@ -60,7 +63,7 @@ export default function Cooperativas(): ReactNode {
     setSalvando(true);
     setErroCadastro(null);
     try {
-      const nova = await adicionarCooperativa(novos);
+      const nova = await acoes.adicionar(novos);
       setChaveRecarga((chave) => chave + 1);
       setFiltro((atual) => (atual === "ativas" ? "todas" : atual));
       setSelecionadaId(nova.id);

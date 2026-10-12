@@ -85,3 +85,11 @@ export const ROTULOS_STATUS: Readonly<Record<StatusOcorrencia, string>> = {
   recusada: "Recusada",
   finalizada: "Finalizada",
 };
+
+/** Nova classificação escolhida pelo responsável ao revisar a ocorrência. */
+export interface NovaClassificacao {
+  readonly material: Material;
+  readonly qualidade: QualidadeMaterial;
+  readonly prioridade: PrioridadeOcorrencia;
+  readonly perigoso: boolean;
+}

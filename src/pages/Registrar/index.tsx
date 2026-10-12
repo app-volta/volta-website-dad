@@ -7,7 +7,7 @@ import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
-import { criarOcorrencia } from "../../services/ocorrencias";
+import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { METADADOS_MATERIAL } from "../../types/material";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { formatarPorcentagem } from "../../utils/formatacao";
@@ -52,6 +52,7 @@ function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
 
 export default function Registrar(): ReactNode {
   const { usuario } = useAuth();
+  const acoes = useAcoesOcorrencia();
   const navegar = useNavigate();
   const [estado, despachar] = useReducer(
     redutor,
@@ -95,7 +96,7 @@ export default function Registrar(): ReactNode {
     }
     despachar({ tipo: "iniciar_envio" });
     try {
-      const criada = await criarOcorrencia({
+      const criada = await acoes.criar({
         descricao: descricaoInformada
           ? estado.descricao
           : `Resíduo registrado em ${estado.setor}`,

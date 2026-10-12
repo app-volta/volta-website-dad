@@ -11,11 +11,11 @@ import { Mascote } from "../../components/Mascote";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useMetaRecuperacao } from "../../hooks/useConfiguracoes";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
-import { metaRecuperacaoAtual } from "../../services/configuracoes";
 import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
-import { aprovarOcorrencia } from "../../services/ocorrencias";
 import "./styles.css";
 
 type Prioridade = "alta" | "media" | "baixa";
@@ -161,6 +161,7 @@ function tituloDaFila(carregou: boolean, pendentes: number): string {
 
 export default function Home(): ReactNode {
   const { usuario } = useAuth();
+  const acoes = useAcoesOcorrencia();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [janela, setJanela] = useState<JanelaGrafico>("semanas");
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
@@ -189,14 +190,14 @@ export default function Home(): ReactNode {
 
   const pendentes = fila.length;
   const totalMes = MATERIAIS_MES.reduce((acc, m) => acc + m.kg, 0);
-  const metaMes = metaRecuperacaoAtual();
+  const metaMes = useMetaRecuperacao();
   const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
 
   async function aprovar(id: string, titulo: string): Promise<void> {
     setAprovandoId(id);
     setErroAprovacao(null);
     try {
-      await aprovarOcorrencia(id, usuario?.nome ?? "Equipe");
+      await acoes.aprovar(id, usuario?.nome ?? "Equipe");
       setChaveRecarga((v) => v + 1);
       setAviso(`#${id.slice(-4)} · ${titulo}`);
     } catch (excecao: unknown) {
