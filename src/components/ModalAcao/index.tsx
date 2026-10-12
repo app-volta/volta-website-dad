@@ -102,7 +102,7 @@ export function ModalAcao({
         {ilustracao ? (
           <div className="modal-acao__ilustracao">{ilustracao}</div>
         ) : null}
-        <header className="modal-acao__cabecalho">
+        <div className="modal-acao__cabecalho">
           {icone ? (
             <span
               className={`modal-acao__icone modal-acao__icone--${tom}`}
@@ -119,7 +119,7 @@ export function ModalAcao({
               <p className="modal-acao__subtitulo">{subtitulo}</p>
             ) : null}
           </div>
-        </header>
+        </div>
 
         {children ? <div className="modal-acao__corpo">{children}</div> : null}
         {rodape ? <footer className="modal-acao__rodape">{rodape}</footer> : null}

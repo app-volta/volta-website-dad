@@ -58,9 +58,9 @@ export function CartaoMeta({
   return (
     <section className="cfg__cartao" aria-labelledby="cfg-meta-titulo">
       <div className="cfg__cabecalho">
-        <h3 id="cfg-meta-titulo" className="cfg__titulo">
+        <h2 id="cfg-meta-titulo" className="cfg__titulo">
           Meta de recuperação
-        </h3>
+        </h2>
         <span className="cfg__selo">{percentual}% atingido</span>
       </div>
 

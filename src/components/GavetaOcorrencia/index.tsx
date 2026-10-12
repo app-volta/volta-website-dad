@@ -33,7 +33,7 @@ export function GavetaOcorrencia({
   aoAprovar,
   aoAbrirCompleta,
 }: GavetaOcorrenciaProps): ReactNode {
-  const painel = useRef<HTMLElement | null>(null);
+  const painel = useRef<HTMLDivElement | null>(null);
   const botaoFechar = useRef<HTMLButtonElement | null>(null);
   const aberta = ocorrencia !== null;
 
@@ -81,7 +81,7 @@ export function GavetaOcorrencia({
   return (
     <>
       <div className="gaveta__fundo" onClick={aoFechar} aria-hidden="true" />
-      <aside
+      <div
         ref={painel}
         className="gaveta"
         role="dialog"
@@ -89,7 +89,7 @@ export function GavetaOcorrencia({
         aria-labelledby="gaveta-titulo"
         onKeyDown={prenderFoco}
       >
-        <header className="gaveta__cabecalho">
+        <div className="gaveta__cabecalho">
           <span
             className="gaveta__tile"
             data-material={ocorrencia.material ?? "outro"}
@@ -115,7 +115,7 @@ export function GavetaOcorrencia({
           >
             <Icone nome="fechar" tamanho={16} />
           </button>
-        </header>
+        </div>
 
         <div className="gaveta__corpo">
           <div className="gaveta__foto">
@@ -198,7 +198,7 @@ export function GavetaOcorrencia({
             ) : null}
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 }
