@@ -161,11 +161,9 @@ export function Sidebar({ aoAbrirAssistente }: SidebarProps): ReactNode {
                         {item.rotulo}
                       </span>
                       {item.caminho === "/ocorrencias" && aguardando > 0 ? (
-                        <span
-                          className="sidebar__link-badge"
-                          aria-label={`${aguardando} aguardando aprovação`}
-                        >
+                        <span className="sidebar__link-badge">
                           {aguardando}
+                          <span className="sr-only"> aguardando aprovação</span>
                         </span>
                       ) : null}
                     </NavLink>

@@ -363,14 +363,36 @@
   .sidebar__ajuda-mascote,
   .sidebar__chip-papel,
   .sidebar__grupo-titulo,
-  .sidebar__link-rotulo,
-  .sidebar__link-badge,
   .sidebar__ajuda-titulo,
   .sidebar__ajuda-texto,
-  .sidebar__ajuda-botao span,
   .sidebar__usuario-info,
   .sidebar__usuario-seta {
     display: none;
+  }
+  /* Só o texto some da tela: leitores de tela continuam lendo o nome do item. */
+  .sidebar__link-rotulo,
+  .sidebar__ajuda-botao span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* A contagem vira um ponto; o texto continua disponível para leitores de tela. */
+  .sidebar__link-badge {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 9px;
+    height: 9px;
+    min-width: 0;
+    padding: 0;
+    font-size: 0;
+    line-height: 0;
   }
   .sidebar__topo {
     justify-content: center;
