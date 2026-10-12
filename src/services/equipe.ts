@@ -20,7 +20,7 @@ function ontemAsDezesseis(): string {
   return data.toISOString();
 }
 
-const equipe: MembroEquipe[] = [
+let equipe: readonly MembroEquipe[] = [
   {
     id: "membro-breno",
     nome: "Breno Gomes",
@@ -113,7 +113,7 @@ export async function convidarPessoa(
     ultimaAtividade: null,
     convitePendente: true,
   };
-  equipe.push(novo);
+  equipe = [...equipe, novo];
   return novo;
 }
 
@@ -134,5 +134,5 @@ export async function cancelarConvite(
   await aguardar(500, sinal);
   const indice = equipe.findIndex((m) => m.id === id && m.convitePendente);
   if (indice < 0) throw new Error("Não há convite pendente para cancelar.");
-  equipe.splice(indice, 1);
+  equipe = equipe.filter((_, posicao) => posicao !== indice);
 }
