@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { listarMensagens } from "../services/chat";
+import { enviarMensagem, listarMensagens } from "../services/chat";
 import type { MensagemChat } from "../types/chat";
 import type { EstadoRequisicao } from "../types/comum";
 
@@ -44,4 +44,14 @@ export function useChatCooperativa(
   }, [cooperativaId, chaveRecarga]);
 
   return { dados, carregando, erro };
+}
+
+interface AcoesChat {
+  readonly enviar: typeof enviarMensagem;
+}
+
+const ACOES: AcoesChat = { enviar: enviarMensagem };
+
+export function useAcoesChat(): AcoesChat {
+  return ACOES;
 }

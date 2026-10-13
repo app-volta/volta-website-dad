@@ -3,6 +3,8 @@ import { useSyncExternalStore } from "react";
 import {
   assinarNotificacoes,
   lerNotificacoesLidas,
+  marcarComoLida,
+  marcarTodasComoLidas,
   montarNotificacoes,
 } from "../services/notificacoes";
 import {
@@ -16,4 +18,15 @@ export function useNotificacoes(): readonly Notificacao[] {
   const lidas = useSyncExternalStore(assinarNotificacoes, lerNotificacoesLidas);
   const pendentes = useSyncExternalStore(assinarMudancas, quantidadeAguardando);
   return montarNotificacoes(lidas, pendentes);
+}
+
+interface AcoesNotificacoes {
+  readonly marcarComoLida: (id: string) => void;
+  readonly marcarTodasComoLidas: () => void;
+}
+
+const ACOES: AcoesNotificacoes = { marcarComoLida, marcarTodasComoLidas };
+
+export function useAcoesNotificacoes(): AcoesNotificacoes {
+  return ACOES;
 }

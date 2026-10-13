@@ -1,10 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  marcarComoLida,
-  marcarTodasComoLidas,
-} from "../../services/notificacoes";
+import { useAcoesNotificacoes } from "../../hooks/useNotificacoes";
 import type { Notificacao, TipoNotificacao } from "../../types/notificacao";
 import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
@@ -34,6 +31,7 @@ export function Notificacoes({
   notificacoes,
   aoNavegar,
 }: NotificacoesProps): ReactNode {
+  const { marcarComoLida, marcarTodasComoLidas } = useAcoesNotificacoes();
   const naoLidas = notificacoes.filter((item) => !item.lida).length;
 
   return (

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Alerta } from "../../../components/Alerta";
 import { Icone } from "../../../components/Icone";
 import { ModalAcao } from "../../../components/ModalAcao";
-import type { NovaClassificacao } from "../../../services/ocorrencias";
+import type { NovaClassificacao } from "../../../types/ocorrencia";
 import { MATERIAIS, METADADOS_MATERIAL } from "../../../types/material";
 import type { Material } from "../../../types/material";
 import type {

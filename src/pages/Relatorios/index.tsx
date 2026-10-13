@@ -8,8 +8,7 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
-import { useRelatorio } from "../../hooks/useRelatorio";
-import { gerarPgrs } from "../../services/relatorios";
+import { useAcoesRelatorio, useRelatorio } from "../../hooks/useRelatorio";
 import { PERIODOS_RELATORIO } from "../../types/relatorio";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../../types/relatorio";
 import { baixarCsv } from "../../utils/exportarCsv";
@@ -69,6 +68,7 @@ export default function Relatorios(): ReactNode {
   const { usuario } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
   const { dados, carregando, erro } = useRelatorio(periodo);
+  const acoes = useAcoesRelatorio();
 
   const [gerando, setGerando] = useState<boolean>(false);
   const [ultimo, setUltimo] = useState<ArquivoGerado | null>(null);
@@ -86,7 +86,7 @@ export default function Relatorios(): ReactNode {
     setGerando(true);
     setErroGeracao(null);
     try {
-      const { geradoEm } = await gerarPgrs(relatorio.periodo);
+      const { geradoEm } = await acoes.gerarPgrs(relatorio.periodo);
       const arquivo: ArquivoGerado = {
         nome: `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`,
         conteudo: montarCsvRelatorio(relatorio, {

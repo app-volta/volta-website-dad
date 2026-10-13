@@ -4,10 +4,10 @@ import { METADADOS_MATERIAL } from "../types/material";
 import type {
   AtualizarOcorrencia,
   EventoOcorrencia,
+  NovaClassificacao,
   NovaOcorrencia,
   Ocorrencia,
   PrioridadeOcorrencia,
-  QualidadeMaterial,
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { aguardar } from "./http";
@@ -448,13 +448,6 @@ export async function registrarObservacao(
       texto: `adicionou uma observação · ${texto.trim()}`,
     },
   );
-}
-
-export interface NovaClassificacao {
-  readonly material: Material;
-  readonly qualidade: QualidadeMaterial;
-  readonly prioridade: PrioridadeOcorrencia;
-  readonly perigoso: boolean;
 }
 
 const PRIORIDADE_POR_EXTENSO: Readonly<Record<PrioridadeOcorrencia, string>> = {

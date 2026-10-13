@@ -7,8 +7,10 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
-import { useConfiguracoes } from "../../hooks/useConfiguracoes";
-import { RECUPERADO_NO_MES_KG } from "../../services/configuracoes";
+import {
+  useConfiguracoes,
+  useRecuperadoNoMesKg,
+} from "../../hooks/useConfiguracoes";
 import { CartaoMeta } from "./CartaoMeta";
 import {
   CartaoInsights,
@@ -28,6 +30,7 @@ export default function Configuracoes(): ReactNode {
   const navegar = useNavigate();
   const { usuario, sair, atualizarUsuario } = useAuth();
   const { dados, carregando, erro, atualizar, limparErro } = useConfiguracoes();
+  const recuperadoNoMesKg = useRecuperadoNoMesKg();
 
   const [editandoPerfil, setEditandoPerfil] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -86,7 +89,7 @@ export default function Configuracoes(): ReactNode {
             <CartaoUnidade unidade={dados.unidade} />
             <CartaoMeta
               metaKg={dados.metaRecuperacaoKg}
-              recuperadoKg={RECUPERADO_NO_MES_KG}
+              recuperadoKg={recuperadoNoMesKg}
               aoSalvar={salvarMeta}
             />
           </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { obterOcorrencia } from "../services/ocorrencias";
+import { obterOcorrencia, semelhantesNaSemana } from "../services/ocorrencias";
 import type { EstadoRequisicao } from "../types/comum";
 import type { Ocorrencia } from "../types/ocorrencia";
 
@@ -44,4 +44,9 @@ export function useOcorrencia(
   }, [id, chaveRecarga]);
 
   return { dados, carregando, erro };
+}
+
+/** Quantas ocorrências parecidas a unidade teve na semana; 0 enquanto a ocorrência não chegou. */
+export function useSemelhantesNaSemana(ocorrencia: Ocorrencia | null): number {
+  return ocorrencia ? semelhantesNaSemana(ocorrencia) : 0;
 }

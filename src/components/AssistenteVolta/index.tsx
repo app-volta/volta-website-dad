@@ -1,15 +1,9 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
-import {
-  assinarConversa,
-  iniciarConversa,
-  lerConversa,
-  perguntar,
-  SUGESTOES_ASSISTENTE,
-} from "../../services/assistente";
+import { useAssistente } from "../../hooks/useAssistente";
 import type { MensagemAssistente } from "../../types/assistente";
 import { Icone } from "../Icone";
 import { Mascote } from "../Mascote";
@@ -33,7 +27,13 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
   const entrada = useRef<HTMLInputElement | null>(null);
   const fimDasMensagens = useRef<HTMLDivElement | null>(null);
 
-  const { mensagens, pensando } = useSyncExternalStore(assinarConversa, lerConversa);
+  const {
+    mensagens,
+    pensando,
+    sugestoes,
+    iniciar,
+    perguntar,
+  } = useAssistente();
   const [texto, setTexto] = useState<string>("");
   const primeiroNome = usuario?.nome.split(" ")[0] ?? "";
 
@@ -44,8 +44,8 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
   }, []);
 
   useEffect(() => {
-    void iniciarConversa();
-  }, []);
+    void iniciar();
+  }, [iniciar]);
 
   useEffect(() => {
     function aoTeclar(evento: KeyboardEvent): void {
@@ -180,7 +180,7 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
 
       <div className="assist__rodape">
         <ul className="assist__sugestoes" aria-label="Sugestões de pergunta">
-          {SUGESTOES_ASSISTENTE.map((sugestao) => (
+          {sugestoes.map((sugestao) => (
             <li key={sugestao}>
               <button
                 type="button"

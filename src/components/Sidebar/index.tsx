@@ -1,12 +1,8 @@
-import { useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
-import {
-  assinarMudancas,
-  quantidadeAguardando,
-} from "../../services/ocorrencias";
+import { useAguardandoAprovacao } from "../../hooks/useAguardandoAprovacao";
 import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
 import { LogoVolta } from "../LogoVolta";
@@ -118,10 +114,7 @@ interface SidebarProps {
 
 export function Sidebar({ aoAbrirAssistente }: SidebarProps): ReactNode {
   const { usuario } = useAuth();
-  const aguardando = useSyncExternalStore(
-    assinarMudancas,
-    quantidadeAguardando,
-  );
+  const aguardando = useAguardandoAprovacao();
   const papelChip = usuario ? CHIP_PAPEL[usuario.papel] : "GESTOR";
 
   return (

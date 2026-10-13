@@ -9,17 +9,17 @@ import type { NomeIcone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
-import { useOcorrencia } from "../../hooks/useOcorrencia";
+import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import {
-  alterarClassificacao,
-  aprovarOcorrencia,
-  encaminharOcorrencia,
-  recusarOcorrencia,
-  registrarObservacao,
-} from "../../services/ocorrencias";
-import type { NovaClassificacao } from "../../services/ocorrencias";
+  useOcorrencia,
+  useSemelhantesNaSemana,
+} from "../../hooks/useOcorrencia";
 import { METADADOS_MATERIAL } from "../../types/material";
-import type { Ocorrencia, TipoEvento } from "../../types/ocorrencia";
+import type {
+  NovaClassificacao,
+  Ocorrencia,
+  TipoEvento,
+} from "../../types/ocorrencia";
 import {
   contaminacao,
   recomendacaoVolta,
@@ -99,6 +99,8 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const { usuario } = useAuth();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
+  const acoes = useAcoesOcorrencia();
+  const semelhantes = useSemelhantesNaSemana(dados);
   const [modal, setModal] = useState<ModalAtivo>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
@@ -162,7 +164,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function aprovar(): void {
     void executar(
-      () => aprovarOcorrencia(ocorrencia.id, autor),
+      () => acoes.aprovar(ocorrencia.id, autor),
       () => setModal("sucesso"),
       "Falha ao aprovar.",
     );
@@ -170,7 +172,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function classificar(nova: NovaClassificacao): void {
     void executar(
-      () => alterarClassificacao(ocorrencia.id, nova, autor),
+      () => acoes.reclassificar(ocorrencia.id, nova, autor),
       () => {
         setModal(null);
         setAviso({
@@ -184,7 +186,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function encaminhar(setor: string, mensagem: string): void {
     void executar(
-      () => encaminharOcorrencia(ocorrencia.id, setor, mensagem, autor),
+      () => acoes.encaminhar(ocorrencia.id, setor, mensagem, autor),
       () => {
         setModal(null);
         setAviso({
@@ -198,7 +200,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function observar(texto: string): void {
     void executar(
-      () => registrarObservacao(ocorrencia.id, texto, autor),
+      () => acoes.observar(ocorrencia.id, texto, autor),
       () => {
         setModal(null);
         setAviso({
@@ -212,7 +214,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function recusar(motivo: string): void {
     void executar(
-      () => recusarOcorrencia(ocorrencia.id, motivo, autor),
+      () => acoes.recusar(ocorrencia.id, motivo, autor),
       () => {
         setModal(null);
         setAviso({
@@ -507,7 +509,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <Icone nome="brilho" tamanho={14} /> VOLTA recomenda
               </p>
               <p className="detalhe__recomenda-texto">
-                {recomendacaoVolta(ocorrencia)}
+                {recomendacaoVolta(ocorrencia, semelhantes)}
               </p>
             </div>
           </section>

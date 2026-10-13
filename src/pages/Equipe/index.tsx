@@ -7,12 +7,7 @@ import type { CartaoResumo } from "../../components/CartoesResumo";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
-import { useEquipe } from "../../hooks/useEquipe";
-import {
-  cancelarConvite,
-  convidarPessoa,
-  reenviarConvite,
-} from "../../services/equipe";
+import { useAcoesEquipe, useEquipe } from "../../hooks/useEquipe";
 import type { MembroEquipe, NovoConvite } from "../../types/equipe";
 import {
   resumirEquipe,
@@ -60,6 +55,7 @@ function montarCartoes(resumo: ResumoEquipe): readonly CartaoResumo[] {
 export default function Equipe(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useEquipe(chaveRecarga);
+  const acoes = useAcoesEquipe();
 
   const [busca, setBusca] = useState<string>("");
   const [convidando, setConvidando] = useState<boolean>(false);
@@ -84,7 +80,7 @@ export default function Equipe(): ReactNode {
     setSalvando(true);
     setErroConvite(null);
     try {
-      const novo = await convidarPessoa(convite);
+      const novo = await acoes.convidar(convite);
       setChaveRecarga((chave) => chave + 1);
       setBusca("");
       setConvidando(false);
@@ -104,7 +100,7 @@ export default function Equipe(): ReactNode {
   async function reenviar(membro: MembroEquipe): Promise<void> {
     setErroAcao(null);
     try {
-      await reenviarConvite(membro.id);
+      await acoes.reenviar(membro.id);
       setAviso({
         titulo: "Convite reenviado",
         descricao: `Enviamos de novo para ${membro.email}.`,
@@ -119,7 +115,7 @@ export default function Equipe(): ReactNode {
   async function cancelar(membro: MembroEquipe): Promise<void> {
     setErroAcao(null);
     try {
-      await cancelarConvite(membro.id);
+      await acoes.cancelar(membro.id);
       setChaveRecarga((chave) => chave + 1);
       setAviso({
         titulo: "Convite cancelado",

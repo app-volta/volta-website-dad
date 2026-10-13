@@ -1,4 +1,3 @@
-import { semelhantesNaSemana } from "../services/ocorrencias";
 import type { Ocorrencia } from "../types/ocorrencia";
 
 export function contaminacao(confianca: number): string {
@@ -42,8 +41,10 @@ export function relatorioAutomatico(ocorrencia: Ocorrencia): string {
   }
 }
 
-export function recomendacaoVolta(ocorrencia: Ocorrencia): string {
-  const semelhantes = semelhantesNaSemana(ocorrencia);
+export function recomendacaoVolta(
+  ocorrencia: Ocorrencia,
+  semelhantes: number,
+): string {
   if (semelhantes >= 2) {
     return `Esse é o ${semelhantes}º ${ocorrencia.titulo.toLowerCase()} do ${ocorrencia.localizacao.setor} na semana. Vale uma ação preventiva no setor.`;
   }
