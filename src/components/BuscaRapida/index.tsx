@@ -10,12 +10,13 @@ import "./styles.css";
 
 interface BuscaRapidaProps {
   readonly aoFechar: () => void;
+  readonly id?: string;
 }
 
 const BASE_VAZIA: BaseBusca = { ocorrencias: [], cooperativas: [] };
 
 /** Paleta de busca (Ctrl K): ocorrências, cooperativas e páginas, só pelo teclado se quiser. */
-export function BuscaRapida({ aoFechar }: BuscaRapidaProps): ReactNode {
+export function BuscaRapida({ aoFechar, id }: BuscaRapidaProps): ReactNode {
   const navegar = useNavigate();
   const idEntrada = useId();
   const idLista = useId();
@@ -68,13 +69,16 @@ export function BuscaRapida({ aoFechar }: BuscaRapidaProps): ReactNode {
   }
 
   return (
-    <div
-      className="busca__fundo"
-      onMouseDown={(evento) => {
-        if (evento.target === evento.currentTarget) aoFechar();
-      }}
-    >
+    <div className="busca__fundo">
+      <button
+        type="button"
+        className="busca__fundo-fechar"
+        onClick={aoFechar}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div
+        id={id}
         className="busca"
         role="dialog"
         aria-modal="true"

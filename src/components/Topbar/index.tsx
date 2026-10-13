@@ -15,6 +15,10 @@ interface TopbarProps {
   readonly comBusca?: boolean;
   readonly aoAbrirAssistente?: () => void;
   readonly aoAbrirBusca?: () => void;
+  readonly assistenteAberto?: boolean;
+  readonly idAssistente?: string;
+  readonly buscaAberta?: boolean;
+  readonly idBusca?: string;
 }
 
 export function Topbar({
@@ -24,6 +28,10 @@ export function Topbar({
   comBusca = true,
   aoAbrirAssistente,
   aoAbrirBusca,
+  assistenteAberto = false,
+  idAssistente,
+  buscaAberta = false,
+  idBusca,
 }: TopbarProps): ReactNode {
   const idNotificacoes = useId();
   const areaSino = useRef<HTMLDivElement | null>(null);
@@ -69,6 +77,9 @@ export function Topbar({
           className="topbar__busca"
           aria-label="Buscar na plataforma"
           aria-keyshortcuts="Control+K"
+          aria-haspopup="dialog"
+          aria-expanded={buscaAberta}
+          aria-controls={buscaAberta ? idBusca : undefined}
           onClick={aoAbrirBusca}
         >
           <span className="topbar__busca-lupa" aria-hidden="true">
@@ -88,6 +99,9 @@ export function Topbar({
           type="button"
           className="topbar__assistente"
           aria-label="Abrir assistente VOLTA"
+          aria-haspopup="dialog"
+          aria-expanded={assistenteAberto}
+          aria-controls={assistenteAberto ? idAssistente : undefined}
           onClick={aoAbrirAssistente}
         >
           <Mascote tamanho={18} altura={28} rotulo="" />

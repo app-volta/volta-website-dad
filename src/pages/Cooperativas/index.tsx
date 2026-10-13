@@ -115,6 +115,7 @@ export default function Cooperativas(): ReactNode {
             <button
               type="button"
               className="coops__botao coops__botao--primario coops__botao--topo"
+              aria-haspopup="dialog"
               onClick={abrirCadastro}
             >
               <Icone nome="mais" tamanho={14} />

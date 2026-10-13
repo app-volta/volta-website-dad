@@ -329,11 +329,10 @@ export default function Home(): ReactNode {
             <h2 id="titulo-recuperacao" className="home-painel__titulo">
               Recuperação semanal
             </h2>
-            <div className="home-toggle" role="tablist" aria-label="Período">
+            <div className="home-toggle" role="group" aria-label="Período">
               <button
                 type="button"
-                role="tab"
-                aria-selected={janela === "semanas"}
+                aria-pressed={janela === "semanas"}
                 className={
                   janela === "semanas"
                     ? "home-toggle__opcao home-toggle__opcao--ativa"
@@ -345,8 +344,7 @@ export default function Home(): ReactNode {
               </button>
               <button
                 type="button"
-                role="tab"
-                aria-selected={janela === "trimestre"}
+                aria-pressed={janela === "trimestre"}
                 className={
                   janela === "trimestre"
                     ? "home-toggle__opcao home-toggle__opcao--ativa"

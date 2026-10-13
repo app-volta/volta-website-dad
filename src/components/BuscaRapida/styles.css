@@ -10,7 +10,17 @@
   animation: busca-fundo 0.14s ease;
 }
 
+.busca__fundo-fechar {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .busca {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 626px;

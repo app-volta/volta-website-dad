@@ -11,6 +11,11 @@
   box-shadow: 0 24px 60px rgba(5, 43, 26, 0.22);
 }
 
+/* O painel recebe o foco ao abrir; ele mantém a sombra em vez do anel de foco. */
+.notif:focus-visible {
+  box-shadow: 0 24px 60px rgba(5, 43, 26, 0.22);
+}
+
 .notif__cabecalho {
   display: flex;
   align-items: center;
