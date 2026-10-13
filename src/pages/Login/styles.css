@@ -2,6 +2,16 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 738fr) minmax(0, 702fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.login-tela > .painel-acesso {
+  grid-row: 1 / span 2;
+}
+
+.login-tela__rodape {
+  grid-column: 2;
+  background: #f4f7f5;
 }
 
 .login-tela__form-lado {
@@ -219,5 +229,8 @@
   }
   .painel-acesso {
     display: none;
+  }
+  .login-tela__rodape {
+    grid-column: 1;
   }
 }

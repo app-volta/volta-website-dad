@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import { AssistenteVolta } from "../AssistenteVolta";
 import { BuscaRapida } from "../BuscaRapida";
+import { Rodape } from "../Rodape";
 import { Sidebar } from "../Sidebar";
 import { Topbar } from "../Topbar";
 import "./styles.css";
@@ -24,6 +25,8 @@ export function AppLayout({
 }: AppLayoutProps): ReactNode {
   const [assistenteAberto, setAssistenteAberto] = useState<boolean>(false);
   const [buscaAberta, setBuscaAberta] = useState<boolean>(false);
+  const idAssistente = useId();
+  const idBusca = useId();
 
   useEffect(() => {
     if (!comBusca) return;
@@ -41,7 +44,11 @@ export function AppLayout({
 
   return (
     <div className="app-shell">
-      <Sidebar aoAbrirAssistente={() => setAssistenteAberto(true)} />
+      <Sidebar
+        aoAbrirAssistente={() => setAssistenteAberto(true)}
+        assistenteAberto={assistenteAberto}
+        idAssistente={idAssistente}
+      />
       <div className="app-body">
         <Topbar
           titulo={titulo}
@@ -50,16 +57,26 @@ export function AppLayout({
           comBusca={comBusca}
           aoAbrirAssistente={() => setAssistenteAberto(true)}
           aoAbrirBusca={() => setBuscaAberta(true)}
+          assistenteAberto={assistenteAberto}
+          idAssistente={idAssistente}
+          buscaAberta={buscaAberta}
+          idBusca={idBusca}
         />
         <main id="conteudo" className="app-main" tabIndex={-1}>
           {children}
         </main>
+        <Rodape />
       </div>
 
       {assistenteAberto ? (
-        <AssistenteVolta aoFechar={() => setAssistenteAberto(false)} />
+        <AssistenteVolta
+          id={idAssistente}
+          aoFechar={() => setAssistenteAberto(false)}
+        />
       ) : null}
-      {buscaAberta ? <BuscaRapida aoFechar={() => setBuscaAberta(false)} /> : null}
+      {buscaAberta ? (
+        <BuscaRapida id={idBusca} aoFechar={() => setBuscaAberta(false)} />
+      ) : null}
     </div>
   );
 }

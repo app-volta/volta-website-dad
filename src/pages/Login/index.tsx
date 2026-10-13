@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
+import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
 import { combinar, validarEmail, validarSenha } from "../../utils/validadores";
 import "./styles.css";
@@ -163,6 +164,7 @@ export default function Login(): ReactNode {
           </p>
         </div>
       </main>
+      <Rodape className="login-tela__rodape" />
     </div>
   );
 }
