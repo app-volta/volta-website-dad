@@ -29,7 +29,12 @@ export function CartaoPerfil({
         <h2 className="cfg__perfil-nome">{nome}</h2>
         <p className="cfg__perfil-papel">{papel}</p>
       </div>
-      <button type="button" className="cfg__botao-contorno" onClick={aoEditar}>
+      <button
+        type="button"
+        className="cfg__botao-contorno"
+        aria-haspopup="dialog"
+        onClick={aoEditar}
+      >
         <Icone nome="editar" tamanho={14} />
         Editar
       </button>

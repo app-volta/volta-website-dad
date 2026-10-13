@@ -175,6 +175,7 @@ export default function Equipe(): ReactNode {
             <button
               type="button"
               className="eq__botao-principal"
+              aria-haspopup="dialog"
               onClick={abrirConvite}
             >
               <Icone nome="mais" tamanho={14} />

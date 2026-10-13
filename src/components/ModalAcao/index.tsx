@@ -124,7 +124,7 @@ export function ModalAcao({
         </div>
 
         {children ? <div className="modal-acao__corpo">{children}</div> : null}
-        {rodape ? <footer className="modal-acao__rodape">{rodape}</footer> : null}
+        {rodape ? <div className="modal-acao__rodape">{rodape}</div> : null}
       </div>
     </div>
   );

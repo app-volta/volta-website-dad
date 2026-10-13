@@ -405,6 +405,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__acao"
+                  aria-haspopup="dialog"
                   onClick={() => abrir("classificar")}
                 >
                   <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
@@ -423,6 +424,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__acao"
+                  aria-haspopup="dialog"
                   onClick={() => abrir("encaminhar")}
                 >
                   <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
@@ -441,6 +443,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__acao"
+                  aria-haspopup="dialog"
                   onClick={() => abrir("observacao")}
                 >
                   <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
@@ -479,6 +482,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__aprovar"
+                  aria-haspopup="dialog"
                   onClick={() => abrir("aprovar")}
                 >
                   <Icone nome="check" tamanho={16} />
@@ -487,6 +491,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 <button
                   type="button"
                   className="detalhe__recusar"
+                  aria-haspopup="dialog"
                   onClick={() => abrir("recusar")}
                 >
                   <Icone nome="fechar" tamanho={15} />

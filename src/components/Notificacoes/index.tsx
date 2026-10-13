@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
@@ -33,9 +34,21 @@ export function Notificacoes({
 }: NotificacoesProps): ReactNode {
   const { marcarComoLida, marcarTodasComoLidas } = useAcoesNotificacoes();
   const naoLidas = notificacoes.filter((item) => !item.lida).length;
+  const painel = useRef<HTMLDivElement | null>(null);
+
+  // Ao abrir, o foco vai para o painel; Esc devolve ao sino (quem abre cuida disso).
+  useEffect(() => {
+    painel.current?.focus();
+  }, []);
 
   return (
-    <div className="notif" role="dialog" aria-label="Notificações">
+    <div
+      ref={painel}
+      className="notif"
+      role="dialog"
+      aria-label="Notificações"
+      tabIndex={-1}
+    >
       <div className="notif__cabecalho">
         <h2 className="notif__titulo">Notificações</h2>
         <button

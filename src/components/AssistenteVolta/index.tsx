@@ -12,6 +12,7 @@ import "./styles.css";
 
 interface AssistenteVoltaProps {
   readonly aoFechar: () => void;
+  readonly id?: string;
 }
 
 function Texto({ mensagem }: { readonly mensagem: MensagemAssistente }): ReactNode {
@@ -19,7 +20,7 @@ function Texto({ mensagem }: { readonly mensagem: MensagemAssistente }): ReactNo
 }
 
 /** Painel lateral de conversa com o assistente; a conversa dura até recarregar a página. */
-export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
+export function AssistenteVolta({ aoFechar, id }: AssistenteVoltaProps): ReactNode {
   const navegar = useNavigate();
   const { usuario } = useAuth();
   const idTitulo = useId();
@@ -74,6 +75,7 @@ export function AssistenteVolta({ aoFechar }: AssistenteVoltaProps): ReactNode {
 
   return (
     <div
+      id={id}
       ref={painel}
       className="assist"
       role="dialog"

@@ -110,9 +110,15 @@ function SetasDeFundo(): ReactNode {
 
 interface SidebarProps {
   readonly aoAbrirAssistente?: () => void;
+  readonly assistenteAberto?: boolean;
+  readonly idAssistente?: string;
 }
 
-export function Sidebar({ aoAbrirAssistente }: SidebarProps): ReactNode {
+export function Sidebar({
+  aoAbrirAssistente,
+  assistenteAberto = false,
+  idAssistente,
+}: SidebarProps): ReactNode {
   const { usuario } = useAuth();
   const aguardando = useAguardandoAprovacao();
   const papelChip = usuario ? CHIP_PAPEL[usuario.papel] : "GESTOR";
@@ -178,6 +184,9 @@ export function Sidebar({ aoAbrirAssistente }: SidebarProps): ReactNode {
           <button
             type="button"
             className="sidebar__ajuda-botao"
+            aria-haspopup="dialog"
+            aria-expanded={assistenteAberto}
+            aria-controls={assistenteAberto ? idAssistente : undefined}
             onClick={aoAbrirAssistente}
           >
             <Icone nome="brilho" tamanho={13} />

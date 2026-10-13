@@ -17,10 +17,13 @@ auditoria quanto como referência para revisores de PR.
 
 ### 1.3.1 Informações e relações
 - Landmarks do shell V2: `<aside aria-label="Navegação principal">` com
-  `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar) e
-  `<main id="conteudo">`. Diálogos e gavetas usam `<div role="dialog">` e não
-  declaram `<header>`/`<aside>`, para não virarem um segundo banner nem um
-  complementar dentro de outro ponto de referência.
+  `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar),
+  `<main id="conteudo">` e `<footer>` (componente `Rodape`, fora do `<main>`
+  para valer como landmark de informações do site). Login, cadastro e 404
+  também têm `<main>` e `<footer>`. Diálogos e gavetas usam
+  `<div role="dialog">` e não declaram `<header>`, `<footer>` nem `<aside>`,
+  para não virarem um segundo banner, um segundo rodapé nem um complementar
+  dentro de outro ponto de referência.
 - Hierarquia de títulos: o `h1` é o título da Topbar; cada cartão ou seção da
   página usa `h2` e subseções usam `h3`, sem pular nível.
 - Listas dinâmicas usam `<ul>`/`<ol>` com `key` do id do dado — nunca
@@ -105,6 +108,16 @@ calculado no pior ponto do gradiente.
 - Busca rápida: padrão combobox com `aria-activedescendant`; notificações e
   assistente abrem como `role="dialog"` e devolvem o foco ao botão que abriu.
 - Barra de progresso da meta: `role="progressbar"` com `aria-label`.
+- Quem abre um diálogo declara `aria-haspopup="dialog"`: assistente, busca
+  rápida, notificações, modais de ação do detalhe, convite, cadastro de
+  cooperativa e edição de perfil. Os que ficam abertos ao lado do gatilho
+  (assistente, busca e notificações) também refletem `aria-expanded` e
+  `aria-controls`, que só aponta para o painel enquanto ele existe.
+- Controles segmentados (período do gráfico da Início, período do relatório,
+  filtros) são grupos de botões com `aria-pressed`. `role="tab"` fica
+  reservado para abas que controlam um painel.
+- Painel de notificações: o foco vai para o painel ao abrir e Esc devolve o
+  foco ao sino.
 - Estados dinâmicos comunicados via `role="status"` + `aria-live="polite"`
   (Spinner, SkeletonList, alerta de sucesso) e `role="alert"` para erros.
 
@@ -128,12 +141,10 @@ botões param de animar para pessoas com sensibilidade a movimento.
 
 ## Como validar manualmente
 
-1. **Teclado apenas**: Tab pela home, entre em /registrar, complete o fluxo
-   inteiro sem tocar no mouse. Ao chegar em um Modal, ESC fecha; foco volta
-   para o botão que abriu.
-2. **Leitor de tela**: NVDA (Windows) ou VoiceOver (macOS). Anúncios
-   esperados: skip-link no início, contagens dos filtros ("Todas, 4 itens"),
-   alertas de erro imediatos, título do modal ao abrir.
+1. **Teclado apenas**: veja "Teste só com teclado" abaixo; é o mesmo percurso,
+   automatizado com eventos de teclado reais do Chrome.
+2. **Leitor de tela**: NVDA (Windows) ou VoiceOver (macOS), seguindo o roteiro
+   abaixo.
 3. **Contraste e estrutura automáticos**: axe-core 4.10 nas regras WCAG 2.0 e
    2.1 níveis A e AA mais as boas práticas.
 
@@ -144,6 +155,49 @@ registrar, ocorrências (lista e gaveta), detalhe e seus cinco modais,
 cooperativas (lista e cadastro), chat, relatórios, equipe (lista, convite e
 menu), configurações (visão e edição de perfil), perfil, 404, login, cadastro,
 notificações, assistente, busca rápida e as versões de 390px.
-Resultado: nenhuma violação. Ficam apenas os itens "para revisar" que a
-ferramenta não consegue decidir sozinha (texto sobre gradiente ou imagem),
-conferidos manualmente na tabela de contraste acima.
+Resultado: nenhuma violação, inclusive com o `<footer>` em todas as páginas.
+Ficam apenas os itens "para revisar" que a ferramenta não consegue decidir
+sozinha (texto sobre gradiente ou imagem), conferidos manualmente na tabela de
+contraste acima.
+
+## Teste só com teclado (13/10/2026)
+
+Percurso com eventos de teclado reais (`Input.dispatchKeyEvent` do Chrome),
+sem mouse e sem simular o foco por script, a 1440px:
+
+| Fluxo | Resultado |
+|---|---|
+| Login: Tab até o e-mail, digitar, Tab, senha, Enter | Entra e chega em `/` |
+| Skip-link: primeiro Tab da página, depois Enter | Foco no `<main id="conteudo">` |
+| Início: 30 paradas de Tab | Todas com indicador de foco visível |
+| Notificações: Enter no sino, Esc | Foco vai ao painel; Esc fecha e devolve o foco ao sino |
+| Busca rápida: Ctrl K, digitar, seta, Enter | Foco no campo; navega para o resultado e fecha |
+| Assistente: Enter no botão, Esc | Foco no campo; `aria-expanded` verdadeiro; Esc devolve o foco ao botão |
+| Modal de aprovação: Enter, 14 Tab e 4 Shift+Tab, Esc | Foco nunca sai do modal; Esc fecha e devolve o foco ao botão de origem |
+| Gaveta de ocorrência: Enter no título, 14 Tab, Esc | Foco nunca sai da gaveta; Esc fecha e devolve o foco ao título |
+| Menu de ações da Equipe: Enter, seta, Esc | Foco no primeiro item; seta troca de item; Esc fecha e devolve o foco |
+
+Cada página interna tem exatamente um `banner`, um `main`, um `footer` e um
+`h1`; Ocorrências tem duas `nav` (menu e paginação, ambas com nome).
+
+## Roteiro com leitor de tela (a executar)
+
+Ainda **não foi executado** com NVDA nem VoiceOver; o resultado deve ser
+registrado aqui, com data e versão do leitor. Para cada fluxo, ligar o leitor,
+usar só o teclado e conferir o que é anunciado:
+
+1. **Login**: ao carregar, o título "Bem-vindo de volta" é lido; cada campo
+   anuncia seu rótulo; erro de e-mail ou senha é lido na hora (`role="alert"`).
+2. **Início**: "Pular para o conteúdo principal" é o primeiro item; a região
+   principal e o rodapé são anunciados pelos landmarks; a barra de meta lê
+   "Progresso da meta de recuperação do mês" com o valor.
+3. **Aprovar uma ocorrência**: abrir o detalhe, acionar "Aprovar"; o diálogo
+   anuncia o título e que é um diálogo; Esc volta ao botão.
+4. **Registrar ocorrência**: foto, setor, prioridade ("pressionado") e o
+   interruptor de aviso; a análise da IA aparece como status.
+5. **Equipe**: convidar pessoa; o menu de ações anuncia "menu" e itens.
+6. **Busca rápida e assistente**: combobox com a lista de resultados e o item
+   ativo lido; o assistente lê cada resposta nova.
+
+Critério de aceite: nenhum fluxo perde o contexto nem prende o foco, e o foco
+volta ao elemento de origem ao fechar qualquer painel.
