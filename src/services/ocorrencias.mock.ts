@@ -222,6 +222,22 @@ function notificar(): void {
   for (const ouvinte of ouvintes) ouvinte();
 }
 
+/** O mock já nasce carregado; existe para manter a mesma interface da API. */
+export function garantirCarregado(): void {}
+
+const SETORES: readonly string[] = [
+  "Frigorífico — Setor B2",
+  "Embalagens B",
+  "Caldeira",
+  "Pátio Norte",
+  "Laboratório",
+  "Expedição",
+];
+
+export function listarSetores(): Promise<readonly string[]> {
+  return Promise.resolve(SETORES);
+}
+
 function aguardaAprovacao(status: StatusOcorrencia): boolean {
   return status === "classificada" || status === "aguardando_classificacao";
 }

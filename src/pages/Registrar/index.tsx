@@ -1,4 +1,4 @@
-import { useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useSetores } from "../../hooks/useSetores";
 import { METADADOS_MATERIAL } from "../../types/material";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { formatarConfianca } from "../../utils/formatacao";
@@ -33,14 +34,7 @@ const PRIORIDADES: readonly {
   { valor: "baixa", rotulo: "Baixa" },
 ];
 
-const SETORES: readonly string[] = [
-  "Frigorífico — Setor B2",
-  "Embalagens B",
-  "Caldeira",
-  "Pátio Norte",
-  "Laboratório",
-  "Expedição",
-];
+const SEM_SETORES: readonly string[] = [];
 
 function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
   const leitor = new FileReader();
@@ -53,12 +47,23 @@ function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
 export default function Registrar(): ReactNode {
   const { usuario } = useAuth();
   const acoes = useAcoesOcorrencia();
+  const { dados: setoresCarregados, erro: erroSetores } = useSetores();
+  const setores = setoresCarregados ?? SEM_SETORES;
   const navegar = useNavigate();
   const [estado, despachar] = useReducer(
     redutor,
     usuario?.unidade ?? "Frigorífico — Setor B2",
     estadoInicial,
   );
+  const setorInicial = useRef<string>(estado.setor);
+
+  // O setor sugerido no início pode não existir na empresa; troca pelo primeiro cadastrado.
+  useEffect(() => {
+    if (setores.length === 0) return;
+    if (estado.setor === setorInicial.current && !setores.includes(estado.setor)) {
+      despachar({ tipo: "definir_setor", setor: setores[0] });
+    }
+  }, [setores, estado.setor]);
   const [arrastando, setArrastando] = useState<boolean>(false);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
   const inputCamera = useRef<HTMLInputElement | null>(null);
@@ -207,6 +212,11 @@ export default function Registrar(): ReactNode {
         {concluida ? "Análise concluída." : null}
       </p>
 
+      {erroSetores ? (
+        <Alerta variante="erro" titulo="Não foi possível carregar os setores">
+          {erroSetores}
+        </Alerta>
+      ) : null}
       {estado.erroEnvio ? (
         <Alerta variante="erro" titulo="Falha na análise">
           {estado.erroEnvio}
@@ -359,10 +369,10 @@ export default function Registrar(): ReactNode {
                     despachar({ tipo: "definir_setor", setor: e.target.value })
                   }
                 >
-                  {SETORES.includes(estado.setor) ? null : (
+                  {setores.includes(estado.setor) ? null : (
                     <option value={estado.setor}>{estado.setor}</option>
                   )}
-                  {SETORES.map((s) => (
+                  {setores.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
