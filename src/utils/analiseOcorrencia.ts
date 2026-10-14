@@ -1,15 +1,36 @@
+import type {
+  ClassificacaoIA,
+  NivelContaminacao,
+} from "../types/classificacao";
 import type { Ocorrencia } from "../types/ocorrencia";
 
-export function contaminacao(confianca: number): string {
-  if (confianca >= 0.85) return "Baixa";
-  if (confianca >= 0.75) return "Média";
-  return "Alta";
+function nivelPorConfianca(confianca: number | null): NivelContaminacao | null {
+  if (confianca === null) return null;
+  if (confianca >= 0.85) return "baixa";
+  if (confianca >= 0.75) return "media";
+  return "alta";
+}
+
+const ROTULO_CONTAMINACAO: Readonly<Record<NivelContaminacao, string>> = {
+  baixa: "Baixa",
+  media: "Média",
+  alta: "Alta",
+};
+
+/** Nível informado pela IA; se não veio, deduz da confiança. "—" sem nenhum dos dois. */
+export function contaminacao(classificacao: ClassificacaoIA | null): string {
+  const nivel =
+    classificacao?.contaminacao ??
+    nivelPorConfianca(classificacao?.confianca ?? null);
+  return nivel ? ROTULO_CONTAMINACAO[nivel] : "—";
 }
 
 export function relatorioAutomatico(ocorrencia: Ocorrencia): string {
   const prefixo = ocorrencia.perigoso
     ? "Resíduo perigoso (Classe I da NBR 10004): exige destinação especial e registro no PGRS. "
     : "";
+  const textoDaIa = ocorrencia.classificacao?.relatorio?.trim();
+  if (textoDaIa) return prefixo + textoDaIa;
   switch (ocorrencia.material) {
     case "papelao":
       return (

@@ -22,6 +22,16 @@ export function formatarPorcentagem(razao: number): string {
   return `${Math.round(razao * 100)}%`;
 }
 
+/** Confiança da IA; "—" quando a fonte não informa (a volta-api não envia). */
+export function formatarConfianca(confianca: number | null): string {
+  return confianca === null ? "—" : formatarPorcentagem(confianca);
+}
+
+/** Peso estimado em kg; "—" enquanto ninguém informou. */
+export function formatarPeso(kg: number): string {
+  return kg > 0 ? `≈ ${kg} kg` : "—";
+}
+
 /** Distância com vírgula decimal, como no layout: "2,4 km". */
 export function formatarKm(km: number): string {
   return `${km.toLocaleString("pt-BR", {

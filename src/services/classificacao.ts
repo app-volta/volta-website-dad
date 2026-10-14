@@ -1,4 +1,4 @@
-import type { ClassificacaoIA } from "../types/classificacao";
+import type { ClassificacaoCompleta } from "../types/classificacao";
 import type { Material } from "../types/material";
 import { MATERIAIS } from "../types/material";
 import { aguardar } from "./http";
@@ -39,7 +39,7 @@ function escolherMaterialDeterministico(pistaFoto: string): Material {
 export async function classificarFoto(
   fotoBase64: string,
   sinal?: AbortSignal,
-): Promise<ClassificacaoIA> {
+): Promise<ClassificacaoCompleta> {
   await aguardar(1600, sinal);
   if (!fotoBase64) {
     throw new Error("É preciso fornecer uma foto para classificar.");

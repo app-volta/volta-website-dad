@@ -10,7 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { METADADOS_MATERIAL } from "../../types/material";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
-import { formatarPorcentagem } from "../../utils/formatacao";
+import { formatarConfianca } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
@@ -156,10 +156,9 @@ export default function Registrar(): ReactNode {
   const passo = estado.etapa === "detalhes" ? 1 : 2;
   const rotuloPrioridade =
     PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
-  const confiancaPct = estado.classificacao
-    ? Math.round(estado.classificacao.confianca * 100)
-    : 0;
-  const materialRotulo = estado.classificacao
+  const confianca = estado.classificacao?.confianca ?? null;
+  const confiancaPct = Math.round((confianca ?? 0) * 100);
+  const materialRotulo = estado.classificacao?.material
     ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
     : "";
 
@@ -253,7 +252,7 @@ export default function Registrar(): ReactNode {
                 <Icone nome="galeria" tamanho={15} />
                 Trocar
               </button>
-              {concluida && estado.classificacao
+              {concluida && estado.classificacao && confianca !== null
                 ? DETECCOES.map((d) => (
                     <span
                       key={`${d.esquerda}-${d.topo}`}
@@ -515,11 +514,11 @@ export default function Registrar(): ReactNode {
                   <span>Confiança da IA</span>
                   <div className="registrar__confianca-barra">
                     <span
-                      style={{ width: `${estado.classificacao.confianca * 100}%` }}
+                      style={{ width: `${(confianca ?? 0) * 100}%` }}
                     />
                   </div>
                   <strong>
-                    {formatarPorcentagem(estado.classificacao.confianca)}
+                    {formatarConfianca(confianca)}
                   </strong>
                 </div>
 
