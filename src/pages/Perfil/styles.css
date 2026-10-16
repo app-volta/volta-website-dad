@@ -56,6 +56,25 @@
   background: var(--verde-suave);
 }
 
+/* Em 320 px o botão desce para a linha de baixo, sem estourar a largura. */
+@media (max-width: 560px) {
+  .perfil__cartao {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px 16px;
+    padding: 16px;
+  }
+
+  .perfil__editar {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .perfil__nome {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+}
+
 .perfil__secao-titulo {
   margin: 0 0 12px;
   font-size: 1rem;
