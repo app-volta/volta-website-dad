@@ -279,11 +279,11 @@
 .registrar__select {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 49px;
-  padding: 0 18px;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
   border: 0.8px solid var(--reg-borda);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
   color: var(--reg-mudo);
 }
@@ -295,7 +295,7 @@
   background: transparent;
   color: var(--reg-texto);
   font: inherit;
-  font-size: 14.5px;
+  font-size: 15.5px;
   appearance: none;
 }
 
