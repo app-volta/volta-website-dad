@@ -27,9 +27,14 @@ export function formatarConfianca(confianca: number | null): string {
   return confianca === null ? "—" : formatarPorcentagem(confianca);
 }
 
-/** Peso estimado em kg; "—" enquanto ninguém informou. */
-export function formatarPeso(kg: number): string {
-  return kg > 0 ? `≈ ${kg} kg` : "—";
+/**
+ * Peso estimado em kg; "—" enquanto ninguém informou. Usa espaço sem quebra
+ * para o valor não se partir em duas linhas numa coluna estreita. A versão
+ * compacta (lista) não tem espaço depois do "≈", como no layout.
+ */
+export function formatarPeso(kg: number, compacto = false): string {
+  if (kg <= 0) return "—";
+  return compacto ? `≈${kg}\u00A0kg` : `≈\u00A0${kg}\u00A0kg`;
 }
 
 /** Distância com vírgula decimal, como no layout: "2,4 km". */

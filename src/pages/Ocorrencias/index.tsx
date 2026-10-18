@@ -355,7 +355,7 @@ export default function Ocorrencias(): ReactNode {
                         </td>
                         <td>{o.localizacao.setor}</td>
                         <td>
-                          <strong>{formatarPeso(o.pesoKg)}</strong>
+                          <strong>{formatarPeso(o.pesoKg, true)}</strong>
                         </td>
                         <td>
                           <span className="ocorrencias__confianca">
