@@ -18,6 +18,14 @@ const BASE_URL: string = (
 ).replace(/\/+$/, "");
 
 /**
+ * Base do chatbot. Também passa por proxy: o navegador chama /chat-api e o
+ * proxy (Vite ou vercel.json) repassa ao serviço.
+ */
+export const BASE_CHATBOT: string = (
+  (import.meta.env.VITE_CHAT_API_BASE_URL as string | undefined) ?? "/chat-api"
+).replace(/\/+$/, "");
+
+/**
  * Os mocks locais ficam ligados por padrão: o app roda sem backend, no CI e no
  * Docker. A API real só entra com VITE_USAR_MOCKS=false.
  */
@@ -84,11 +92,20 @@ export interface OpcoesRequisicao {
   readonly metodo?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** `null` envia sem token (login). Omitido, usa o token da sessão atual. */
   readonly token?: string | null;
+  /** Base da chamada. Omitida, usa a da volta-api. */
+  readonly base?: string;
+  /** Tempo limite desta chamada. Omitido, 20 s. */
+  readonly tempoLimiteMs?: number;
+  /** Usa o `detail` que o servidor devolve (já em português) como mensagem de erro. */
+  readonly detalheDoServidor?: boolean;
+  /** Um 401 desta chamada não encerra a sessão do app (serviços que só validam o token). */
+  readonly semLogoutEm401?: boolean;
 }
 
 async function erroDaResposta(
   resposta: Response,
   autenticada: boolean,
+  opcoes: OpcoesRequisicao,
 ): Promise<ErroHttp> {
   let problema: ProblemaApi | null = null;
   try {
@@ -97,12 +114,19 @@ async function erroDaResposta(
     problema = null;
   }
 
-  if (resposta.status === 401 && autenticada) {
+  if (resposta.status === 401 && autenticada && !opcoes.semLogoutEm401) {
     ganchos?.aoNaoAutorizado();
   }
 
+  const detalhe =
+    opcoes.detalheDoServidor && resposta.status !== 401
+      ? problema?.detail?.trim()
+      : undefined;
+
   return new ErroHttp(
-    traduzirErro(resposta.status, problema, autenticada),
+    typeof detalhe === "string" && detalhe !== ""
+      ? detalhe
+      : traduzirErro(resposta.status, problema, autenticada),
     resposta.status,
     problema?.errors ?? {},
   );
@@ -123,12 +147,12 @@ export async function requisitar<Resposta>(
     cabecalhos.Authorization = `Bearer ${token}`;
   }
 
-  const limite = AbortSignal.timeout(TEMPO_LIMITE_MS);
+  const limite = AbortSignal.timeout(opcoes.tempoLimiteMs ?? TEMPO_LIMITE_MS);
   const sinal = opcoes.sinal ? AbortSignal.any([opcoes.sinal, limite]) : limite;
 
   let resposta: Response;
   try {
-    resposta = await fetch(`${BASE_URL}${caminho}`, {
+    resposta = await fetch(`${opcoes.base ?? BASE_URL}${caminho}`, {
       method: opcoes.metodo ?? "GET",
       headers: cabecalhos,
       body: opcoes.corpo !== undefined ? JSON.stringify(opcoes.corpo) : null,
@@ -144,7 +168,7 @@ export async function requisitar<Resposta>(
   }
 
   if (!resposta.ok) {
-    throw await erroDaResposta(resposta, token !== null);
+    throw await erroDaResposta(resposta, token !== null, opcoes);
   }
 
   if (resposta.status === 204) {

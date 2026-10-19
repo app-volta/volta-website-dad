@@ -156,6 +156,7 @@
 }
 
 .assist__balao p {
+  white-space: pre-line;
   margin: 0;
 }
 

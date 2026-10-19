@@ -45,8 +45,10 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | Nome | Descrição |
 |------|-----------|
 | `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
+| `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
 | `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
+| `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
 | `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
@@ -71,6 +73,10 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` |
 | Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) |
 | Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
+| Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
+
+O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
+um assistente de IA, não um canal de mensagens com a cooperativa.
 
 O que a API ainda não oferece fica só neste navegador: recusar, encaminhar,
 observação e reclassificação (salvos em `localStorage`, por usuário). A foto do

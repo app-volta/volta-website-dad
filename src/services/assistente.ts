@@ -4,21 +4,34 @@ import { criarArmazem } from "../utils/armazem";
 import { estadoLicenca, rotuloLicenca } from "../utils/cooperativas";
 import { numeroCurto, normalizar } from "../utils/busca";
 import { aguardaAprovacao, categoriaDe } from "../utils/statusOcorrencia";
+import { conteudoDaRespostaChat } from "./adaptadores";
+import { criarSessaoChat, perguntarAoChatbot } from "./chatbot";
 import { listarCooperativas } from "./cooperativas";
-import { aguardar } from "./http";
+import { aguardar, aoEncerrarSessao, ErroHttp, USAR_MOCKS } from "./http";
 import { listarOcorrencias } from "./ocorrencias";
 
 /**
- * MOCK: substitua por chamada real quando o backend expuser /assistente.
- * As respostas são montadas a partir dos mesmos dados das telas; reconhece
- * poucos assuntos por palavra-chave, e o resto cai numa resposta de ajuda.
+ * Assistente VOLTA. Com VITE_USAR_MOCKS=false conversa com o volta-chatbot
+ * (POST /v1/sessions e POST /v1/chat). Nos demais casos usa o mock: as
+ * respostas saem dos mesmos dados das telas e só cobrem poucos assuntos por
+ * palavra-chave; o resto cai numa resposta de ajuda.
  */
 
-export const SUGESTOES_ASSISTENTE: readonly string[] = [
+const SUGESTOES_MOCK: readonly string[] = [
   "O que está esperando aprovação?",
   "Resumo da semana",
   "Licenças vencendo",
 ];
+
+const SUGESTOES_CHATBOT: readonly string[] = [
+  "Como descartar óleo de cozinha?",
+  "Quais normas valem para resíduo perigoso?",
+  "Como está o desempenho da unidade?",
+];
+
+export const SUGESTOES_ASSISTENTE: readonly string[] = USAR_MOCKS
+  ? SUGESTOES_MOCK
+  : SUGESTOES_CHATBOT;
 
 interface EstadoConversa {
   readonly mensagens: readonly MensagemAssistente[];
@@ -29,6 +42,14 @@ const conversa = criarArmazem<EstadoConversa>({ mensagens: [], pensando: false }
 
 export const assinarConversa = conversa.assinar;
 export const lerConversa = conversa.obter;
+
+/** Sessão do chatbot, criada na primeira pergunta e esquecida quando a pessoa sai. */
+let sessaoChat: string | null = null;
+
+aoEncerrarSessao(() => {
+  sessaoChat = null;
+  conversa.definir({ mensagens: [], pensando: false });
+});
 
 let contador = 0;
 function proximoId(): string {
@@ -145,9 +166,40 @@ async function montarResposta(pergunta: string): Promise<RespostaAssistente> {
   return responderAjuda();
 }
 
+async function responderComChatbot(pergunta: string): Promise<RespostaAssistente> {
+  sessaoChat ??= (await criarSessaoChat()).session_id;
+  return conteudoDaRespostaChat(await perguntarAoChatbot(sessaoChat, pergunta));
+}
+
+function textoDeErro(excecao: unknown): string {
+  if (!USAR_MOCKS && excecao instanceof ErroHttp) {
+    // Sessão recusada ou inexistente: a próxima pergunta abre uma nova.
+    if (excecao.status === 403 || excecao.status === 404) sessaoChat = null;
+    return excecao.message;
+  }
+  return "Não consegui consultar os dados agora. Tente de novo em instantes.";
+}
+
 /** Primeira mensagem da conversa: um olhar rápido sobre a unidade. */
 export async function iniciarConversa(): Promise<void> {
   if (conversa.obter().mensagens.length > 0) return;
+
+  if (!USAR_MOCKS) {
+    adicionar({
+      autor: "assistente",
+      trechos: [
+        { texto: "Sou o assistente da VOLTA. Pergunte sobre " },
+        { texto: "normas de descarte", destaque: true },
+        { texto: ", " },
+        { texto: "ocorrências", destaque: true },
+        { texto: " ou o " },
+        { texto: "desempenho da unidade", destaque: true },
+        { texto: "." },
+      ],
+    });
+    return;
+  }
+
   const [ocorrencias, atencao] = await Promise.all([listarOcorrencias(), licencasEmAtencao()]);
   if (conversa.obter().mensagens.length > 0) return;
 
@@ -178,13 +230,12 @@ export async function perguntar(pergunta: string): Promise<void> {
   adicionar({ autor: "usuario", trechos: [{ texto }] });
   definirPensando(true);
   try {
-    const [resposta] = await Promise.all([montarResposta(texto), aguardar(700)]);
+    const resposta = USAR_MOCKS
+      ? (await Promise.all([montarResposta(texto), aguardar(700)]))[0]
+      : await responderComChatbot(texto);
     adicionar({ autor: "assistente", ...resposta });
-  } catch {
-    adicionar({
-      autor: "assistente",
-      trechos: [{ texto: "Não consegui consultar os dados agora. Tente de novo em instantes." }],
-    });
+  } catch (excecao) {
+    adicionar({ autor: "assistente", trechos: [{ texto: textoDeErro(excecao) }] });
   } finally {
     definirPensando(false);
   }
