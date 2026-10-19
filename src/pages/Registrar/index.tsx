@@ -361,7 +361,7 @@ export default function Registrar(): ReactNode {
                 Onde está?
               </label>
               <div className="registrar__select">
-                <Icone nome="pin" tamanho={17} />
+                <Icone nome="pin" tamanho={18} />
                 <select
                   id="reg-setor"
                   value={estado.setor}
@@ -378,7 +378,7 @@ export default function Registrar(): ReactNode {
                     </option>
                   ))}
                 </select>
-                <Icone nome="seta-baixo" tamanho={14} />
+                <Icone nome="seta-baixo" tamanho={18} />
               </div>
             </div>
 

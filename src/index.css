@@ -8,6 +8,7 @@
   --verde-suave-borda: #B7DDC4;
 
   --fundo: #F7F8FA;
+  --divisoria-cabecalho: #EEF2EF;
   --superficie: #FFFFFF;
   --texto: #12241C;
   --texto-medio: #4A5A54;
@@ -56,7 +57,7 @@
   --foco: 0 0 0 3px rgba(47, 178, 90, 0.35);
 
   --sidebar-largura: 264px;
-  --topbar-altura: 84px;
+  --topbar-altura: 92px;
 
   /* Shell V2 — sidebar verde em gradiente (Figma, frame 23 · side) */
   --sidebar-bg: linear-gradient(170deg, #0F6B41 0%, #0D5B37 55%, #0A4A2D 100%);
