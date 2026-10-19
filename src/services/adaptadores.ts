@@ -6,6 +6,7 @@ import type {
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
+  RespostaChatApi,
   RiscoApi,
   TipoResiduoApi,
   UsuarioApi,
@@ -22,6 +23,8 @@ import type {
   PrioridadeOcorrencia,
   StatusOcorrencia,
 } from "../types/ocorrencia";
+import type { AcaoMensagem } from "../types/assistente";
+import type { Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
 
 /**
@@ -149,6 +152,50 @@ export function classificacaoDoRelatorio(
     recomendacao: relatorio.recommendations ?? relatorio.reportText ?? "",
     relatorio: relatorio.reportText ?? undefined,
     analisadaEm: instanteUtc(relatorio.generatedAt),
+  };
+}
+
+/** O que o assistente mostra de uma resposta do chatbot. */
+export interface ConteudoAssistente {
+  readonly trechos: readonly Trecho[];
+  readonly acao?: AcaoMensagem;
+}
+
+/**
+ * Resposta do chatbot em trechos de texto: título em destaque, resposta,
+ * próximos passos e fontes. Documentos internos não aparecem como fonte.
+ */
+export function conteudoDaRespostaChat(resposta: RespostaChatApi): ConteudoAssistente {
+  const { response, citations, proposed_occurrence: proposta } = resposta;
+  const trechos: Trecho[] = [];
+
+  if (response.title) trechos.push({ texto: `${response.title}\n`, destaque: true });
+  trechos.push({ texto: response.answer });
+
+  if (response.recommended_actions.length > 0) {
+    trechos.push({ texto: "\n\nPróximos passos:", destaque: true });
+    for (const passo of response.recommended_actions) {
+      trechos.push({ texto: `\n• ${passo}` });
+    }
+  }
+
+  const fontes = citations
+    .filter((fonte) => !fonte.internal_document)
+    .slice(0, 3)
+    .map((fonte) => fonte.title);
+  if (fontes.length > 0) {
+    trechos.push({ texto: `\n\nFontes: ${fontes.join("; ")}.` });
+  }
+
+  if (response.requires_human_validation) {
+    trechos.push({ texto: "\n\nPeça a validação do responsável antes de agir." });
+  }
+
+  return {
+    trechos,
+    acao: proposta
+      ? { rotulo: "Registrar ocorrência", destino: "/registrar" }
+      : undefined,
   };
 }
 

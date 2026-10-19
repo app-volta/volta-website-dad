@@ -205,7 +205,7 @@ export function AssistenteVolta({ aoFechar, id }: AssistenteVoltaProps): ReactNo
             type="text"
             placeholder="Pergunte ao VOLTA…"
             autoComplete="off"
-            maxLength={200}
+            maxLength={500}
             value={texto}
             onChange={(evento) => setTexto(evento.target.value)}
           />
