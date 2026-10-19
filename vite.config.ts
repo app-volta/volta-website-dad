@@ -14,6 +14,12 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       rewrite: (caminho: string) => caminho.replace(/^\/api/, ''),
     },
+    '/chat-api': {
+      target:
+        env.VITE_CHAT_PROXY_TARGET || 'https://chat.qa.54.210.1.34.sslip.io',
+      changeOrigin: true,
+      rewrite: (caminho: string) => caminho.replace(/^\/chat-api/, ''),
+    },
   }
 
   return {

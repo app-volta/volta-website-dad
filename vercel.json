@@ -5,6 +5,10 @@
       "source": "/api/:path*",
       "destination": "https://api.qa.54.210.1.34.sslip.io/:path*"
     },
+    {
+      "source": "/chat-api/:path*",
+      "destination": "https://chat.qa.54.210.1.34.sslip.io/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
