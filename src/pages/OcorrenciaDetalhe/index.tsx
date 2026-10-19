@@ -26,7 +26,11 @@ import {
   relatorioAutomatico,
 } from "../../utils/analiseOcorrencia";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
-import { formatarPorcentagem, formatarRegistro } from "../../utils/formatacao";
+import {
+  formatarConfianca,
+  formatarPeso,
+  formatarRegistro,
+} from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -130,7 +134,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   const ocorrencia = dados;
   const categoria = categoriaDe(ocorrencia.status);
-  const confianca = ocorrencia.classificacao?.confianca ?? 0;
+  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -293,7 +297,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   <Icone nome="brilho" tamanho={12} />
                   Análise concluída
                 </span>
-                {DETECCOES.map((d) => (
+                {(confianca === null ? [] : DETECCOES).map((d) => (
                   <span
                     key={`${d.esquerda}-${d.topo}`}
                     className="detalhe__deteccao"
@@ -309,7 +313,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                       {rotuloDeteccao(
                         d,
                         material ?? ocorrencia.titulo,
-                        Math.round(confianca * 100),
+                        Math.round((confianca ?? 0) * 100),
                       )}
                     </span>
                   </span>
@@ -322,7 +326,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 </div>
                 <div className="detalhe__fato">
                   <p>Confiança da IA</p>
-                  <strong>{formatarPorcentagem(confianca)}</strong>
+                  <strong>{formatarConfianca(confianca)}</strong>
                 </div>
               </div>
             </div>
@@ -336,11 +340,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
                 </div>
                 <div className="detalhe__card detalhe__card--contaminacao">
                   <p>Contaminação</p>
-                  <strong>{contaminacao(confianca)}</strong>
+                  <strong>{contaminacao(ocorrencia.classificacao)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--quantidade">
                   <p>Quantidade</p>
-                  <strong>≈ {ocorrencia.pesoKg} kg</strong>
+                  <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--prioridade">
                   <p>Prioridade</p>

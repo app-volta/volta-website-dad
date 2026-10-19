@@ -14,7 +14,11 @@ import { METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { baixarCsv, montarCsv } from "../../utils/exportarCsv";
-import { formatarPorcentagem, formatarRegistro } from "../../utils/formatacao";
+import {
+  formatarConfianca,
+  formatarPeso,
+  formatarRegistro,
+} from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -162,7 +166,7 @@ export default function Ocorrencias(): ReactNode {
         o.titulo,
         o.localizacao.setor,
         o.pesoKg,
-        formatarPorcentagem(o.classificacao?.confianca ?? 0),
+        formatarConfianca(o.classificacao?.confianca ?? null),
         ROTULO_PRIORIDADE[o.prioridade],
         ROTULO_CATEGORIA[categoriaDe(o.status)],
         o.criadaPorNome,
@@ -296,7 +300,7 @@ export default function Ocorrencias(): ReactNode {
                   </tr>
                 ) : (
                   visiveis.map((o) => {
-                    const confianca = o.classificacao?.confianca ?? 0;
+                    const confianca = o.classificacao?.confianca ?? null;
                     return (
                       <tr
                         key={o.id}
@@ -351,7 +355,7 @@ export default function Ocorrencias(): ReactNode {
                         </td>
                         <td>{o.localizacao.setor}</td>
                         <td>
-                          <strong>≈{o.pesoKg} kg</strong>
+                          <strong>{formatarPeso(o.pesoKg, true)}</strong>
                         </td>
                         <td>
                           <span className="ocorrencias__confianca">
@@ -359,9 +363,9 @@ export default function Ocorrencias(): ReactNode {
                               className="ocorrencias__barra"
                               aria-hidden="true"
                             >
-                              <span style={{ width: `${confianca * 100}%` }} />
+                              <span style={{ width: `${(confianca ?? 0) * 100}%` }} />
                             </span>
-                            <strong>{formatarPorcentagem(confianca)}</strong>
+                            <strong>{formatarConfianca(confianca)}</strong>
                           </span>
                         </td>
                         <td>

@@ -44,14 +44,39 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 
 | Nome | Descrição |
 |------|-----------|
-| `VITE_API_BASE_URL` | URL base da API do VOLTA (quando existir). |
+| `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
+| `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
+| `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
-| `VITE_USAR_MOCKS` | `true` mantém os mocks locais mesmo com API configurada. |
 
-Enquanto o backend real não estiver disponível, tudo passa pelos mocks em
-`src/services/`. As assinaturas exportadas já batem com o formato pretendido
-para o backend, então a troca depois é substituir a implementação sem tocar
-componentes/páginas.
+### Integração com a volta-api
+
+Por padrão o app roda com mocks (`src/services/*.mock.ts` e o mock embutido de
+`auth.ts`), então `npm run dev` funciona sem backend. Para usar a API real,
+crie um `.env.local` (não versionado):
+
+```
+VITE_API_BASE_URL=/api
+VITE_USAR_MOCKS=false
+```
+
+O navegador chama `/api/...` na própria origem. Em desenvolvimento, o Vite
+repassa para a API de QA (`vite.config.ts`); na Vercel, o `rewrite` do
+`vercel.json` faz o mesmo. Isso evita o CORS, que a API ainda não libera, e o
+bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
+
+| Tela | Endpoints |
+|------|-----------|
+| Login | `POST /auth/login`, `GET /users/me` |
+| Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` |
+| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) |
+| Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
+
+O que a API ainda não oferece fica só neste navegador: recusar, encaminhar,
+observação e reclassificação (salvos em `localStorage`, por usuário). A foto do
+registro também não é enviada: a API recebe uma URL, e o upload depende do
+armazenamento (S3). Os contratos estão em `src/types/api.ts`; a tradução para os
+tipos do app, em `src/services/adaptadores.ts`.
 
 ## Estrutura de pastas
 
@@ -116,8 +141,9 @@ Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 O `vercel.json` já contém o rewrite de SPA (`/(.*)` → `/index.html`) para
 que rotas como `/ocorrencias/1234` funcionem em recarga direta. Ao
 importar o repo na Vercel, os padrões do Vite (`npm run build` / pasta
-`dist`) já funcionam. Configure `VITE_API_BASE_URL` em Environment
-Variables se o backend estiver disponível.
+`dist`) já funcionam. Para usar a API real, configure em Environment
+Variables `VITE_API_BASE_URL=/api` e `VITE_USAR_MOCKS=false`; o `rewrite` de
+`/api` no `vercel.json` aponta para a API de QA.
 
 ## Padrão de commits
 

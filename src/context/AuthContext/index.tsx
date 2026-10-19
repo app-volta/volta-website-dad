@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 
 import { autenticar, cadastrar } from "../../services/auth";
+import { configurarSessaoHttp, encerrarSessaoHttp } from "../../services/http";
 import type {
   CredenciaisLogin,
   DadosCadastro,
@@ -29,6 +30,31 @@ import { carregar, remover, salvar } from "../../utils/armazenamento";
 
 const CHAVE_STORAGE = "volta:sessao";
 const VERSAO_STORAGE = 1;
+const LIMITE_TEMPORIZADOR_MS = 2_147_483_000;
+const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
+
+/**
+ * A camada HTTP precisa do token a cada requisição, e os services não conhecem
+ * React. A sessão atual fica neste módulo e é entregue à camada HTTP por
+ * ganchos, configurados na importação para valer antes da primeira chamada.
+ */
+let sessaoAtual: SessaoAutenticada | null = null;
+let aoSessaoExpirar: (() => void) | null = null;
+
+configurarSessaoHttp({
+  obterToken: () => sessaoAtual?.token ?? null,
+  obterUsuario: () =>
+    sessaoAtual
+      ? { id: sessaoAtual.usuario.id, nome: sessaoAtual.usuario.nome }
+      : null,
+  aoNaoAutorizado: () => aoSessaoExpirar?.(),
+});
+
+function lerSessaoSalva(): SessaoAutenticada | null {
+  const salva = carregar<SessaoAutenticada>(CHAVE_STORAGE, VERSAO_STORAGE);
+  if (!salva) return null;
+  return new Date(salva.expiraEm).getTime() > Date.now() ? salva : null;
+}
 
 interface ValorAuthContext {
   readonly sessao: SessaoAutenticada | null;
@@ -52,11 +78,40 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps): ReactNode {
-  const [sessao, setSessao] = useState<SessaoAutenticada | null>(() =>
-    carregar<SessaoAutenticada>(CHAVE_STORAGE, VERSAO_STORAGE),
-  );
+  const [sessao, setSessao] = useState<SessaoAutenticada | null>(() => {
+    const inicial = lerSessaoSalva();
+    sessaoAtual = inicial;
+    return inicial;
+  });
   const [carregando, setCarregando] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  /** Troca a sessão e manda os services esquecerem o que era da pessoa anterior. */
+  const aplicarSessao = useCallback((nova: SessaoAutenticada | null) => {
+    sessaoAtual = nova;
+    encerrarSessaoHttp();
+    setSessao(nova);
+  }, []);
+
+  useEffect(() => {
+    aoSessaoExpirar = () => {
+      aplicarSessao(null);
+      setErro(MENSAGEM_SESSAO_EXPIRADA);
+    };
+    return () => {
+      aoSessaoExpirar = null;
+    };
+  }, [aplicarSessao]);
+
+  useEffect(() => {
+    if (!sessao) return undefined;
+    const restante = new Date(sessao.expiraEm).getTime() - Date.now();
+    const id = setTimeout(
+      () => aoSessaoExpirar?.(),
+      Math.min(Math.max(restante, 0), LIMITE_TEMPORIZADOR_MS),
+    );
+    return () => clearTimeout(id);
+  }, [sessao]);
 
   useEffect(() => {
     if (sessao) {
@@ -72,7 +127,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       setErro(null);
       try {
         const nova = await autenticar(credenciais);
-        setSessao(nova);
+        aplicarSessao(nova);
       } catch (excecao) {
         const mensagem =
           excecao instanceof Error
@@ -84,7 +139,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
         setCarregando(false);
       }
     },
-    [],
+    [aplicarSessao],
   );
 
   const cadastrarNovo = useCallback(
@@ -93,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       setErro(null);
       try {
         const nova = await cadastrar(dados);
-        setSessao(nova);
+        aplicarSessao(nova);
       } catch (excecao) {
         const mensagem =
           excecao instanceof Error
@@ -105,18 +160,22 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
         setCarregando(false);
       }
     },
-    [],
+    [aplicarSessao],
   );
 
   const sair = useCallback(() => {
-    setSessao(null);
+    aplicarSessao(null);
     setErro(null);
-  }, []);
+  }, [aplicarSessao]);
 
   const atualizarUsuario = useCallback((alteracoes: AlteracoesUsuario) => {
-    setSessao((atual) =>
-      atual ? { ...atual, usuario: { ...atual.usuario, ...alteracoes } } : atual,
-    );
+    setSessao((atual) => {
+      const proxima = atual
+        ? { ...atual, usuario: { ...atual.usuario, ...alteracoes } }
+        : atual;
+      sessaoAtual = proxima;
+      return proxima;
+    });
   }, []);
 
   const limparErro = useCallback(() => setErro(null), []);

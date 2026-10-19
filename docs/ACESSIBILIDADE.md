@@ -160,6 +160,27 @@ Ficam apenas os itens "para revisar" que a ferramenta não consegue decidir
 sozinha (texto sobre gradiente ou imagem), conferidos manualmente na tabela de
 contraste acima.
 
+A rodada foi repetida em 16/10/2026, depois da integração com a volta-api, com o
+mesmo resultado: nenhuma violação nas 30 telas e estados.
+
+## Reflow em 320 px (16/10/2026)
+
+Critério 1.4.10 (nível AA): em 320 px de largura o conteúdo não pode exigir
+rolagem horizontal da página. Medido em nove rotas (início, registrar,
+ocorrências, cooperativas, relatórios, equipe, configurações, perfil e 404),
+procurando elementos que passam da largura sem estar dentro de um contêiner com
+rolagem própria.
+
+| Tela | Antes | Correção |
+|---|---|---|
+| Perfil | 91 px de rolagem; o botão "Editar" estourava a largura | Em ≤ 560 px o botão desce para a linha de baixo, em largura total |
+| Ocorrências | 57 px; a barra "Aprovar selecionadas" era mais larga que a tela | A barra quebra linha e ocupa a largura disponível |
+| Relatórios | 22 px; a coluna de valores dos destinos passava da borda | Colunas e espaçamento menores em ≤ 640 px |
+
+Resultado: nenhuma das nove rotas rola na horizontal. A tabela de Ocorrências
+continua rolando dentro do próprio contêiner (`overflow-x: auto`), que é o
+comportamento previsto na norma para tabelas de dados.
+
 ## Teste só com teclado (13/10/2026)
 
 Percurso com eventos de teclado reais (`Input.dispatchKeyEvent` do Chrome),

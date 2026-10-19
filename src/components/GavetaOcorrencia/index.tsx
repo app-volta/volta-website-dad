@@ -5,7 +5,7 @@ import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { contaminacao } from "../../utils/analiseOcorrencia";
-import { formatarPorcentagem } from "../../utils/formatacao";
+import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -70,7 +70,7 @@ export function GavetaOcorrencia({
     }
   }
 
-  const confianca = ocorrencia.classificacao?.confianca ?? 0;
+  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -131,7 +131,7 @@ export function GavetaOcorrencia({
             />
             <span className="gaveta__selo">
               <Icone nome="brilho" tamanho={12} />
-              Confiança da IA {formatarPorcentagem(confianca)}
+              Confiança da IA {formatarConfianca(confianca)}
             </span>
           </div>
 
@@ -152,11 +152,11 @@ export function GavetaOcorrencia({
             </div>
             <div className="gaveta__card gaveta__card--contaminacao">
               <p>Contaminação</p>
-              <strong>{contaminacao(confianca)}</strong>
+              <strong>{contaminacao(ocorrencia.classificacao)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--quantidade">
               <p>Quantidade</p>
-              <strong>≈ {ocorrencia.pesoKg} kg</strong>
+              <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--autor">
               <p>Registrada por</p>

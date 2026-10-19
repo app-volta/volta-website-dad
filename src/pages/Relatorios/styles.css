@@ -412,6 +412,12 @@
 }
 
 @media (max-width: 640px) {
+  .rel__destino {
+    grid-template-columns: 28px minmax(0, 1fr) 64px 48px;
+    column-gap: 8px;
+    padding: 0 8px 12px;
+  }
+
   .rel__ranking-item {
     grid-template-columns: 26px minmax(0, 1fr) minmax(48px, auto);
     grid-template-rows: auto auto;
