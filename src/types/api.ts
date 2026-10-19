@@ -104,6 +104,65 @@ export interface RelatorioIaApi {
   readonly generatedAt: string;
 }
 
+/* ---- volta-chatbot (FastAPI): as chaves vêm em snake_case ---- */
+
+export type RotaChatApi =
+  | "triage"
+  | "standards"
+  | "data"
+  | "performance"
+  | "direct"
+  | "blocked";
+
+/** POST /v1/sessions */
+export interface SessaoChatApi {
+  readonly session_id: string;
+  readonly tenant_id: string;
+  readonly user_id: string;
+  readonly created_at: string;
+}
+
+/** POST /v1/chat */
+export interface PedidoChatApi {
+  readonly session_id: string;
+  readonly message: string;
+}
+
+export interface RespostaCorporativaApi {
+  readonly title: string | null;
+  readonly answer: string;
+  readonly recommended_actions: readonly string[];
+  readonly requires_human_validation: boolean;
+}
+
+export interface CitacaoChatApi {
+  readonly source_id: string;
+  readonly title: string;
+  readonly corpus: "operational" | "regulatory" | "cooperatives" | "history";
+  readonly internal_document: boolean;
+  readonly location: string | null;
+  readonly url: string | null;
+  readonly score: number | null;
+  readonly excerpt: string;
+  readonly retrieved_at: string | null;
+}
+
+export interface OcorrenciaPropostaApi {
+  readonly description: string;
+  readonly category: string;
+  readonly requires_sanitization: boolean;
+}
+
+/** Resposta de POST /v1/chat. */
+export interface RespostaChatApi {
+  readonly request_id: string;
+  readonly session_id: string;
+  readonly route: RotaChatApi;
+  readonly response: RespostaCorporativaApi;
+  readonly citations: readonly CitacaoChatApi[];
+  readonly proposed_occurrence: OcorrenciaPropostaApi | null;
+}
+
 /** Erros da API seguem o ProblemDetail (RFC 7807). */
 export interface ProblemaApi {
   readonly title?: string;
