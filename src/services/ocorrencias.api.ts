@@ -1,5 +1,6 @@
 import type {
   AreaApi,
+  HistoricoColetaApi,
   IncidenteApi,
   NovoIncidenteApi,
   RelatorioIaApi,
@@ -24,11 +25,14 @@ import {
   analiseInconclusiva,
   categoriaDoTexto,
   classificacaoDaAnalise,
+  eventoDaColeta,
   ocorrenciaDaApi,
   riscoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
 import { analisarFoto } from "./chatbot";
+import { historicoDaColeta, listarColetas } from "./coletas";
+import { nomesDasCooperativas } from "./cooperativasBrutas";
 import {
   ErroHttp,
   aoEncerrarSessao,
@@ -74,6 +78,7 @@ let catalogo: Promise<CatalogoApi> | null = null;
 let carregouLista = false;
 let carregandoLista = false;
 const relatorios = new Map<string, RelatorioIaApi>();
+const eventosDeColeta = new Map<string, readonly EventoOcorrencia[]>();
 const classificacoes = new Map<string, ClassificacaoIA>();
 const ouvintes = new Set<() => void>();
 
@@ -202,6 +207,7 @@ function daApi(dto: IncidenteApi, cat: CatalogoApi): Ocorrencia {
   return ocorrenciaDaApi(dto, cat, {
     relatorio: relatorios.get(dto.id) ?? null,
     classificacao: classificacoes.get(dto.id) ?? null,
+    coleta: eventosDeColeta.get(dto.id),
     autorNome: nomeDoAutor(dto.userId),
   });
 }
@@ -249,6 +255,38 @@ function buscarRelatorio(
   });
 }
 
+/**
+ * Linha do tempo da coleta da ocorrência (GET /collections e
+ * /collections/{id}/history, só ADMIN e MANAGER). Sem permissão ou sem coleta,
+ * não há eventos; qualquer falha aqui não impede de abrir a ocorrência.
+ */
+async function buscarEventosDeColeta(
+  incidenteId: string,
+  sinal?: AbortSignal,
+): Promise<readonly EventoOcorrencia[]> {
+  try {
+    const coletas = (await listarColetas()).filter(
+      (coleta) => coleta.incidentId === incidenteId,
+    );
+    if (coletas.length === 0) return [];
+    const nomes = await nomesDasCooperativas().catch(() => new Map<string, string>());
+    const historicos = await Promise.all(
+      coletas.map(async (coleta) => {
+        const itens: readonly HistoricoColetaApi[] = await historicoDaColeta(
+          coleta.id,
+          sinal,
+        ).catch(() => []);
+        return itens.map((item) =>
+          eventoDaColeta(item, nomes.get(coleta.cooperativeId)),
+        );
+      }),
+    );
+    return historicos.flat();
+  } catch {
+    return [];
+  }
+}
+
 const FORMATO_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -259,12 +297,14 @@ export async function obterOcorrencia(
   if (!FORMATO_UUID.test(id)) {
     throw new Error("Ocorrência não encontrada.");
   }
-  const [incidente, cat, relatorio] = await Promise.all([
+  const [incidente, cat, relatorio, coleta] = await Promise.all([
     requisitar<IncidenteApi>(`/incidents/${id}`, { sinal }),
     carregarCatalogo(),
     buscarRelatorio(id, sinal),
+    buscarEventosDeColeta(id, sinal),
   ]);
   if (relatorio) relatorios.set(id, relatorio);
+  eventosDeColeta.set(id, coleta);
   const anterior = bases.find((item) => item.id === id);
   const base = daApi(incidente, cat);
   substituirBase(
@@ -502,6 +542,7 @@ function reiniciar(): void {
   catalogo = null;
   carregouLista = false;
   relatorios.clear();
+  eventosDeColeta.clear();
   classificacoes.clear();
   notificar();
 }

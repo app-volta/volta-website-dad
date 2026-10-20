@@ -4,12 +4,14 @@ import type {
   AreaApi,
   CategoriaResiduoApi,
   CooperativaApi,
+  HistoricoColetaApi,
   IncidenteApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
   RespostaChatApi,
   RiscoApi,
+  StatusColetaApi,
   TipoResiduoApi,
   UsuarioApi,
 } from "../types/api";
@@ -424,8 +426,33 @@ export function cooperativaDaApi(
   };
 }
 
+const TEXTO_DO_STATUS_DA_COLETA: Readonly<Record<StatusColetaApi, string>> = {
+  REQUESTED: "recebeu o pedido de coleta",
+  SCHEDULED: "agendou a coleta",
+  IN_PROGRESS: "iniciou a coleta",
+  COMPLETED: "concluiu a coleta",
+  CANCELED: "cancelou a coleta",
+};
+
+/** Uma mudança de status da coleta como evento da linha do tempo da ocorrência. */
+export function eventoDaColeta(
+  historico: HistoricoColetaApi,
+  nomeDaCooperativa: string | undefined,
+): EventoOcorrencia {
+  const observacao = historico.observation?.trim();
+  const texto = TEXTO_DO_STATUS_DA_COLETA[historico.status] ?? "atualizou a coleta";
+  return {
+    id: `coleta-${historico.id}`,
+    tipo: "coleta",
+    autor: nomeDaCooperativa ?? "Cooperativa",
+    texto: observacao ? `${texto} · ${observacao}` : texto,
+    em: instanteUtc(historico.changedAt),
+  };
+}
+
 export interface ExtrasOcorrencia {
   readonly relatorio?: RelatorioIaApi | null;
+  readonly coleta?: readonly EventoOcorrencia[];
   readonly classificacao?: ClassificacaoIA | null;
   readonly autorNome?: string;
 }
@@ -476,6 +503,10 @@ export function ocorrenciaDaApi(
       em: instanteUtc(extras.relatorio.generatedAt),
     });
   }
+
+  // A coleta acontece depois do registro: mantém a linha do tempo em ordem.
+  historico.push(...(extras.coleta ?? []));
+  historico.sort((a, b) => a.em.localeCompare(b.em));
 
   return {
     id: dto.id,

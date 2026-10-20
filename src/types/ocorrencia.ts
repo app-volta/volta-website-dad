@@ -20,7 +20,8 @@ export type TipoEvento =
   | "encaminhamento"
   | "observacao"
   | "aprovacao"
-  | "recusa";
+  | "recusa"
+  | "coleta";
 
 export interface EventoOcorrencia {
   readonly id: string;

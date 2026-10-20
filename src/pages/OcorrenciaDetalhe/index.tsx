@@ -71,6 +71,7 @@ const ICONE_EVENTO: Readonly<
   observacao: { icone: "mais", tom: "roxo" },
   aprovacao: { icone: "check", tom: "verde" },
   recusa: { icone: "fechar", tom: "rosa" },
+  coleta: { icone: "caminhao", tom: "azul" },
 };
 
 function passosDe(ocorrencia: Ocorrencia): readonly {

@@ -155,6 +155,15 @@ export interface ColetaApi {
   readonly urgent: boolean;
 }
 
+/** GET /collections/{id}/history (ADMIN e MANAGER). */
+export interface HistoricoColetaApi {
+  readonly id: string;
+  readonly collectionId: string;
+  readonly status: StatusColetaApi;
+  readonly changedAt: string;
+  readonly observation: string | null;
+}
+
 /** GET /cooperatives (somente ADMIN). */
 export interface CooperativaApi {
   readonly id: string;

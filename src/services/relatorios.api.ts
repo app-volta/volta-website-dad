@@ -1,7 +1,7 @@
 import type { PeriodoRelatorio, PgrsGerado, RelatorioPgrs } from "../types/relatorio";
 import { calcularRelatorio } from "../utils/relatorioPgrs";
 import { listarColetas } from "./coletas";
-import { nomesDasCooperativas } from "./cooperativas.api";
+import { nomesDasCooperativas } from "./cooperativasBrutas";
 import { listarMetricasEsg, obterScoreEsg } from "./esg";
 import { listarOcorrencias } from "./ocorrencias.api";
 

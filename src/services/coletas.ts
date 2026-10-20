@@ -1,27 +1,30 @@
-import type { ColetaApi } from "../types/api";
-import { aoEncerrarSessao, ErroHttp, requisitar } from "./http";
+import type { ColetaApi, HistoricoColetaApi } from "../types/api";
+import { criarCache } from "./cache";
+import { ErroHttp, requisitar } from "./http";
 
 /**
- * Coletas da volta-api (GET /collections), liberadas só para ADMIN e MANAGER.
- * Sem permissão, a lista vem vazia.
+ * Coletas da volta-api (GET /collections e GET /collections/{id}/history),
+ * liberadas só para ADMIN e MANAGER. Sem permissão, a lista vem vazia.
  */
 
-let coletas: Promise<readonly ColetaApi[]> | null = null;
+const coletas = criarCache(() =>
+  requisitar<readonly ColetaApi[]>("/collections").catch(
+    (excecao: unknown): readonly ColetaApi[] => {
+      if (excecao instanceof ErroHttp && excecao.status === 403) return [];
+      throw excecao;
+    },
+  ),
+);
 
-aoEncerrarSessao(() => {
-  coletas = null;
-});
+/** Coletas da empresa; a chamada é compartilhada entre as telas, então não é cancelável. */
+export const listarColetas = coletas.obter;
 
-/** Coletas da empresa; guardadas por sessão e compartilhadas, então a chamada não é cancelável. */
-export function listarColetas(): Promise<readonly ColetaApi[]> {
-  if (coletas === null) {
-    coletas = requisitar<readonly ColetaApi[]>("/collections").catch(
-      (excecao: unknown) => {
-        coletas = null;
-        if (excecao instanceof ErroHttp && excecao.status === 403) return [];
-        throw excecao;
-      },
-    );
-  }
-  return coletas;
+/** Mudanças de status de uma coleta, da mais antiga para a mais recente. */
+export function historicoDaColeta(
+  id: string,
+  sinal?: AbortSignal,
+): Promise<readonly HistoricoColetaApi[]> {
+  return requisitar<readonly HistoricoColetaApi[]>(`/collections/${id}/history`, {
+    sinal,
+  });
 }

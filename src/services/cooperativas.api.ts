@@ -8,7 +8,11 @@ import {
   posicoesNoMapa,
 } from "./adaptadores";
 import { listarColetas } from "./coletas";
-import { aoEncerrarSessao, ErroHttp, requisitar } from "./http";
+import {
+  invalidarCooperativas,
+  listarCooperativasDaApi,
+} from "./cooperativasBrutas";
+import { requisitar } from "./http";
 import { listarOcorrencias } from "./ocorrencias.api";
 
 /**
@@ -17,37 +21,6 @@ import { listarOcorrencias } from "./ocorrencias.api";
  * coletas (GET /collections) e o que a API não guarda (contato, distância,
  * capacidade, licença) fica vazio.
  */
-
-let lista: Promise<readonly CooperativaApi[]> | null = null;
-
-aoEncerrarSessao(() => {
-  lista = null;
-});
-
-/** Cooperativas da API, guardadas por sessão e compartilhadas, então a chamada não é cancelável. */
-export function listarCooperativasDaApi(): Promise<readonly CooperativaApi[]> {
-  if (lista === null) {
-    lista = requisitar<readonly CooperativaApi[]>("/cooperatives").catch(
-      (excecao: unknown) => {
-        // Sem permissão não muda durante a sessão: guarda a recusa e não insiste.
-        if (!(excecao instanceof ErroHttp && excecao.status === 403)) lista = null;
-        throw excecao;
-      },
-    );
-  }
-  return lista;
-}
-
-/** Nome de cada cooperativa pelo id; vazio quando a pessoa não tem permissão para listá-las. */
-export async function nomesDasCooperativas(): Promise<ReadonlyMap<string, string>> {
-  try {
-    const cooperativas = await listarCooperativasDaApi();
-    return new Map(cooperativas.map((c) => [c.id, c.name]));
-  } catch (excecao) {
-    if (excecao instanceof ErroHttp && excecao.status === 403) return new Map();
-    throw excecao;
-  }
-}
 
 export async function listarCooperativas(
   sinal?: AbortSignal,
@@ -118,7 +91,7 @@ export async function adicionarCooperativa(
     corpo,
     sinal,
   });
-  lista = null;
+  invalidarCooperativas();
   const todas = await listarCooperativas(sinal);
   return (
     todas.find((c) => c.id === criada.id) ??
