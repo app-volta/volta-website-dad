@@ -1,6 +1,6 @@
 import type { ClassificacaoCompleta } from "../types/classificacao";
 import type { Material } from "../types/material";
-import { MATERIAIS } from "../types/material";
+import { MATERIAIS, METADADOS_MATERIAL } from "../types/material";
 import { aguardar } from "./http";
 
 /**
@@ -49,6 +49,10 @@ export async function classificarFoto(
   return {
     material,
     confianca: Math.min(0.98, Number(confianca.toFixed(2))),
+    contaminacao: "baixa",
+    tipoDetectado: METADADOS_MATERIAL[material].rotulo,
+    pesoEstimadoKg: 38,
+    unidades: 11,
     recomendacao: RECOMENDACOES[material],
     analisadaEm: new Date().toISOString(),
   };

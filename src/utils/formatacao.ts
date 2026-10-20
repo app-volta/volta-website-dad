@@ -34,7 +34,8 @@ export function formatarConfianca(confianca: number | null): string {
  */
 export function formatarPeso(kg: number, compacto = false): string {
   if (kg <= 0) return "—";
-  return compacto ? `≈${kg}\u00A0kg` : `≈\u00A0${kg}\u00A0kg`;
+  const valor = kg.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  return compacto ? `≈${valor}\u00A0kg` : `≈\u00A0${valor}\u00A0kg`;
 }
 
 /** Distância com vírgula decimal, como no layout: "2,4 km". */

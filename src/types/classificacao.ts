@@ -15,6 +15,14 @@ export interface ClassificacaoIA {
   readonly recomendacao: string;
   /** Texto completo do relatório, quando a IA da API o gerou. */
   readonly relatorio?: string;
+  /** Tipo de resíduo como a IA descreveu ("Papelão contaminado"). */
+  readonly tipoDetectado?: string;
+  /** Peso estimado em kg; null quando a foto não tem escala ou referência. */
+  readonly pesoEstimadoKg?: number | null;
+  /** Quantidade de volumes (caixas, fardos), quando a fonte informa. */
+  readonly unidades?: number | null;
+  /** A IA pede revisão do responsável antes de agir. */
+  readonly exigeValidacao?: boolean;
   readonly analisadaEm: string;
 }
 
