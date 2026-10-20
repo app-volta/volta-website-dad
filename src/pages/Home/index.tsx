@@ -217,9 +217,11 @@ export default function Home(): ReactNode {
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
             este mês — <strong>{Math.round(progressoMeta)}%</strong> da meta.
-            {kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
-              ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
-              : ""}
+            {dadosReais
+              ? kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
+                ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
+                : ""
+              : " Aprovando a fila de hoje, vocês passam de 80%."}
           </p>
           <div className="home-hero__acoes">
             <Link to="/ocorrencias?status=aguardando" className="home-hero__botao home-hero__botao--primario">
