@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-import type { MembroEquipe } from "../../types/equipe";
+import { PAPEIS_EQUIPE } from "../../types/equipe";
+import type { MembroEquipe, PapelEquipe } from "../../types/equipe";
 import { formatarAtividade, ROTULOS_PAPEL } from "../../utils/equipe";
 import { iniciais } from "../../utils/pessoa";
 import { MenuAcoes } from "./MenuAcoes";
@@ -13,6 +14,10 @@ interface TabelaEquipeProps {
   readonly aoCopiarEmail: (membro: MembroEquipe) => void;
   readonly aoReenviarConvite: (membro: MembroEquipe) => void;
   readonly aoCancelarConvite: (membro: MembroEquipe) => void;
+  /** Quando informado, o menu oferece a troca de papel (só na volta-api, para o ADMIN). */
+  readonly aoAlterarPapel?: (membro: MembroEquipe, papel: PapelEquipe) => void;
+  /** A volta-api não deixa a pessoa mudar o próprio papel. */
+  readonly idDaPessoaLogada?: string;
 }
 
 export function TabelaEquipe({
@@ -21,6 +26,8 @@ export function TabelaEquipe({
   aoCopiarEmail,
   aoReenviarConvite,
   aoCancelarConvite,
+  aoAlterarPapel,
+  idDaPessoaLogada,
 }: TabelaEquipeProps): ReactNode {
   function itensDoMenu(membro: MembroEquipe): readonly ItemMenuAcao[] {
     if (membro.convitePendente) {
@@ -33,7 +40,17 @@ export function TabelaEquipe({
         },
       ];
     }
-    return [{ rotulo: "Copiar e-mail", aoClicar: () => aoCopiarEmail(membro) }];
+    const trocas: readonly ItemMenuAcao[] =
+      aoAlterarPapel && membro.id !== idDaPessoaLogada
+        ? PAPEIS_EQUIPE.filter((papel) => papel !== membro.papel).map((papel) => ({
+            rotulo: `Tornar ${ROTULOS_PAPEL[papel].toLowerCase()}`,
+            aoClicar: () => aoAlterarPapel(membro, papel),
+          }))
+        : [];
+    return [
+      { rotulo: "Copiar e-mail", aoClicar: () => aoCopiarEmail(membro) },
+      ...trocas,
+    ];
   }
 
   return (
@@ -96,8 +113,10 @@ export function TabelaEquipe({
                 <td className="eq__atividade">
                   {membro.ultimaAtividade ? (
                     formatarAtividade(membro.ultimaAtividade)
-                  ) : (
+                  ) : membro.convitePendente ? (
                     <span className="eq__selo-convite">Convite enviado</span>
+                  ) : (
+                    "—"
                   )}
                 </td>
                 <td className="eq__acoes">

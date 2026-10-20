@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import {
+  alterarPapel,
   cancelarConvite,
   convidarPessoa,
   listarEquipe,
@@ -60,12 +61,14 @@ interface AcoesEquipe {
   readonly convidar: typeof convidarPessoa;
   readonly reenviar: typeof reenviarConvite;
   readonly cancelar: typeof cancelarConvite;
+  readonly alterarPapel: typeof alterarPapel;
 }
 
 const ACOES: AcoesEquipe = {
   convidar: convidarPessoa,
   reenviar: reenviarConvite,
   cancelar: cancelarConvite,
+  alterarPapel,
 };
 
 export function useAcoesEquipe(): AcoesEquipe {

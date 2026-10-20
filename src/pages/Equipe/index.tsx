@@ -7,10 +7,13 @@ import type { CartaoResumo } from "../../components/CartoesResumo";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
+import { useAuth } from "../../context/AuthContext";
 import { useAcoesEquipe, useEquipe } from "../../hooks/useEquipe";
-import type { MembroEquipe, NovoConvite } from "../../types/equipe";
+import { useDadosReais } from "../../hooks/useModo";
+import type { MembroEquipe, NovoConvite, PapelEquipe } from "../../types/equipe";
 import {
   resumirEquipe,
+  ROTULOS_PAPEL,
   textoBuscavel,
 } from "../../utils/equipe";
 import type { ResumoEquipe } from "../../utils/equipe";
@@ -56,6 +59,8 @@ export default function Equipe(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useEquipe(chaveRecarga);
   const acoes = useAcoesEquipe();
+  const dadosReais = useDadosReais();
+  const { usuario } = useAuth();
 
   const [busca, setBusca] = useState<string>("");
   const [convidando, setConvidando] = useState<boolean>(false);
@@ -84,10 +89,17 @@ export default function Equipe(): ReactNode {
       setChaveRecarga((chave) => chave + 1);
       setBusca("");
       setConvidando(false);
-      setAviso({
-        titulo: "Convite enviado",
-        descricao: `${novo.email} vai receber um e-mail para criar a conta.`,
-      });
+      setAviso(
+        dadosReais
+          ? {
+              titulo: "Acesso criado",
+              descricao: `${novo.email} já pode entrar com a senha que você definiu.`,
+            }
+          : {
+              titulo: "Convite enviado",
+              descricao: `${novo.email} vai receber um e-mail para criar a conta.`,
+            },
+      );
     } catch (excecao: unknown) {
       setErroConvite(
         excecao instanceof Error ? excecao.message : "Falha ao enviar o convite.",
@@ -124,6 +136,22 @@ export default function Equipe(): ReactNode {
     } catch (excecao: unknown) {
       setErroAcao(
         excecao instanceof Error ? excecao.message : "Falha ao cancelar o convite.",
+      );
+    }
+  }
+
+  async function alterarPapel(membro: MembroEquipe, papel: PapelEquipe): Promise<void> {
+    setErroAcao(null);
+    try {
+      await acoes.alterarPapel(membro.id, papel);
+      setChaveRecarga((chave) => chave + 1);
+      setAviso({
+        titulo: "Papel atualizado",
+        descricao: `${membro.nome} agora é ${ROTULOS_PAPEL[papel].toLowerCase()}.`,
+      });
+    } catch (excecao: unknown) {
+      setErroAcao(
+        excecao instanceof Error ? excecao.message : "Falha ao alterar o papel.",
       );
     }
   }
@@ -179,7 +207,7 @@ export default function Equipe(): ReactNode {
               onClick={abrirConvite}
             >
               <Icone nome="mais" tamanho={14} />
-              Convidar pessoa
+              {dadosReais ? "Cadastrar pessoa" : "Convidar pessoa"}
             </button>
           </div>
 
@@ -194,6 +222,10 @@ export default function Equipe(): ReactNode {
               aoCopiarEmail={(membro) => void copiarEmail(membro)}
               aoReenviarConvite={(membro) => void reenviar(membro)}
               aoCancelarConvite={(membro) => void cancelar(membro)}
+              aoAlterarPapel={
+                dadosReais ? (membro, papel) => void alterarPapel(membro, papel) : undefined
+              }
+              idDaPessoaLogada={usuario?.id}
             />
           )}
         </>
@@ -201,6 +233,7 @@ export default function Equipe(): ReactNode {
 
       {convidando ? (
         <ModalConvidar
+          criaAcesso={dadosReais}
           salvando={salvando}
           erro={erroConvite}
           aoConfirmar={(convite) => void convidar(convite)}
