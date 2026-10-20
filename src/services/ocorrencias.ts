@@ -14,6 +14,7 @@ import * as mock from "./ocorrencias.mock";
 export interface ServicoOcorrencias {
   readonly assinarMudancas: (ouvinte: () => void) => () => void;
   readonly quantidadeAguardando: () => number;
+  readonly lerOcorrencias: () => readonly Ocorrencia[];
   readonly semelhantesNaSemana: (ocorrencia: Ocorrencia) => number;
   readonly garantirCarregado: () => void;
   readonly listarSetores: () => Promise<readonly string[]>;
@@ -70,6 +71,7 @@ const servico: ServicoOcorrencias = USAR_MOCKS ? mock : api;
 export const {
   assinarMudancas,
   quantidadeAguardando,
+  lerOcorrencias,
   semelhantesNaSemana,
   garantirCarregado,
   listarSetores,

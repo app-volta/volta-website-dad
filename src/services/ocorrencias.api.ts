@@ -140,6 +140,11 @@ function aguardaAprovacao(status: StatusOcorrencia): boolean {
   return status === "classificada" || status === "aguardando_classificacao";
 }
 
+/** Ocorrências já carregadas, na ordem da lista; troca de referência a cada mudança. */
+export function lerOcorrencias(): readonly Ocorrencia[] {
+  return cache;
+}
+
 export function quantidadeAguardando(): number {
   return cache.filter((item) => aguardaAprovacao(item.status)).length;
 }
@@ -172,6 +177,12 @@ function carregarCatalogo(): Promise<CatalogoApi> {
       });
   }
   return catalogo;
+}
+
+/** Áreas (setores) da empresa da pessoa logada, com o id que a API usa. */
+export async function listarAreas(): Promise<readonly AreaApi[]> {
+  const cat = await carregarCatalogo();
+  return [...cat.areas.values()];
 }
 
 /** Setores da empresa da pessoa logada (GET /areas/mine). */

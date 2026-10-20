@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   metaRecuperacaoAtual,
   obterConfiguracoes,
-  RECUPERADO_NO_MES_KG,
   salvarConfiguracoes,
 } from "../services/configuracoes";
 import type {
@@ -11,6 +10,8 @@ import type {
   ParcialConfiguracoes,
 } from "../types/configuracao";
 import { mesclarConfiguracoes } from "../utils/configuracoes";
+import { useOcorrencias } from "./useOcorrencias";
+import { usePainel } from "./usePainel";
 
 interface EstadoConfiguracoes {
   readonly dados: Configuracoes | null;
@@ -73,7 +74,8 @@ export function useMetaRecuperacao(): number {
   return metaRecuperacaoAtual();
 }
 
-/** Quanto a unidade já recuperou no mês, em kg. */
+/** Quanto a unidade já recuperou no mês, em kg: o mesmo número do Início. */
 export function useRecuperadoNoMesKg(): number {
-  return RECUPERADO_NO_MES_KG;
+  const { dados } = useOcorrencias();
+  return usePainel(dados).painel.recuperadoMesKg;
 }

@@ -110,6 +110,70 @@ export interface RelatorioIaApi {
   readonly generatedAt: string;
 }
 
+/** GET /esg/metrics (ADMIN e MANAGER). Os decimais chegam como número. */
+export interface MetricaEsgApi {
+  readonly id: string;
+  readonly companyId: string;
+  /** Mês de referência, AAAA-MM. */
+  readonly period: string;
+  readonly totalWasteKg: number;
+  readonly totalRecycledKg: number;
+  readonly recyclingPercentage: number;
+  readonly calculatedAt: string;
+}
+
+/** GET /esg/score (ADMIN e MANAGER). */
+export interface ScoreEsgApi {
+  readonly companyId: string;
+  readonly score: number;
+}
+
+export type StatusColetaApi =
+  | "REQUESTED"
+  | "SCHEDULED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELED";
+
+/** GET /collections (ADMIN e MANAGER). */
+export interface ColetaApi {
+  readonly id: string;
+  readonly incidentId: string;
+  readonly cooperativeId: string;
+  readonly requestedAt: string;
+  readonly scheduledAt: string | null;
+  readonly currentStatus: StatusColetaApi;
+  readonly collectionType: string;
+  readonly urgent: boolean;
+}
+
+/** GET /cooperatives (somente ADMIN). */
+export interface CooperativaApi {
+  readonly id: string;
+  readonly name: string;
+  /** Só dígitos, sem máscara. */
+  readonly cnpj: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly averageRating: number | null;
+  /** Categorias de resíduo separadas por vírgula: "PAPEL,PLASTICO". */
+  readonly specialties: string;
+}
+
+/** POST /cooperatives e PUT /cooperatives/{id} (somente ADMIN). */
+export interface NovaCooperativaApi {
+  readonly name: string;
+  readonly cnpj: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly specialties: string;
+}
+
+/** PATCH /users/{id}/role (somente ADMIN). */
+export interface PerfilNovoApi {
+  readonly role: PerfilApi;
+}
+
 /* ---- volta-chatbot (FastAPI): as chaves vêm em snake_case ---- */
 
 export type RotaChatApi =
@@ -190,6 +254,30 @@ export interface AnaliseResiduoApi {
   readonly judge: VereditoJuizApi | null;
   readonly analysis_id: string | null;
   readonly generated_at: string | null;
+}
+
+/** GET /v1/occurrences/reports/ai_summary */
+export interface ResumoGestaoApi {
+  readonly problema_analisado: string;
+  readonly recomendacoes: readonly string[];
+}
+
+/**
+ * GET /v1/occurrences/areas/{id}/predict_capacity. Sem histórico suficiente o
+ * servidor responde 400; com poucos dias distintos, devolve só `mensagem`.
+ */
+export interface PrevisaoCapacidadeApi {
+  readonly sucesso?: boolean;
+  readonly mensagem?: string;
+  readonly dias_projetados?: number;
+  readonly data_projetada?: string;
+  readonly taxa_geracao_diaria_kg?: number;
+  readonly volume_atual_kg?: number;
+  readonly volume_estimado_kg?: number;
+  readonly capacidade_maxima_kg?: number;
+  readonly capacidade_atingida_no_horizonte?: boolean;
+  readonly dias_ate_lotacao?: number | null;
+  readonly data_estimada_lotacao?: string | null;
 }
 
 /** Erros da API seguem o ProblemDetail (RFC 7807). */

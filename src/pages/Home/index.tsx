@@ -13,13 +13,20 @@ import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useMetaRecuperacao } from "../../hooks/useConfiguracoes";
+import { useDicaVolta, useInsightVolta } from "../../hooks/useInsights";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { usePainel } from "../../hooks/usePainel";
 import type { Material } from "../../types/material";
+import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
+import { iniciais } from "../../utils/pessoa";
+import { tempoRelativo } from "../../utils/painel";
 import "./styles.css";
 
 type Prioridade = "alta" | "media" | "baixa";
 type JanelaGrafico = "semanas" | "trimestre";
+
+const COR_OUTROS = "var(--texto-suave)";
 
 interface ItemFila {
   readonly id: string;
@@ -27,13 +34,6 @@ interface ItemFila {
   readonly subtitulo: string;
   readonly prioridade: Prioridade;
   readonly material: Material | null;
-}
-
-interface AtividadeEquipe {
-  readonly iniciais: string;
-  readonly cor: string;
-  readonly texto: ReactNode;
-  readonly tempo: string;
 }
 
 const ROTULO_PRIORIDADE: Readonly<Record<Prioridade, string>> = {
@@ -62,93 +62,12 @@ function inferirPrioridade(o: Ocorrencia): Prioridade {
   return "baixa";
 }
 
-function tempoRelativo(iso: string): string {
-  const delta = Date.now() - new Date(iso).getTime();
-  const minutos = Math.round(delta / 60000);
-  if (minutos < 60) return `há ${Math.max(minutos, 1)} min`;
-  const horas = Math.round(minutos / 60);
-  if (horas < 24) return `${horas}h hoje`;
-  const dias = Math.round(horas / 24);
-  if (dias === 1) return "ontem";
-  return `${dias} dias`;
-}
-
 function saudacao(): string {
   const hora = new Date().getHours();
   if (hora < 12) return "Bom dia";
   if (hora < 18) return "Boa tarde";
   return "Boa noite";
 }
-
-const DADOS_RECUPERACAO: Readonly<
-  Record<JanelaGrafico, readonly { rotulo: string; valor: number; meta: number }[]>
-> = {
-  semanas: [
-    { rotulo: "S1", valor: 108, meta: 140 },
-    { rotulo: "S2", valor: 128, meta: 140 },
-    { rotulo: "S3", valor: 141, meta: 140 },
-    { rotulo: "S4", valor: 134, meta: 140 },
-    { rotulo: "S5", valor: 155, meta: 140 },
-    { rotulo: "S6", valor: 162, meta: 140 },
-    { rotulo: "S7", valor: 178, meta: 140 },
-    { rotulo: "S8", valor: 191, meta: 140 },
-  ],
-  trimestre: [
-    { rotulo: "Jan", valor: 320, meta: 420 },
-    { rotulo: "Fev", valor: 410, meta: 420 },
-    { rotulo: "Mar", valor: 485, meta: 420 },
-  ],
-};
-
-const MATERIAIS_MES = [
-  { material: "papelao" as const, rotulo: "Papelão", kg: 542 },
-  { material: "plastico" as const, rotulo: "Plástico", kg: 318 },
-  { material: "metal" as const, rotulo: "Metal", kg: 176 },
-  { material: "vidro" as const, rotulo: "Vidro", kg: 111 },
-];
-
-const ATIVIDADES: readonly AtividadeEquipe[] = [
-  {
-    iniciais: "AS",
-    cor: "var(--metal-bg)",
-    texto: (
-      <>
-        <strong>Ana Souza</strong> aprovou #0481 · Sucata metálica
-      </>
-    ),
-    tempo: "há 5 min",
-  },
-  {
-    iniciais: "CM",
-    cor: "var(--plastico-bg)",
-    texto: (
-      <>
-        <strong>Carla Mendes</strong> registrou #0482 · Plástico
-      </>
-    ),
-    tempo: "há 32 min",
-  },
-  {
-    iniciais: "RL",
-    cor: "var(--vidro-bg)",
-    texto: (
-      <>
-        <strong>Rafael Lima</strong> encaminhou #0479 pra Qualidade
-      </>
-    ),
-    tempo: "ontem",
-  },
-  {
-    iniciais: "JP",
-    cor: "var(--papelao-bg)",
-    texto: (
-      <>
-        <strong>João Pereira</strong> adicionou uma observação em #0475
-      </>
-    ),
-    tempo: "ontem",
-  },
-];
 
 /** Frase da saudação sobre a fila: muda quando não sobra nada para aprovar. */
 function tituloDaFila(carregou: boolean, pendentes: number): string {
@@ -159,12 +78,41 @@ function tituloDaFila(carregou: boolean, pendentes: number): string {
     : `Tem ${pendentes} ocorrências esperando você.`;
 }
 
+/** "+12 vs. mês passado": o sinal acompanha a direção, sem ruído quando não há o que comparar. */
+function deltaDeOcorrencias(variacao: number | null): {
+  readonly texto?: string;
+  readonly direcao: "sobe" | "desce" | "neutro";
+} {
+  if (variacao === null) return { direcao: "neutro" };
+  if (variacao === 0) return { texto: "igual ao mês passado", direcao: "neutro" };
+  return {
+    texto: `${variacao > 0 ? "+" : "−"}${Math.abs(variacao)} vs. mês passado`,
+    direcao: variacao > 0 ? "sobe" : "desce",
+  };
+}
+
+function deltaDePontos(pontos: number | null): {
+  readonly texto?: string;
+  readonly direcao: "sobe" | "desce" | "neutro";
+} {
+  if (pontos === null) return { direcao: "neutro" };
+  if (pontos === 0) return { texto: "igual ao mês passado", direcao: "neutro" };
+  const unidade = Math.abs(pontos) === 1 ? "ponto" : "pontos";
+  return {
+    texto: `${pontos > 0 ? "+" : "−"}${Math.abs(pontos)} ${unidade}`,
+    direcao: pontos > 0 ? "sobe" : "desce",
+  };
+}
+
 export default function Home(): ReactNode {
   const { usuario } = useAuth();
   const acoes = useAcoesOcorrencia();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [janela, setJanela] = useState<JanelaGrafico>("semanas");
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
+  const { painel, dadosReais } = usePainel(dados);
+  const insight = useInsightVolta();
+  const dica = useDicaVolta();
   const [aprovandoId, setAprovandoId] = useState<string | null>(null);
   const [erroAprovacao, setErroAprovacao] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -189,9 +137,29 @@ export default function Home(): ReactNode {
   }, [dados]);
 
   const pendentes = fila.length;
-  const totalMes = MATERIAIS_MES.reduce((acc, m) => acc + m.kg, 0);
+  const totalMes = painel.recuperadoMesKg;
   const metaMes = useMetaRecuperacao();
   const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
+  // Com a API ainda carregando, os números reais ainda não existem: mostra "—".
+  const aguardandoDados = dadosReais && dados === null;
+  const kgNaFila = (dados ?? [])
+    .filter((o) => fila.some((item) => item.id === o.id))
+    .reduce((soma, o) => soma + o.pesoKg, 0);
+  const projecaoMeta = Math.round(((totalMes + kgNaFila) / metaMes) * 100);
+  const deltaOcorrencias = deltaDeOcorrencias(painel.ocorrenciasVariacao);
+  const deltaTaxa = deltaDePontos(painel.taxaVariacaoPontos);
+  const materiaisMes = [
+    ...painel.porMaterial.map((m) => ({
+      chave: m.material as string,
+      rotulo: METADADOS_MATERIAL[m.material].rotulo,
+      kg: m.kg,
+      cor: COR_MATERIAL[m.material],
+    })),
+    ...(painel.outrosKg > 0
+      ? [{ chave: "outros", rotulo: "Outros", kg: painel.outrosKg, cor: COR_OUTROS }]
+      : []),
+  ];
+  const somaDonut = materiaisMes.reduce((soma, m) => soma + m.kg, 0);
 
   async function aprovar(id: string, titulo: string): Promise<void> {
     setAprovandoId(id);
@@ -209,10 +177,10 @@ export default function Home(): ReactNode {
     }
   }
 
-  const fatiasDonut = MATERIAIS_MES.map((m) => ({
+  const fatiasDonut = materiaisMes.map((m) => ({
     rotulo: m.rotulo,
     valor: m.kg,
-    cor: COR_MATERIAL[m.material],
+    cor: m.cor,
   }));
 
   return (
@@ -249,7 +217,9 @@ export default function Home(): ReactNode {
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
             este mês — <strong>{Math.round(progressoMeta)}%</strong> da meta.
-            Aprovando a fila de hoje, vocês passam de 80%.
+            {kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
+              ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
+              : ""}
           </p>
           <div className="home-hero__acoes">
             <Link to="/ocorrencias?status=aguardando" className="home-hero__botao home-hero__botao--primario">
@@ -262,11 +232,13 @@ export default function Home(): ReactNode {
             </Link>
           </div>
         </div>
-        <div className="home-hero__dica" role="note" aria-label="Dica do assistente VOLTA">
-          <p>
-            <strong>VOLTA notou:</strong> o Setor B2 registrou papelão molhado 3 vezes essa semana. Que tal uma área coberta perto da câmara fria?
-          </p>
-        </div>
+        {insight ? (
+          <div className="home-hero__dica" role="note" aria-label="Dica do assistente VOLTA">
+            <p>
+              <strong>VOLTA notou:</strong> {insight.texto}
+            </p>
+          </div>
+        ) : null}
         <div className="home-hero__mascote" aria-hidden="true">
           <Mascote tamanho={122} altura={182} />
         </div>
@@ -277,10 +249,10 @@ export default function Home(): ReactNode {
           <KpiCard
             icone="grafico"
             rotulo="Ocorrências no mês"
-            valor="52"
-            delta="+12 vs. mês passado"
-            direcao="sobe"
-            sparkline={[32, 36, 40, 38, 44, 48, 52]}
+            valor={aguardandoDados ? "—" : painel.ocorrenciasMes}
+            delta={deltaOcorrencias.texto}
+            direcao={deltaOcorrencias.direcao}
+            sparkline={painel.sparkOcorrencias ?? undefined}
           />
         </li>
         <li>
@@ -288,9 +260,9 @@ export default function Home(): ReactNode {
             icone="sino"
             rotulo="Aguardando aprovação"
             valor={dados ? pendentes : "—"}
-            delta="média de 2,4 h pra aprovar"
+            delta={dados ? painel.textoEspera : undefined}
             direcao="neutro"
-            sparkline={[6, 4, 7, 5, 8, 3, 4]}
+            sparkline={painel.sparkPendentes ?? undefined}
           />
         </li>
         <li>
@@ -298,13 +270,25 @@ export default function Home(): ReactNode {
             icone="reciclagem"
             rotulo="Recuperado no mês"
             valor={
-              <>
-                {totalMes.toLocaleString("pt-BR")} <small>kg</small>
-              </>
+              aguardandoDados ? (
+                "—"
+              ) : (
+                <>
+                  {totalMes.toLocaleString("pt-BR")} <small>kg</small>
+                </>
+              )
             }
-            delta={`+8% · ${Math.round(progressoMeta)}% da meta`}
-            direcao="sobe"
-            sparkline={[720, 810, 860, 920, 980, 1050, 1147]}
+            delta={
+              painel.recuperadoVariacaoPct === null
+                ? `${Math.round(progressoMeta)}% da meta`
+                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}% · ${Math.round(progressoMeta)}% da meta`
+            }
+            direcao={
+              painel.recuperadoVariacaoPct !== null && painel.recuperadoVariacaoPct < 0
+                ? "desce"
+                : "sobe"
+            }
+            sparkline={painel.sparkRecuperado ?? undefined}
           />
         </li>
         <li>
@@ -312,13 +296,17 @@ export default function Home(): ReactNode {
             icone="check"
             rotulo="Taxa de aprovação"
             valor={
-              <>
-                94 <small>%</small>
-              </>
+              painel.taxaAprovacao === null || aguardandoDados ? (
+                "—"
+              ) : (
+                <>
+                  {painel.taxaAprovacao} <small>%</small>
+                </>
+              )
             }
-            delta="+3 pontos"
-            direcao="sobe"
-            sparkline={[88, 90, 89, 91, 92, 93, 94]}
+            delta={deltaTaxa.texto}
+            direcao={deltaTaxa.direcao}
+            sparkline={painel.sparkTaxa ?? undefined}
           />
         </li>
       </ul>
@@ -357,7 +345,7 @@ export default function Home(): ReactNode {
             </div>
           </header>
           <GraficoLinha
-            pontos={DADOS_RECUPERACAO[janela]}
+            pontos={janela === "semanas" ? painel.semanas : painel.meses}
             rotulo="Recuperação de resíduos ao longo do tempo"
           />
           <div className="home-legenda">
@@ -384,15 +372,15 @@ export default function Home(): ReactNode {
           <div className="home-donut">
             <GraficoDonut
               fatias={fatiasDonut}
-              centroTitulo={totalMes.toLocaleString("pt-BR")}
+              centroTitulo={somaDonut.toLocaleString("pt-BR")}
               centroRotulo="kg no mês"
             />
             <ul className="home-donut__lista">
-              {MATERIAIS_MES.map((m) => (
-                <li key={m.material} className="home-donut__item">
+              {materiaisMes.map((m) => (
+                <li key={m.chave} className="home-donut__item">
                   <span
                     className="home-donut__ponto"
-                    style={{ background: COR_MATERIAL[m.material] }}
+                    style={{ background: m.cor }}
                     aria-hidden="true"
                   />
                   <span className="home-donut__rotulo">{m.rotulo}</span>
@@ -539,40 +527,56 @@ export default function Home(): ReactNode {
               Atividade da equipe
             </h2>
           </header>
-          <ul className="home-timeline">
-            {ATIVIDADES.map((a) => (
-              <li key={`${a.iniciais}-${a.tempo}`} className="home-timeline__item">
-                <span
-                  className="home-timeline__avatar"
-                  style={{ background: a.cor }}
-                  aria-hidden="true"
-                >
-                  {a.iniciais}
-                </span>
-                <div className="home-timeline__corpo">
-                  <p className="home-timeline__texto">{a.texto}</p>
-                  <span className="home-timeline__tempo">{a.tempo}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {painel.atividades.length > 0 ? (
+            <ul className="home-timeline">
+              {painel.atividades.map((a) => (
+                <li key={a.id} className="home-timeline__item">
+                  <span
+                    className="home-timeline__avatar"
+                    style={{ background: a.cor }}
+                    aria-hidden="true"
+                  >
+                    {iniciais(a.autor)}
+                  </span>
+                  <div className="home-timeline__corpo">
+                    <p className="home-timeline__texto">
+                      <strong>{a.autor}</strong> {a.acao}
+                    </p>
+                    <span className="home-timeline__tempo">{a.tempo}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="home-fila-vazia__texto">
+              {dados ? "Nenhuma atividade ainda." : "Carregando atividade…"}
+            </p>
+          )}
 
-          <div className="home-dica">
-            <div className="home-dica__mascote" aria-hidden="true">
-              <Mascote tamanho={56} />
+          {dica ? (
+            <div className="home-dica">
+              <div className="home-dica__mascote" aria-hidden="true">
+                <Mascote tamanho={56} />
+              </div>
+              <div className="home-dica__texto">
+                <p className="home-dica__titulo">
+                  <span aria-hidden="true">✦</span> Dica do VOLTA
+                </p>
+                <p>
+                  {dica.trechos.map((trecho, indice) =>
+                    trecho.destaque ? (
+                      <strong key={indice}>{trecho.texto}</strong>
+                    ) : (
+                      <span key={indice}>{trecho.texto}</span>
+                    ),
+                  )}
+                </p>
+                <Link to={dica.destino} className="home-painel__link">
+                  {dica.rotuloDestino}
+                </Link>
+              </div>
             </div>
-            <div className="home-dica__texto">
-              <p className="home-dica__titulo">
-                <span aria-hidden="true">✦</span> Dica do VOLTA
-              </p>
-              <p>
-                A licença da <strong>Recicla Vida</strong> vence em 12 dias. Peça a renovação antes de mandar mais material.
-              </p>
-              <Link to="/cooperativas" className="home-painel__link">
-                Ver cooperativa
-              </Link>
-            </div>
-          </div>
+          ) : null}
         </aside>
       </div>
 

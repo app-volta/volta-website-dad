@@ -27,6 +27,7 @@ import type {
 import type { AcaoMensagem } from "../types/assistente";
 import type { Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
+import { instanteUtc } from "../utils/datas";
 
 /**
  * Tradução entre os contratos da volta-api (src/types/api.ts) e os tipos de
@@ -106,13 +107,6 @@ const CONTAMINACAO_DA_API: Readonly<Record<RiscoApi, NivelContaminacao>> = {
   MEDIUM: "media",
   HIGH: "alta",
 };
-
-/** O backend serializa LocalDateTime em UTC e sem fuso. */
-export function instanteUtc(valor: string): string {
-  const temFuso = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(valor);
-  const data = new Date(temFuso ? valor : `${valor}Z`);
-  return Number.isNaN(data.getTime()) ? valor : data.toISOString();
-}
 
 /** Código curto e estável derivado do UUID, no formato OCC-12345. */
 export function codigoDaOcorrencia(id: string): string {

@@ -242,6 +242,11 @@ function aguardaAprovacao(status: StatusOcorrencia): boolean {
   return status === "classificada" || status === "aguardando_classificacao";
 }
 
+/** Ocorrências já carregadas, na ordem da lista; troca de referência a cada mudança. */
+export function lerOcorrencias(): readonly Ocorrencia[] {
+  return CATALOGO;
+}
+
 export function quantidadeAguardando(): number {
   return CATALOGO.filter((item) => aguardaAprovacao(item.status)).length;
 }

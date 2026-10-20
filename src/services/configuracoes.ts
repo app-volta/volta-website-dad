@@ -14,9 +14,6 @@ import { aguardar } from "./http";
 const CHAVE_STORAGE = "volta:configuracoes";
 const VERSAO_STORAGE = 1;
 
-/** Quilos recuperados no mês, o mesmo número da Home e do relatório PGRS. */
-export const RECUPERADO_NO_MES_KG = 1147;
-
 const PADRAO: Configuracoes = {
   unidade: {
     nome: "Unidade Frigorífico",
