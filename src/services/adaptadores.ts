@@ -50,6 +50,7 @@ export function usuarioDaApi(dto: UsuarioApi): Usuario {
     email: dto.email,
     papel: PAPEL_POR_PERFIL[dto.role] ?? "operador",
     unidade: UNIDADE_PADRAO,
+    cargo: dto.position,
   };
 }
 

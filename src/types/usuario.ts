@@ -6,6 +6,8 @@ export interface Usuario {
   readonly email: string;
   readonly papel: PapelUsuario;
   readonly unidade: string;
+  /** Cargo informado no perfil (position na volta-api); a API aceita vazio. */
+  readonly cargo?: string | null;
   readonly avatarUrl?: string;
 }
 

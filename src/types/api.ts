@@ -48,6 +48,12 @@ export interface UsuarioApi {
   readonly role: PerfilApi;
 }
 
+/** PUT /users/me: a pessoa altera só o próprio nome e cargo. */
+export interface AtualizacaoPerfilApi {
+  readonly name: string;
+  readonly position: string | null;
+}
+
 /** GET /areas/mine */
 export interface AreaApi {
   readonly id: string;
