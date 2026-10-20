@@ -71,7 +71,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 |------|-----------|
 | Login | `POST /auth/login`, `GET /users/me` |
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` |
-| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) |
+| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict` |
 | Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
 
@@ -80,8 +80,9 @@ um assistente de IA, não um canal de mensagens com a cooperativa.
 
 O que a API ainda não oferece fica só neste navegador: recusar, encaminhar,
 observação e reclassificação (salvos em `localStorage`, por usuário). A foto do
-registro também não é enviada: a API recebe uma URL, e o upload depende do
-armazenamento (S3). Os contratos estão em `src/types/api.ts`; a tradução para os
+registro vai para a IA do chatbot, mas não é guardada: a volta-api recebe uma
+URL, e o upload depende do armazenamento (S3). Se a IA não confirma o resíduo
+na foto, o app não cria a ocorrência e pede outra foto. Os contratos estão em `src/types/api.ts`; a tradução para os
 tipos do app, em `src/services/adaptadores.ts`.
 
 ## Estrutura de pastas
