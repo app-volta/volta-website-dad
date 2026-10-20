@@ -16,6 +16,8 @@ import { validarCnpj } from "../../utils/validadores";
 import "./modal.css";
 
 interface ModalAdicionarProps {
+  /** Cadastro na volta-api: pede a localização da sede e não recebe a licença em PDF. */
+  readonly cadastroNaApi?: boolean;
   readonly salvando: boolean;
   readonly erro: string | null;
   readonly aoConfirmar: (dados: NovaCooperativa) => void;
@@ -27,7 +29,14 @@ function formatarTamanho(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
 }
 
+/** Aceita vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
+function lerCoordenada(texto: string): number {
+  const limpo = texto.trim().replace(",", ".");
+  return limpo === "" ? Number.NaN : Number(limpo);
+}
+
 export function ModalAdicionar({
+  cadastroNaApi = false,
   salvando,
   erro,
   aoConfirmar,
@@ -36,6 +45,8 @@ export function ModalAdicionar({
   const idFormulario = useId();
   const idNome = useId();
   const idCnpj = useId();
+  const idLatitude = useId();
+  const idLongitude = useId();
   const idRotuloLicenca = useId();
   const nomeRef = useRef<HTMLInputElement | null>(null);
   const cnpjRef = useRef<HTMLInputElement | null>(null);
@@ -44,6 +55,8 @@ export function ModalAdicionar({
   const [cnpj, setCnpj] = useState<string>("");
   const [materiais, setMateriais] = useState<readonly MaterialAceito[]>([]);
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
   const [arrastando, setArrastando] = useState<boolean>(false);
   const [tentou, setTentou] = useState<boolean>(false);
 
@@ -53,6 +66,16 @@ export function ModalAdicionar({
   const erroMateriais =
     materiais.length === 0 ? "Escolha ao menos um material." : null;
   const erroLicenca = validarLicenca(arquivo);
+  const erroLatitude = !cadastroNaApi
+    ? null
+    : !(lerCoordenada(latitude) >= -90 && lerCoordenada(latitude) <= 90)
+      ? "Informe a latitude, entre -90 e 90."
+      : null;
+  const erroLongitude = !cadastroNaApi
+    ? null
+    : !(lerCoordenada(longitude) >= -180 && lerCoordenada(longitude) <= 180)
+      ? "Informe a longitude, entre -180 e 180."
+      : null;
 
   function alternarMaterial(material: MaterialAceito): void {
     setMateriais((atuais) =>
@@ -86,8 +109,16 @@ export function ModalAdicionar({
       cnpjRef.current?.focus();
       return;
     }
-    if (erroMateriais || erroLicenca) return;
-    aoConfirmar({ nome, cnpj, materiais, licenca: arquivo });
+    if (erroMateriais || erroLicenca || erroLatitude || erroLongitude) return;
+    aoConfirmar({
+      nome,
+      cnpj,
+      materiais,
+      licenca: arquivo,
+      ...(cadastroNaApi
+        ? { latitude: lerCoordenada(latitude), longitude: lerCoordenada(longitude) }
+        : {}),
+    });
   }
 
   return (
@@ -98,7 +129,11 @@ export function ModalAdicionar({
       tom="verde"
       largura={526}
       titulo="Adicionar cooperativa"
-      subtitulo="Ela entra em homologação até a licença ser validada."
+      subtitulo={
+        cadastroNaApi
+          ? "Ela entra na lista de cooperativas da sua empresa."
+          : "Ela entra em homologação até a licença ser validada."
+      }
       aoFechar={aoFechar}
       rodape={
         <>
@@ -116,7 +151,11 @@ export function ModalAdicionar({
             className="modal-acao__botao modal-acao__botao--primario"
             disabled={salvando}
           >
-            {salvando ? "Enviando…" : "Enviar pra homologação"}
+            {salvando
+              ? "Enviando…"
+              : cadastroNaApi
+                ? "Cadastrar"
+                : "Enviar pra homologação"}
           </button>
         </>
       }
@@ -181,6 +220,48 @@ export function ModalAdicionar({
           ) : null}
         </fieldset>
 
+        {cadastroNaApi ? (
+          <div className="coops-form__linha">
+            <Campo
+              id={idLatitude}
+              rotulo="Latitude"
+              icone="pin"
+              erro={tentou ? erroLatitude : null}
+            >
+              <input
+                id={idLatitude}
+                type="text"
+                inputMode="decimal"
+                value={latitude}
+                placeholder="-23,561684"
+                autoComplete="off"
+                aria-invalid={tentou && erroLatitude ? true : undefined}
+                aria-describedby={tentou && erroLatitude ? `${idLatitude}-erro` : undefined}
+                onChange={(evento) => setLatitude(evento.target.value)}
+              />
+            </Campo>
+            <Campo
+              id={idLongitude}
+              rotulo="Longitude"
+              icone="pin"
+              erro={tentou ? erroLongitude : null}
+            >
+              <input
+                id={idLongitude}
+                type="text"
+                inputMode="decimal"
+                value={longitude}
+                placeholder="-46,655981"
+                autoComplete="off"
+                aria-invalid={tentou && erroLongitude ? true : undefined}
+                aria-describedby={tentou && erroLongitude ? `${idLongitude}-erro` : undefined}
+                onChange={(evento) => setLongitude(evento.target.value)}
+              />
+            </Campo>
+          </div>
+        ) : null}
+
+        {cadastroNaApi ? null : (
         <div className="coops-form__grupo">
           <span className="coops-form__rotulo" id={idRotuloLicenca}>
             Licença ambiental
@@ -223,6 +304,7 @@ export function ModalAdicionar({
             </button>
           ) : null}
         </div>
+        )}
 
         {erro ? (
           <Alerta variante="erro" titulo="Não foi possível cadastrar">

@@ -7,7 +7,11 @@ import {
   mesesDoGrafico,
   rotuloLicenca,
 } from "../../utils/cooperativas";
-import { formatarKg, formatarKm, formatarNota } from "../../utils/formatacao";
+import {
+  formatarKg,
+  formatarKmOpcional,
+  formatarNota,
+} from "../../utils/formatacao";
 import { corDaCooperativa } from "./cores";
 import { MapaCooperativas } from "./MapaCooperativas";
 
@@ -83,11 +87,13 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
         </div>
         <div className="coops__kv-item">
           <dt>Distância</dt>
-          <dd>{formatarKm(coop.distanciaKm)}</dd>
+          <dd>{formatarKmOpcional(coop.distanciaKm)}</dd>
         </div>
         <div className="coops__kv-item">
           <dt>Capacidade/mês</dt>
-          <dd>{formatarKg(coop.capacidadeMesKg)}</dd>
+          <dd>
+            {coop.capacidadeMesKg === null ? "—" : formatarKg(coop.capacidadeMesKg)}
+          </dd>
         </div>
         <div className="coops__kv-item">
           <dt>Avaliação</dt>

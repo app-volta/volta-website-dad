@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import type { Cooperativa } from "../../types/cooperativa";
-import { cooperativasNoRaio } from "../../utils/cooperativas";
+import { cooperativasNoRaio, temDistancias } from "../../utils/cooperativas";
 import { corDaCooperativa } from "./cores";
 
 const RAIO_KM = 10;
@@ -85,9 +85,13 @@ export function MapaCooperativas({
       })}
 
       <p className="coops__mapa-nota">
-        {total === 1
-          ? "1 cooperativa num raio de 10 km da unidade"
-          : `${total} cooperativas num raio de 10 km da unidade`}
+        {!temDistancias(todas)
+          ? todas.length === 1
+            ? "1 cooperativa cadastrada"
+            : `${todas.length} cooperativas cadastradas`
+          : total === 1
+            ? "1 cooperativa num raio de 10 km da unidade"
+            : `${total} cooperativas num raio de 10 km da unidade`}
       </p>
     </div>
   );

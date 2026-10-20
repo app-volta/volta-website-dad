@@ -46,6 +46,11 @@ export function formatarKm(km: number): string {
   })} km`;
 }
 
+/** Distância ou "—" quando a fonte não informa. */
+export function formatarKmOpcional(km: number | null): string {
+  return km === null ? "—" : formatarKm(km);
+}
+
 /** Nota com uma casa e vírgula decimal: "4,9". */
 export function formatarNota(nota: number): string {
   return nota.toLocaleString("pt-BR", {

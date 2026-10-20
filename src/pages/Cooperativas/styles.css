@@ -383,6 +383,10 @@
   color: #0b60ec;
 }
 
+.coops__lic--nao_informada {
+  color: var(--texto-suave);
+}
+
 /* Painel da cooperativa selecionada */
 .coops__mapa {
   position: relative;
@@ -565,6 +569,10 @@
 .coops__kv-item dd.coops__kv-licenca--em_analise,
 .coops__kv-item dd.coops__kv-licenca--sem_licenca {
   color: #0b60ec;
+}
+
+.coops__kv-item dd.coops__kv-licenca--nao_informada {
+  color: var(--texto-suave);
 }
 
 .coops__grafico-titulo {

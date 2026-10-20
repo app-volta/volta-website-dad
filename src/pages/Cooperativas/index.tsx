@@ -10,6 +10,7 @@ import {
   useAcoesCooperativas,
   useCooperativas,
 } from "../../hooks/useCooperativas";
+import { useDadosReais } from "../../hooks/useModo";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
 import { ModalAdicionar } from "./ModalAdicionar";
@@ -36,6 +37,7 @@ export default function Cooperativas(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useCooperativas(chaveRecarga);
   const acoes = useAcoesCooperativas();
+  const dadosReais = useDadosReais();
 
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
@@ -68,10 +70,17 @@ export default function Cooperativas(): ReactNode {
       setFiltro((atual) => (atual === "ativas" ? "todas" : atual));
       setSelecionadaId(nova.id);
       setAdicionando(false);
-      setAviso({
-        titulo: "Cooperativa enviada para homologação",
-        descricao: `${nova.nome} entra na lista até a licença ser validada.`,
-      });
+      setAviso(
+        nova.situacao === "em_homologacao"
+          ? {
+              titulo: "Cooperativa enviada para homologação",
+              descricao: `${nova.nome} entra na lista até a licença ser validada.`,
+            }
+          : {
+              titulo: "Cooperativa cadastrada",
+              descricao: `${nova.nome} já está na lista da sua empresa.`,
+            },
+      );
     } catch (excecao: unknown) {
       setErroCadastro(
         excecao instanceof Error ? excecao.message : "Falha ao cadastrar.",
@@ -142,6 +151,7 @@ export default function Cooperativas(): ReactNode {
 
       {adicionando ? (
         <ModalAdicionar
+          cadastroNaApi={dadosReais}
           salvando={salvando}
           erro={erroCadastro}
           aoConfirmar={(novos) => void cadastrar(novos)}

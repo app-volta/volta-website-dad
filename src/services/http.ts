@@ -53,6 +53,7 @@ export class ErroHttp extends Error {
 export interface UsuarioAtual {
   readonly id: string;
   readonly nome: string;
+  readonly empresaId?: string;
 }
 
 /** Ligação entre a camada HTTP e a sessão, sem os services conhecerem React. */

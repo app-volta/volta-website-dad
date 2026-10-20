@@ -54,6 +54,14 @@ export interface AtualizacaoPerfilApi {
   readonly position: string | null;
 }
 
+/** GET /companies/{id} (somente ADMIN). */
+export interface EmpresaApi {
+  readonly id: string;
+  readonly name: string;
+  readonly cnpj: string;
+  readonly address: string | null;
+}
+
 /** GET /areas/mine */
 export interface AreaApi {
   readonly id: string;
@@ -167,6 +175,16 @@ export interface NovaCooperativaApi {
   readonly latitude: number;
   readonly longitude: number;
   readonly specialties: string;
+}
+
+/** POST /users (somente ADMIN): cria a conta, sempre como EMPLOYEE. */
+export interface NovoUsuarioApi {
+  readonly name: string;
+  readonly email: string;
+  /** De 8 a 72 caracteres. */
+  readonly password: string;
+  readonly position: string | null;
+  readonly companyId: string;
 }
 
 /** PATCH /users/{id}/role (somente ADMIN). */

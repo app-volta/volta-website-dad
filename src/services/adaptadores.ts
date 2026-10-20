@@ -3,6 +3,7 @@ import type {
   AnaliseResiduoApi,
   AreaApi,
   CategoriaResiduoApi,
+  CooperativaApi,
   IncidenteApi,
   PerfilApi,
   PrioridadeApi,
@@ -16,6 +17,8 @@ import type {
   ClassificacaoIA,
   NivelContaminacao,
 } from "../types/classificacao";
+import type { Cooperativa, MaterialAceito, PosicaoMapa } from "../types/cooperativa";
+import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
 import type {
@@ -28,6 +31,8 @@ import type { AcaoMensagem } from "../types/assistente";
 import type { Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
 import { instanteUtc } from "../utils/datas";
+import { mascararCnpj } from "../utils/formatacao";
+import type { VolumeDaCooperativa } from "../utils/volumeCooperativas";
 
 /**
  * Tradução entre os contratos da volta-api (src/types/api.ts) e os tipos de
@@ -52,6 +57,7 @@ export function usuarioDaApi(dto: UsuarioApi): Usuario {
     papel: PAPEL_POR_PERFIL[dto.role] ?? "operador",
     unidade: UNIDADE_PADRAO,
     cargo: dto.position,
+    empresaId: dto.companyId,
   };
 }
 
@@ -262,6 +268,159 @@ export function conteudoDaRespostaChat(resposta: RespostaChatApi): ConteudoAssis
     acao: proposta
       ? { rotulo: "Registrar ocorrência", destino: "/registrar" }
       : undefined,
+  };
+}
+
+/**
+ * Perfil da API → papel mostrado na equipe. Pelas descrições da tela, o
+ * responsável técnico "revisa, encaminha e aprova" (MANAGER) e o gestor tem
+ * "tudo" (ADMIN); quem só registra é colaborador (EMPLOYEE e OPERATOR).
+ */
+const PAPEL_DA_EQUIPE_POR_PERFIL: Readonly<Record<PerfilApi, PapelEquipe>> = {
+  ADMIN: "gestor",
+  MANAGER: "responsavel_tecnico",
+  EMPLOYEE: "colaborador",
+  OPERATOR: "colaborador",
+};
+
+const PERFIL_POR_PAPEL_DA_EQUIPE: Readonly<Record<PapelEquipe, PerfilApi>> = {
+  gestor: "ADMIN",
+  responsavel_tecnico: "MANAGER",
+  colaborador: "EMPLOYEE",
+};
+
+export function perfilDoPapel(papel: PapelEquipe): PerfilApi {
+  return PERFIL_POR_PAPEL_DA_EQUIPE[papel];
+}
+
+/** Pessoa da API na tabela da equipe. Setor a API não informa; "convite pendente" não existe lá. */
+export function membroDaApi(
+  dto: UsuarioApi,
+  registrosNoMes: number,
+  ultimaAtividade: string | null,
+): MembroEquipe {
+  return {
+    id: dto.id,
+    nome: dto.name,
+    email: dto.email,
+    papel: PAPEL_DA_EQUIPE_POR_PERFIL[dto.role] ?? "colaborador",
+    setor: null,
+    registrosNoMes,
+    ultimaAtividade,
+    convitePendente: false,
+  };
+}
+
+/** Categoria que a cooperativa recebe → material mostrado no painel. As demais não têm rótulo no app. */
+const MATERIAL_ACEITO_POR_CATEGORIA: Readonly<
+  Partial<Record<CategoriaResiduoApi, MaterialAceito>>
+> = {
+  PAPEL: "papelao",
+  PLASTICO: "plastico",
+  METAL: "metal",
+  VIDRO: "vidro",
+  ORGANICO: "organico",
+  PERIGOSO: "oleo",
+};
+
+const CATEGORIA_POR_MATERIAL_ACEITO: Readonly<
+  Record<MaterialAceito, CategoriaResiduoApi>
+> = {
+  papelao: "PAPEL",
+  papel_misto: "PAPEL",
+  plastico: "PLASTICO",
+  metal: "METAL",
+  vidro: "VIDRO",
+  organico: "ORGANICO",
+  oleo: "PERIGOSO",
+};
+
+/** "PAPEL,PLASTICO" para o cadastro na API, sem repetir categoria. */
+export function especialidadesDosMateriais(
+  materiais: readonly MaterialAceito[],
+): string {
+  return [...new Set(materiais.map((m) => CATEGORIA_POR_MATERIAL_ACEITO[m]))].join(",");
+}
+
+function materiaisDasEspecialidades(especialidades: string): MaterialAceito[] {
+  const encontrados = especialidades
+    .split(",")
+    .map((item) => MATERIAL_ACEITO_POR_CATEGORIA[item.trim() as CategoriaResiduoApi])
+    .filter((material): material is MaterialAceito => material !== undefined);
+  return [...new Set(encontrados)];
+}
+
+/** CNPJ numérico ganha máscara; o alfanumérico (formato novo) fica como a API devolve. */
+function cnpjParaExibir(cnpj: string): string {
+  return /^\d{14}$/.test(cnpj) ? mascararCnpj(cnpj) : cnpj;
+}
+
+const MARGEM_MAPA_X = { min: 12, max: 88 } as const;
+const MARGEM_MAPA_Y = { min: 18, max: 82 } as const;
+
+function escalar(
+  valor: number,
+  menor: number,
+  maior: number,
+  margem: { readonly min: number; readonly max: number },
+): number {
+  if (maior === menor) return (margem.min + margem.max) / 2;
+  return margem.min + ((valor - menor) / (maior - menor)) * (margem.max - margem.min);
+}
+
+/**
+ * Posição ilustrativa no mapa: as coordenadas reais, proporcionais entre si e
+ * ajustadas ao quadro (norte em cima). Não é um mapa de verdade.
+ */
+export function posicoesNoMapa(
+  lista: readonly CooperativaApi[],
+): ReadonlyMap<string, PosicaoMapa> {
+  const latitudes = lista.map((c) => c.latitude);
+  const longitudes = lista.map((c) => c.longitude);
+  const [sul, norte] = [Math.min(...latitudes), Math.max(...latitudes)];
+  const [oeste, leste] = [Math.min(...longitudes), Math.max(...longitudes)];
+  return new Map(
+    lista.map((c) => [
+      c.id,
+      {
+        x: Number(escalar(c.longitude, oeste, leste, MARGEM_MAPA_X).toFixed(1)),
+        y: Number((MARGEM_MAPA_Y.min + MARGEM_MAPA_Y.max - escalar(c.latitude, sul, norte, MARGEM_MAPA_Y)).toFixed(1)),
+      },
+    ]),
+  );
+}
+
+/**
+ * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
+ * nota e as categorias aceitas; o resto (contato, distância, capacidade e
+ * licença) não existe lá e fica vazio.
+ */
+export function cooperativaDaApi(
+  dto: CooperativaApi,
+  posicaoMapa: PosicaoMapa,
+  volume: VolumeDaCooperativa,
+): Cooperativa {
+  return {
+    id: dto.id,
+    nome: dto.name,
+    cnpj: cnpjParaExibir(dto.cnpj),
+    cidade: "",
+    estado: "",
+    materiaisAceitos: materiaisDasEspecialidades(dto.specialties),
+    contato: null,
+    telefone: null,
+    email: null,
+    distanciaKm: null,
+    avaliacao: dto.averageRating,
+    situacao: "ativa",
+    parceiraGrupo: false,
+    capacidadeMesKg: null,
+    usadoMesKg: volume.usadoMesKg,
+    licencaMonitorada: false,
+    licencaValidaAte: null,
+    licencaDocumento: null,
+    volumeMensalKg: volume.volumeMensalKg,
+    posicaoMapa,
   };
 }
 

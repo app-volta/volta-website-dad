@@ -47,7 +47,11 @@ configurarSessaoHttp({
   obterToken: () => sessaoAtual?.token ?? null,
   obterUsuario: () =>
     sessaoAtual
-      ? { id: sessaoAtual.usuario.id, nome: sessaoAtual.usuario.nome }
+      ? {
+          id: sessaoAtual.usuario.id,
+          nome: sessaoAtual.usuario.nome,
+          empresaId: sessaoAtual.usuario.empresaId,
+        }
       : null,
   aoNaoAutorizado: () => aoSessaoExpirar?.(),
 });
