@@ -290,6 +290,12 @@
 }
 
 /* Setores que mais geram resíduo */
+.rel__vazio {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 14px;
+}
+
 .rel__ranking {
   display: flex;
   flex-direction: column;

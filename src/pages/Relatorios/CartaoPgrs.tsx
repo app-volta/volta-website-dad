@@ -7,6 +7,8 @@ import { TEXTO_PERIODO } from "../../utils/relatorio";
 
 interface CartaoPgrsProps {
   readonly periodo: PeriodoRelatorio;
+  /** Score ESG da empresa, quando a API o informa. */
+  readonly scoreEsg?: number | null;
   readonly gerando: boolean;
   readonly temUltimo: boolean;
   readonly aoGerar: () => void;
@@ -15,6 +17,7 @@ interface CartaoPgrsProps {
 
 export function CartaoPgrs({
   periodo,
+  scoreEsg = null,
   gerando,
   temUltimo,
   aoGerar,
@@ -53,6 +56,17 @@ export function CartaoPgrs({
           Consolida ocorrências aprovadas, destinação por cooperativa e
           evidências fotográficas — pronto pro órgão ambiental.
         </p>
+        {scoreEsg !== null ? (
+          <p className="rel__pgrs-texto">
+            Score ESG da empresa:{" "}
+            <strong>
+              {scoreEsg.toLocaleString("pt-BR", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
+            </strong>
+          </p>
+        ) : null}
         <div className="rel__pgrs-acoes">
           <button
             type="button"

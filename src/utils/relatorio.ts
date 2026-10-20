@@ -39,9 +39,12 @@ export function montarCsvRelatorio(
   linhas.push(
     ["Indicador", "Ocorrências", relatorio.ocorrencias, "un"],
     ["Indicador", "Recuperado", relatorio.recuperadoKg, "kg"],
-    ["Indicador", "Taxa de aprovação", relatorio.taxaAprovacao, "%"],
-    ["Indicador", "Desviado de aterro", relatorio.desvioAterro, "%"],
+    ["Indicador", "Taxa de aprovação", relatorio.taxaAprovacao ?? "", "%"],
+    ["Indicador", "Desviado de aterro", relatorio.desvioAterro ?? "", "%"],
   );
+  if (relatorio.scoreEsg != null) {
+    linhas.push(["Indicador", "Score ESG", relatorio.scoreEsg, "pontos"]);
+  }
   for (const item of relatorio.porMaterial) {
     linhas.push(["Material", METADADOS_MATERIAL[item.material].rotulo, item.kg, "kg"]);
   }

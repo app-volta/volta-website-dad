@@ -28,13 +28,15 @@ export interface RelatorioPgrs {
   readonly periodo: PeriodoRelatorio;
   readonly ocorrencias: number;
   readonly recuperadoKg: number;
-  /** Percentual de ocorrências aprovadas entre as analisadas. */
-  readonly taxaAprovacao: number;
-  /** Percentual do resíduo que deixou de ir para o aterro. */
-  readonly desvioAterro: number;
+  /** Percentual de ocorrências aprovadas entre as analisadas; nulo sem nenhuma analisada. */
+  readonly taxaAprovacao: number | null;
+  /** Percentual do resíduo que deixou de ir para o aterro; nulo sem base para calcular. */
+  readonly desvioAterro: number | null;
   readonly porMaterial: readonly RecuperadoPorMaterial[];
   readonly setores: readonly GeracaoPorSetor[];
   readonly destinacao: readonly DestinacaoCooperativa[];
+  /** Score ESG da empresa (GET /esg/score); ausente no protótipo e sem permissão. */
+  readonly scoreEsg?: number | null;
 }
 
 export interface PgrsGerado {
