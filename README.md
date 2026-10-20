@@ -70,20 +70,54 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Tela | Endpoints |
 |------|-----------|
 | Login | `POST /auth/login`, `GET /users/me` |
-| Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` |
+| Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
 | Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict` |
 | Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
+| Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
+| Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
+| Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
+| Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
+| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
+| Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 
 O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
 um assistente de IA, não um canal de mensagens com a cooperativa.
 
-O que a API ainda não oferece fica só neste navegador: recusar, encaminhar,
-observação e reclassificação (salvos em `localStorage`, por usuário). A foto do
-registro vai para a IA do chatbot, mas não é guardada: a volta-api recebe uma
-URL, e o upload depende do armazenamento (S3). Se a IA não confirma o resíduo
-na foto, o app não cria a ocorrência e pede outra foto. Os contratos estão em `src/types/api.ts`; a tradução para os
-tipos do app, em `src/services/adaptadores.ts`.
+Quem não tem permissão para um endpoint vê o aviso "Você não tem permissão para
+esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
+calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
+usuário ADMIN.
+
+Alguns números não têm endpoint e são calculados no app: o Início e os
+Relatórios contam as ocorrências por data de registro (a API não informa a data
+da aprovação), o desvio do aterro usa as métricas ESG quando existem e, sem
+elas, o que foi aprovado sobre o registrado, e o volume das cooperativas vem do
+peso estimado das ocorrências que originaram cada coleta. A API de usuários
+devolve as pessoas de todas as empresas; a tela filtra pela empresa de quem
+está logado.
+
+O que a volta-api não guarda aparece como "—" ou "Não informada": cidade,
+contato, distância, capacidade e licença das cooperativas, setor das pessoas e
+confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
+licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
+porque não há convite por e-mail.
+
+Ainda sem conexão: o ranking e as cooperativas próximas (volta-api-redis, que
+depende de endpoints e de infraestrutura que não existem), avaliação de coleta
+(`POST /collections/{id}/review`) e pedido, agendamento e status de coleta
+(`POST /collections`, `PATCH /collections/{id}/schedule` e `/status`), que
+não têm tela no layout.
+
+O que a API ainda não oferece fica só neste navegador (`localStorage`, por
+usuário): meta, notificações e insights, em Configurações, e recusar, encaminhar,
+observação e reclassificação das ocorrências. A foto do registro vai para a IA
+do chatbot, mas não é guardada: a volta-api recebe uma URL, e o upload depende
+do armazenamento (S3). Se a IA não confirma o resíduo na foto, o app não cria a
+ocorrência e pede outra foto.
+
+Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
+`src/services/adaptadores.ts`.
 
 ## Estrutura de pastas
 
