@@ -18,13 +18,17 @@ import type {
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { carregar, salvar } from "../utils/armazenamento";
+import { arquivoDaFoto } from "../utils/arquivo";
 import {
-  CATEGORIA_POR_MATERIAL,
   PRIORIDADE_PARA_API,
+  analiseInconclusiva,
+  categoriaDoTexto,
+  classificacaoDaAnalise,
   ocorrenciaDaApi,
+  riscoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
-import { classificarFoto } from "./classificacao";
+import { analisarFoto } from "./chatbot";
 import {
   ErroHttp,
   aoEncerrarSessao,
@@ -271,11 +275,18 @@ export async function criarOcorrencia(
   entrada: NovaOcorrencia,
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
-  const [cat, classificacao] = await Promise.all([
+  const foto = await arquivoDaFoto(entrada.fotoBase64);
+  const [cat, analise] = await Promise.all([
     carregarCatalogo(),
-    // A classificação por foto ainda é local; a API só recebe o resultado.
-    classificarFoto(entrada.fotoBase64, sinal),
+    analisarFoto(foto, sinal),
   ]);
+
+  if (analiseInconclusiva(analise)) {
+    throw new Error(
+      "A IA não conseguiu confirmar o resíduo nesta foto. Tente outra foto, com o resíduo bem visível e boa iluminação.",
+    );
+  }
+  const classificacao = classificacaoDaAnalise(analise);
 
   const area = [...cat.areas.values()].find(
     (item) => item.sectorName === entrada.localizacao.setor,
@@ -284,12 +295,15 @@ export async function criarOcorrencia(
     throw new Error("Escolha um setor cadastrado para a sua empresa.");
   }
 
-  const categoria = CATEGORIA_POR_MATERIAL[classificacao.material];
-  const tipo = [...cat.tipos.values()].find(
-    (item) => item.category === categoria,
-  );
+  const categoria = categoriaDoTexto(analise.detected_waste_type);
+  const tipos = [...cat.tipos.values()];
+  const tipo =
+    tipos.find((item) => item.category === categoria) ??
+    tipos.find((item) => item.category === "NAO_RECICLAVEL");
   if (!tipo) {
-    throw new Error("Esse tipo de resíduo ainda não está cadastrado na VOLTA.");
+    throw new Error(
+      `O tipo de resíduo "${analise.detected_waste_type}" ainda não está cadastrado na VOLTA.`,
+    );
   }
 
   const corpo: NovoIncidenteApi = {
@@ -297,8 +311,11 @@ export async function criarOcorrencia(
     wasteTypeId: tipo.id,
     photoUrl: null,
     employeeDescription: entrada.descricao,
-    contaminationLevel: null,
-    estimatedQuantity: null,
+    contaminationLevel: riscoDaAnalise(analise),
+    estimatedQuantity:
+      analise.estimated_quantity_kg === null
+        ? null
+        : Math.round(analise.estimated_quantity_kg * 100) / 100,
     priority: PRIORIDADE_PARA_API[entrada.prioridade],
   };
 

@@ -11,7 +11,8 @@ import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useSetores } from "../../hooks/useSetores";
 import { METADADOS_MATERIAL } from "../../types/material";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
-import { formatarConfianca } from "../../utils/formatacao";
+import { contaminacao } from "../../utils/analiseOcorrencia";
+import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
@@ -166,6 +167,8 @@ export default function Registrar(): ReactNode {
   const materialRotulo = estado.classificacao?.material
     ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
     : "";
+  const tipoRotulo = estado.classificacao?.tipoDetectado ?? materialRotulo;
+  const unidades = estado.classificacao?.unidades ?? null;
 
   return (
     <div className="registrar">
@@ -474,7 +477,7 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="papelao">
                 <p className="registrar__ia-rotulo">Tipo</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">{materialRotulo}</p>
+                  <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -482,7 +485,9 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="vidro">
                 <p className="registrar__ia-rotulo">Contaminação</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">Baixa</p>
+                  <p className="registrar__ia-valor">
+                    {contaminacao(estado.classificacao)}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -490,15 +495,25 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="plastico">
                 <p className="registrar__ia-rotulo">Quantidade</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">≈ 38 kg</p>
+                  <p className="registrar__ia-valor">
+                    {formatarPeso(estado.classificacao?.pesoEstimadoKg ?? 0)}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="metal">
-                <p className="registrar__ia-rotulo">Caixas</p>
+                <p className="registrar__ia-rotulo">
+                  {unidades !== null ? "Caixas" : "Revisão"}
+                </p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">11 un.</p>
+                  <p className="registrar__ia-valor">
+                    {unidades !== null
+                      ? `${unidades} un.`
+                      : estado.classificacao?.exigeValidacao
+                        ? "Pelo gestor"
+                        : "—"}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -520,17 +535,15 @@ export default function Registrar(): ReactNode {
 
             {concluida && estado.classificacao ? (
               <>
-                <div className="registrar__confianca">
-                  <span>Confiança da IA</span>
-                  <div className="registrar__confianca-barra">
-                    <span
-                      style={{ width: `${(confianca ?? 0) * 100}%` }}
-                    />
+                {confianca !== null ? (
+                  <div className="registrar__confianca">
+                    <span>Confiança da IA</span>
+                    <div className="registrar__confianca-barra">
+                      <span style={{ width: `${confianca * 100}%` }} />
+                    </div>
+                    <strong>{formatarConfianca(confianca)}</strong>
                   </div>
-                  <strong>
-                    {formatarConfianca(confianca)}
-                  </strong>
-                </div>
+                ) : null}
 
                 <div className="registrar__recomenda">
                   <img

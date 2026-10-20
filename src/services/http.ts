@@ -137,7 +137,9 @@ export async function requisitar<Resposta>(
   opcoes: OpcoesRequisicao = {},
 ): Promise<Resposta> {
   const cabecalhos: Record<string, string> = { Accept: "application/json" };
-  if (opcoes.corpo !== undefined) {
+  // Em um upload (FormData) o navegador monta o Content-Type com o boundary.
+  const ehFormulario = opcoes.corpo instanceof FormData;
+  if (opcoes.corpo !== undefined && !ehFormulario) {
     cabecalhos["Content-Type"] = "application/json";
   }
 
@@ -155,7 +157,12 @@ export async function requisitar<Resposta>(
     resposta = await fetch(`${opcoes.base ?? BASE_URL}${caminho}`, {
       method: opcoes.metodo ?? "GET",
       headers: cabecalhos,
-      body: opcoes.corpo !== undefined ? JSON.stringify(opcoes.corpo) : null,
+      body:
+        opcoes.corpo === undefined
+          ? null
+          : opcoes.corpo instanceof FormData
+            ? opcoes.corpo
+            : JSON.stringify(opcoes.corpo),
       signal: sinal,
     });
   } catch (excecao) {

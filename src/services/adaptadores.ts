@@ -1,5 +1,6 @@
 import fotoExemplo from "../assets/foto-exemplo.svg";
 import type {
+  AnaliseResiduoApi,
   AreaApi,
   CategoriaResiduoApi,
   IncidenteApi,
@@ -132,6 +133,76 @@ export function materialDoTexto(texto: string | null): Material | null {
   if (limpo.includes("metal")) return "metal";
   if (limpo.includes("vidro")) return "vidro";
   return null;
+}
+
+function normalizar(texto: string): string {
+  return semAcentos(texto).trim();
+}
+
+/** Palavras (no começo de uma palavra) que levam o texto livre da IA a cada categoria. Vale a primeira que bater. */
+const PALAVRAS_POR_CATEGORIA: ReadonlyArray<
+  readonly [CategoriaResiduoApi, readonly string[]]
+> = [
+  ["RADIOATIVO", ["radioativ", "nuclear"]],
+  ["SAUDE", ["saude", "hospitalar", "infectante", "seringa", "perfurocortante"]],
+  [
+    "PERIGOSO",
+    ["perigos", "oleo", "lubrificante", "solvente", "tinta", "quimic", "toxic", "bateria", "pilha", "combustivel", "inflamavel", "corrosiv", "graxa", "amianto"],
+  ],
+  ["PAPEL", ["papel", "papelao", "cartao"]],
+  ["PLASTICO", ["plastic", "polietileno", "polipropileno", "pet", "pvc"]],
+  ["VIDRO", ["vidro"]],
+  ["METAL", ["metal", "sucata", "aluminio", "ferro", "cobre", "lata"]],
+  ["MADEIRA", ["madeira", "pallet", "palete"]],
+  ["ORGANICO", ["organic", "alimento", "comida", "restos"]],
+];
+
+/** Categoria da volta-api para o tipo descrito pela IA; sem correspondência, não reciclável. */
+export function categoriaDoTexto(texto: string): CategoriaResiduoApi {
+  const limpo = normalizar(texto);
+  for (const [categoria, palavras] of PALAVRAS_POR_CATEGORIA) {
+    if (palavras.some((palavra) => new RegExp(`\\b${palavra}`).test(limpo))) {
+      return categoria;
+    }
+  }
+  return "NAO_RECICLAVEL";
+}
+
+const RISCO_DA_ANALISE: Readonly<Record<string, RiscoApi>> = {
+  BAIXO: "LOW",
+  MEDIO: "MEDIUM",
+  ALTO: "HIGH",
+};
+
+/** Contaminação da IA (BAIXO, MEDIO, ALTO) no risco da volta-api; qualquer outro valor vira nulo. */
+export function riscoDaAnalise(analise: AnaliseResiduoApi): RiscoApi | null {
+  return RISCO_DA_ANALISE[normalizar(analise.ai_contamination_level).toUpperCase()] ?? null;
+}
+
+/** O juiz não aprovou: a IA não sustenta o que viu e a ocorrência não deve ser criada com esses dados. */
+export function analiseInconclusiva(analise: AnaliseResiduoApi): boolean {
+  return (
+    analise.judge?.approved === false ||
+    normalizar(analise.ai_contamination_level).toUpperCase() === "INDETERMINADO"
+  );
+}
+
+/** Análise da foto no formato que as telas leem. A IA não informa a confiança. */
+export function classificacaoDaAnalise(analise: AnaliseResiduoApi): ClassificacaoIA {
+  const risco = riscoDaAnalise(analise);
+  return {
+    material: materialDoTexto(analise.detected_waste_type),
+    confianca: null,
+    contaminacao: risco ? CONTAMINACAO_DA_API[risco] : undefined,
+    recomendacao: analise.recommendations,
+    relatorio: analise.report_text,
+    analisadaEm: analise.generated_at
+      ? instanteUtc(analise.generated_at)
+      : new Date().toISOString(),
+    tipoDetectado: analise.detected_waste_type,
+    pesoEstimadoKg: analise.estimated_quantity_kg,
+    exigeValidacao: analise.requires_human_validation,
+  };
 }
 
 export interface CatalogoApi {
