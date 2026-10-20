@@ -163,6 +163,29 @@ export interface RespostaChatApi {
   readonly proposed_occurrence: OcorrenciaPropostaApi | null;
 }
 
+/** Veredito do juiz que revisa a análise visual. */
+export interface VereditoJuizApi {
+  readonly approved: boolean;
+  readonly reason: string | null;
+}
+
+/**
+ * Resposta de POST /v1/occurrences/predict. `ai_contamination_level` vem como
+ * BAIXO, MEDIO ou ALTO; INDETERMINADO quando o juiz não aprova a análise.
+ */
+export interface AnaliseResiduoApi {
+  readonly detected_waste_type: string;
+  readonly ai_contamination_level: string;
+  readonly estimated_quantity_kg: number | null;
+  readonly recommendations: string;
+  readonly report_text: string;
+  readonly mobile_summary: string;
+  readonly requires_human_validation: boolean;
+  readonly judge: VereditoJuizApi | null;
+  readonly analysis_id: string | null;
+  readonly generated_at: string | null;
+}
+
 /** Erros da API seguem o ProblemDetail (RFC 7807). */
 export interface ProblemaApi {
   readonly title?: string;

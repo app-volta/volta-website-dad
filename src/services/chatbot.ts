@@ -1,4 +1,5 @@
 import type {
+  AnaliseResiduoApi,
   PedidoChatApi,
   RespostaChatApi,
   SessaoChatApi,
@@ -24,6 +25,22 @@ export function criarSessaoChat(sinal?: AbortSignal): Promise<SessaoChatApi> {
   return requisitar<SessaoChatApi>("/v1/sessions", {
     ...BASE,
     metodo: "POST",
+    sinal,
+  });
+}
+
+/** Foto do resíduo para a IA (multipart, campo "file", imagem de até 10 MB). */
+export function analisarFoto(
+  foto: File,
+  sinal?: AbortSignal,
+): Promise<AnaliseResiduoApi> {
+  const corpo = new FormData();
+  corpo.append("file", foto);
+  return requisitar<AnaliseResiduoApi>("/v1/occurrences/predict", {
+    ...BASE,
+    metodo: "POST",
+    corpo,
+    tempoLimiteMs: TEMPO_RESPOSTA_MS,
     sinal,
   });
 }
