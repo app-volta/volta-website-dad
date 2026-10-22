@@ -46,9 +46,11 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 |------|-----------|
 | `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
+| `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
 | `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
+| `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
 | `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
@@ -80,6 +82,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
+| Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 
 O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
 um assistente de IA, não um canal de mensagens com a cooperativa.
@@ -103,11 +106,18 @@ confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
 licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
 porque não há convite por e-mail.
 
-Ainda sem conexão: o ranking e as cooperativas próximas (volta-api-redis, que
-depende de endpoints e de infraestrutura que não existem), avaliação de coleta
-(`POST /collections/{id}/review`) e pedido, agendamento e status de coleta
-(`POST /collections`, `PATCH /collections/{id}/schedule` e `/status`), que
-não têm tela no layout.
+A API de ranking usa o mesmo token e é um complemento: se ela estiver fora do ar
+ou sem dados, a tela segue sem o que vem dela. A distância das cooperativas sai
+do índice do Redis e, para a cooperativa que ainda não está nele, é calculada
+das coordenadas da volta-api. O ponto de partida são as coordenadas da empresa,
+que a volta-api só expõe em `GET /incidents/{id}/scoring-context`; sem nenhuma
+ocorrência, não há distância. As cooperativas indicadas aparecem só enquanto a
+ocorrência espera decisão. Nada disso roda no modo mock.
+
+Ainda sem conexão: avaliação de coleta (`POST /collections/{id}/review`) e
+pedido, agendamento e status de coleta (`POST /collections`,
+`PATCH /collections/{id}/schedule` e `/status`), que não têm tela no layout, e
+o cadastro de pontuação do ranking (`POST /api/v1/ranking/score`).
 
 O que a API ainda não oferece fica só neste navegador (`localStorage`, por
 usuário): meta, notificações e insights, em Configurações, e recusar, encaminhar,
