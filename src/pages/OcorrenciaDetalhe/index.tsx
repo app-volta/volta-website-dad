@@ -10,6 +10,7 @@ import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useCooperativasIndicadas } from "../../hooks/useCooperativasIndicadas";
 import {
   useOcorrencia,
   useSemelhantesNaSemana,
@@ -28,6 +29,8 @@ import {
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import {
   formatarConfianca,
+  formatarKm,
+  formatarNotaDaCooperativa,
   formatarPeso,
   formatarRegistro,
 } from "../../utils/formatacao";
@@ -106,6 +109,10 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
   const acoes = useAcoesOcorrencia();
   const semelhantes = useSemelhantesNaSemana(dados);
+  const { indicacao, aviso: avisoIndicacao } = useCooperativasIndicadas(
+    dados?.id ?? null,
+    dados ? aguardaAprovacao(dados.status) : false,
+  );
   const [modal, setModal] = useState<ModalAtivo>(null);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
@@ -521,6 +528,33 @@ export default function OcorrenciaDetalhe(): ReactNode {
               <p className="detalhe__recomenda-texto">
                 {recomendacaoVolta(ocorrencia, semelhantes)}
               </p>
+              {indicacao || avisoIndicacao ? (
+                <div className="detalhe__indicadas">
+                  <p className="detalhe__recomenda-titulo">
+                    <Icone nome="caminhao" tamanho={14} /> Cooperativas indicadas
+                  </p>
+                  {avisoIndicacao ? (
+                    <p className="detalhe__recomenda-texto">{avisoIndicacao}</p>
+                  ) : indicacao && indicacao.cooperativas.length > 0 ? (
+                    <ol className="detalhe__indicadas-lista">
+                      {indicacao.cooperativas.map((cooperativa) => (
+                        <li key={cooperativa.id}>
+                          <strong>{cooperativa.nome}</strong>
+                          <small>
+                            {formatarNotaDaCooperativa(cooperativa.nota)} pontos ·{" "}
+                            {formatarKm(cooperativa.distanciaKm)}
+                          </small>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="detalhe__recomenda-texto">
+                      Nenhuma cooperativa recebe esse resíduo num raio de{" "}
+                      {indicacao?.raioKm.toLocaleString("pt-BR")} km.
+                    </p>
+                  )}
+                </div>
+              ) : null}
             </div>
           </section>
         </aside>

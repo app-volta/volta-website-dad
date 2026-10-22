@@ -559,6 +559,28 @@
   line-height: 1.5;
 }
 
+.detalhe__indicadas {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #cfeedd;
+}
+
+.detalhe__indicadas-lista small {
+  display: block;
+  color: var(--d-texto);
+  font-size: 13px;
+}
+
+.detalhe__indicadas-lista {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--d-texto);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 @media (max-width: 1100px) {
   .detalhe__grade {
     grid-template-columns: minmax(0, 1fr);

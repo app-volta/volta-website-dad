@@ -51,6 +51,11 @@ export function formatarKmOpcional(km: number | null): string {
   return km === null ? "—" : formatarKm(km);
 }
 
+/** Nota de 0 a 100 da API de ranking, sem casas quando é inteira: "87" ou "87,5". */
+export function formatarNotaDaCooperativa(nota: number): string {
+  return nota.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
 /** Nota com uma casa e vírgula decimal: "4,9". */
 export function formatarNota(nota: number): string {
   return nota.toLocaleString("pt-BR", {
