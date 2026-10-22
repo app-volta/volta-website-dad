@@ -1,5 +1,6 @@
 import type { CooperativaApi, NovaCooperativaApi } from "../types/api";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import { distanciaEmKm } from "../utils/geo";
 import { validarCnpj } from "../utils/validadores";
 import { volumeDaCooperativa, volumesPorCooperativa } from "../utils/volumeCooperativas";
 import {
@@ -14,6 +15,11 @@ import {
 } from "./cooperativasBrutas";
 import { requisitar } from "./http";
 import { listarOcorrencias } from "./ocorrencias.api";
+import {
+  listarCooperativasProximas,
+  origemDaEmpresa,
+  registrarLocalizacao,
+} from "./ranking";
 
 /**
  * Cooperativas na volta-api (GET e POST /cooperatives). Só o perfil ADMIN
@@ -21,6 +27,31 @@ import { listarOcorrencias } from "./ocorrencias.api";
  * coletas (GET /collections) e o que a API não guarda (contato, distância,
  * capacidade, licença) fica vazio.
  */
+
+/**
+ * Distância de cada cooperativa até a empresa. A API de ranking (Redis) é a
+ * fonte; a cooperativa que não está no índice dela (ainda sem localização
+ * salvo lá) tem a distância calculada das coordenadas da volta-api. Sem saber
+ * de onde a empresa envia, não há distância.
+ */
+async function distanciasAteAEmpresa(
+  cooperativas: readonly CooperativaApi[],
+): Promise<ReadonlyMap<string, number>> {
+  const origem = await origemDaEmpresa().catch(() => null);
+  if (!origem) return new Map();
+
+  const doRedis = await listarCooperativasProximas(origem)
+    .then((itens) => new Map(itens.map((item) => [item.cooperativeId, item.distanceKm])))
+    .catch(() => new Map<string, number>());
+
+  return new Map(
+    cooperativas.map((c) => [
+      c.id,
+      doRedis.get(c.id) ??
+        distanciaEmKm(origem, { latitude: c.latitude, longitude: c.longitude }),
+    ]),
+  );
+}
 
 export async function listarCooperativas(
   sinal?: AbortSignal,
@@ -31,13 +62,17 @@ export async function listarCooperativas(
     listarColetas().catch(() => []),
     listarOcorrencias(sinal).catch(() => []),
   ]);
-  const posicoes = posicoesNoMapa(cooperativas);
-  const volumes = volumesPorCooperativa(coletas, ocorrencias);
+  const [posicoes, volumes, distancias] = [
+    posicoesNoMapa(cooperativas),
+    volumesPorCooperativa(coletas, ocorrencias),
+    await distanciasAteAEmpresa(cooperativas),
+  ];
   return cooperativas.map((dto) =>
     cooperativaDaApi(
       dto,
       posicoes.get(dto.id) ?? { x: 50, y: 50 },
       volumeDaCooperativa(volumes, dto.id),
+      distancias.get(dto.id) ?? null,
     ),
   );
 }
@@ -92,6 +127,9 @@ export async function adicionarCooperativa(
     sinal,
   });
   invalidarCooperativas();
+  // A localização também vai para o índice do Redis; se ele estiver fora do ar, o
+  // cadastro segue valendo e a distância sai das coordenadas da volta-api.
+  await registrarLocalizacao(criada.id, { latitude, longitude }).catch(() => undefined);
   const todas = await listarCooperativas(sinal);
   return (
     todas.find((c) => c.id === criada.id) ??
