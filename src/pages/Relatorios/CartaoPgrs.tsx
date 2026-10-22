@@ -2,13 +2,15 @@ import type { ReactNode } from "react";
 
 import { Icone } from "../../components/Icone";
 import { Mascote } from "../../components/Mascote";
-import type { PeriodoRelatorio } from "../../types/relatorio";
+import type { PeriodoRelatorio, PosicaoNoRanking } from "../../types/relatorio";
 import { TEXTO_PERIODO } from "../../utils/relatorio";
 
 interface CartaoPgrsProps {
   readonly periodo: PeriodoRelatorio;
   /** Score ESG da empresa, quando a API o informa. */
   readonly scoreEsg?: number | null;
+  /** Posição da empresa no ranking, quando a API de ranking informa. */
+  readonly posicaoNoRanking?: PosicaoNoRanking | null;
   readonly gerando: boolean;
   readonly temUltimo: boolean;
   readonly aoGerar: () => void;
@@ -18,6 +20,7 @@ interface CartaoPgrsProps {
 export function CartaoPgrs({
   periodo,
   scoreEsg = null,
+  posicaoNoRanking = null,
   gerando,
   temUltimo,
   aoGerar,
@@ -65,6 +68,15 @@ export function CartaoPgrs({
                 maximumFractionDigits: 1,
               })}
             </strong>
+          </p>
+        ) : null}
+        {posicaoNoRanking !== null ? (
+          <p className="rel__pgrs-texto">
+            Ranking de empresas:{" "}
+            <strong>
+              {posicaoNoRanking.posicao}º de {posicaoNoRanking.totalDeEmpresas}
+            </strong>{" "}
+            ({posicaoNoRanking.pontos.toLocaleString("pt-BR")} pontos)
           </p>
         ) : null}
         <div className="rel__pgrs-acoes">

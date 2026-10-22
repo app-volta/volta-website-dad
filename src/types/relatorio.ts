@@ -24,6 +24,13 @@ export interface DestinacaoCooperativa {
   readonly percentual: number;
 }
 
+export interface PosicaoNoRanking {
+  readonly posicao: number;
+  readonly totalDeEmpresas: number;
+  /** De 0 a 1000. */
+  readonly pontos: number;
+}
+
 export interface RelatorioPgrs {
   readonly periodo: PeriodoRelatorio;
   readonly ocorrencias: number;
@@ -37,6 +44,8 @@ export interface RelatorioPgrs {
   readonly destinacao: readonly DestinacaoCooperativa[];
   /** Score ESG da empresa (GET /esg/score); ausente no protótipo e sem permissão. */
   readonly scoreEsg?: number | null;
+  /** Posição da empresa no ranking (volta-api-redis); ausente no protótipo ou sem pontuação. */
+  readonly posicaoNoRanking?: PosicaoNoRanking | null;
 }
 
 export interface PgrsGerado {

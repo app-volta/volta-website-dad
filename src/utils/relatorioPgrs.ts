@@ -5,6 +5,7 @@ import type {
   DestinacaoCooperativa,
   GeracaoPorSetor,
   PeriodoRelatorio,
+  PosicaoNoRanking,
   RelatorioPgrs,
 } from "../types/relatorio";
 import { instanteUtc } from "./datas";
@@ -24,6 +25,7 @@ export interface EntradaRelatorio {
   readonly ocorrencias: readonly Ocorrencia[];
   readonly metricas: readonly MetricaEsgApi[];
   readonly scoreEsg: number | null;
+  readonly posicaoNoRanking: PosicaoNoRanking | null;
   readonly coletas: readonly ColetaApi[];
   /** Nome de cada cooperativa pelo id; vazio quando a pessoa não pode listá-las. */
   readonly nomesCooperativas: ReadonlyMap<string, string>;
@@ -155,5 +157,6 @@ export function calcularRelatorio(
     setores: geracaoPorSetor(subconjunto),
     destinacao: destinacaoPorCooperativa(intervalo, entrada),
     scoreEsg: entrada.scoreEsg,
+    posicaoNoRanking: entrada.posicaoNoRanking,
   };
 }

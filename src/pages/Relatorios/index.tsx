@@ -165,6 +165,7 @@ export default function Relatorios(): ReactNode {
             <CartaoPgrs
               periodo={dados.periodo}
               scoreEsg={dados.scoreEsg ?? null}
+              posicaoNoRanking={dados.posicaoNoRanking ?? null}
               gerando={gerando}
               temUltimo={ultimo !== null}
               aoGerar={() => void gerar(dados)}
