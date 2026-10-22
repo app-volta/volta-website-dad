@@ -6,6 +6,7 @@ import type {
   CooperativaApi,
   HistoricoColetaApi,
   IncidenteApi,
+  NotasDasCooperativasApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
@@ -19,7 +20,12 @@ import type {
   ClassificacaoIA,
   NivelContaminacao,
 } from "../types/classificacao";
-import type { Cooperativa, MaterialAceito, PosicaoMapa } from "../types/cooperativa";
+import type {
+  Cooperativa,
+  IndicacaoDeCooperativas,
+  MaterialAceito,
+  PosicaoMapa,
+} from "../types/cooperativa";
 import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
@@ -394,13 +400,14 @@ export function posicoesNoMapa(
 
 /**
  * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
- * nota e as categorias aceitas; o resto (contato, distância, capacidade e
- * licença) não existe lá e fica vazio.
+ * nota e as categorias aceitas; contato, capacidade e licença não existem lá e
+ * ficam vazios. A distância só entra quando se sabe de onde a empresa envia.
  */
 export function cooperativaDaApi(
   dto: CooperativaApi,
   posicaoMapa: PosicaoMapa,
   volume: VolumeDaCooperativa,
+  distanciaKm: number | null = null,
 ): Cooperativa {
   return {
     id: dto.id,
@@ -412,7 +419,7 @@ export function cooperativaDaApi(
     contato: null,
     telefone: null,
     email: null,
-    distanciaKm: null,
+    distanciaKm,
     avaliacao: dto.averageRating,
     situacao: "ativa",
     parceiraGrupo: false,
@@ -447,6 +454,21 @@ export function eventoDaColeta(
     autor: nomeDaCooperativa ?? "Cooperativa",
     texto: observacao ? `${texto} · ${observacao}` : texto,
     em: instanteUtc(historico.changedAt),
+  };
+}
+
+/** Resposta da API de ranking no formato das telas. */
+export function indicacaoDaApi(
+  resposta: NotasDasCooperativasApi,
+): IndicacaoDeCooperativas {
+  return {
+    raioKm: resposta.radiusKm,
+    cooperativas: resposta.cooperatives.map((c) => ({
+      id: c.cooperativeId,
+      nome: c.name,
+      nota: c.score,
+      distanciaKm: c.distanceKm,
+    })),
   };
 }
 

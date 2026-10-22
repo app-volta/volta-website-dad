@@ -70,6 +70,22 @@ export interface Cooperativa {
   readonly logoUrl?: string;
 }
 
+/** Cooperativa que a API de ranking indica para uma ocorrência. */
+export interface CooperativaIndicada {
+  readonly id: string;
+  readonly nome: string;
+  /** Nota de 0 a 100 (distância, avaliação e adequação ao resíduo). */
+  readonly nota: number;
+  readonly distanciaKm: number;
+}
+
+export interface IndicacaoDeCooperativas {
+  /** Raio, em km, em que a API procurou cooperativas. */
+  readonly raioKm: number;
+  /** Da mais indicada para a menos; vazia quando nenhuma atende o resíduo no raio. */
+  readonly cooperativas: readonly CooperativaIndicada[];
+}
+
 export interface NovaCooperativa {
   readonly nome: string;
   readonly cnpj: string;

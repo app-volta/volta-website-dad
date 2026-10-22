@@ -307,6 +307,59 @@ export interface PrevisaoCapacidadeApi {
   readonly data_estimada_lotacao?: string | null;
 }
 
+/* ---- volta-api-redis: ranking de empresas e cooperativas por proximidade ---- */
+
+/** GET /api/v1/ranking/{companyId}/position */
+export interface PosicaoEmpresaApi {
+  readonly companyId: string;
+  /** 1 é a melhor empresa. */
+  readonly position: number;
+  /** De 0 a 1000. */
+  readonly score: number;
+  readonly totalCompanies: number;
+}
+
+/** GET /api/v1/cooperatives/nearby: só o id e a distância em linha reta. */
+export interface CooperativaProximaApi {
+  readonly cooperativeId: string;
+  readonly distanceKm: number;
+}
+
+/** Peso de cada critério na nota da cooperativa, de 0 a 100. */
+export interface DetalheDaNotaApi {
+  readonly distance: number;
+  readonly rating: number;
+  readonly fit: number;
+}
+
+export interface NotaDaCooperativaApi {
+  readonly cooperativeId: string;
+  readonly name: string;
+  /** De 0 a 100. */
+  readonly score: number;
+  readonly distanceKm: number;
+  readonly breakdown: DetalheDaNotaApi;
+}
+
+/** GET /api/v1/incidents/{id}/cooperative-scores: cooperativas indicadas, da melhor para a pior. */
+export interface NotasDasCooperativasApi {
+  readonly incidentId: string;
+  readonly priority: string;
+  readonly wasteCategory: string;
+  readonly highRisk: boolean;
+  readonly radiusKm: number;
+  readonly cooperatives: readonly NotaDaCooperativaApi[];
+}
+
+/** GET /incidents/{id}/scoring-context (volta-api): de onde a empresa envia o resíduo. */
+export interface ContextoDaOcorrenciaApi {
+  readonly incidentId: string;
+  readonly origin: {
+    readonly latitude: number | null;
+    readonly longitude: number | null;
+  } | null;
+}
+
 /** Erros da API seguem o ProblemDetail (RFC 7807). */
 export interface ProblemaApi {
   readonly title?: string;
