@@ -177,6 +177,16 @@ export interface CooperativaApi {
   readonly specialties: string;
 }
 
+/** GET /cooperatives/scoring-data (ADMIN, MANAGER e EMPLOYEE): leitura, sem CNPJ. */
+export interface CooperativaParaPontuacaoApi {
+  readonly id: string;
+  readonly name: string;
+  readonly latitude: number;
+  readonly longitude: number;
+  readonly averageRating: number | null;
+  readonly specialties: readonly string[];
+}
+
 /** POST /cooperatives e PUT /cooperatives/{id} (somente ADMIN). */
 export interface NovaCooperativaApi {
   readonly name: string;

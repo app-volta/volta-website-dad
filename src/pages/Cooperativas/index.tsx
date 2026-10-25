@@ -10,6 +10,7 @@ import {
   useAcoesCooperativas,
   useCooperativas,
 } from "../../hooks/useCooperativas";
+import { useAuth } from "../../context/AuthContext";
 import { useDadosReais } from "../../hooks/useModo";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
@@ -38,6 +39,9 @@ export default function Cooperativas(): ReactNode {
   const { dados, carregando, erro } = useCooperativas(chaveRecarga);
   const acoes = useAcoesCooperativas();
   const dadosReais = useDadosReais();
+  const { usuario } = useAuth();
+  // Só o ADMIN cadastra na volta-api; quem tem outro perfil só consulta.
+  const podeCadastrar = usuario?.perfil === undefined || usuario.perfil === "ADMIN";
 
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [selecionadaId, setSelecionadaId] = useState<string | null>(null);
@@ -121,15 +125,17 @@ export default function Cooperativas(): ReactNode {
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              className="coops__botao coops__botao--primario coops__botao--topo"
-              aria-haspopup="dialog"
-              onClick={abrirCadastro}
-            >
-              <Icone nome="mais" tamanho={14} />
-              Adicionar cooperativa
-            </button>
+            {podeCadastrar ? (
+              <button
+                type="button"
+                className="coops__botao coops__botao--primario coops__botao--topo"
+                aria-haspopup="dialog"
+                onClick={abrirCadastro}
+              >
+                <Icone nome="mais" tamanho={14} />
+                Adicionar cooperativa
+              </button>
+            ) : null}
           </div>
 
           <div className="coops__grade">
