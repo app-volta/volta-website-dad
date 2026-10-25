@@ -51,6 +51,7 @@ configurarSessaoHttp({
           id: sessaoAtual.usuario.id,
           nome: sessaoAtual.usuario.nome,
           empresaId: sessaoAtual.usuario.empresaId,
+          perfil: sessaoAtual.usuario.perfil,
         }
       : null,
   aoNaoAutorizado: () => aoSessaoExpirar?.(),

@@ -63,6 +63,7 @@ export interface UsuarioAtual {
   readonly id: string;
   readonly nome: string;
   readonly empresaId?: string;
+  readonly perfil?: "ADMIN" | "MANAGER" | "EMPLOYEE" | "OPERATOR";
 }
 
 /** Ligação entre a camada HTTP e a sessão, sem os services conhecerem React. */
