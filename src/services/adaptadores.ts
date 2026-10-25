@@ -66,6 +66,7 @@ export function usuarioDaApi(dto: UsuarioApi): Usuario {
     unidade: UNIDADE_PADRAO,
     cargo: dto.position,
     empresaId: dto.companyId,
+    perfil: dto.role,
   };
 }
 
@@ -319,17 +320,45 @@ export function membroDaApi(
   };
 }
 
-/** Categoria que a cooperativa recebe → material mostrado no painel. As demais não têm rótulo no app. */
-const MATERIAL_ACEITO_POR_CATEGORIA: Readonly<
-  Partial<Record<CategoriaResiduoApi, MaterialAceito>>
-> = {
-  PAPEL: "papelao",
-  PLASTICO: "plastico",
-  METAL: "metal",
-  VIDRO: "vidro",
-  ORGANICO: "organico",
-  PERIGOSO: "oleo",
+/**
+ * O banco do QA veio da carga antiga, com as categorias dos tipos de resíduo em
+ * inglês (PAPER, PLASTIC, GLASS...). A API devolve o texto como está, então o app
+ * traduz para as categorias que ele conhece. Sem correspondência: não reciclável.
+ */
+const CATEGORIA_POR_SINONIMO: Readonly<Record<string, CategoriaResiduoApi>> = {
+  PAPEL: "PAPEL",
+  PAPER: "PAPEL",
+  PAPELAO: "PAPEL",
+  PLASTICO: "PLASTICO",
+  PLASTIC: "PLASTICO",
+  VIDRO: "VIDRO",
+  GLASS: "VIDRO",
+  METAL: "METAL",
+  MADEIRA: "MADEIRA",
+  WOOD: "MADEIRA",
+  PERIGOSO: "PERIGOSO",
+  CHEMICAL: "PERIGOSO",
+  QUIMICO: "PERIGOSO",
+  ELECTRONIC: "PERIGOSO",
+  ELETRONICO: "PERIGOSO",
+  SAUDE: "SAUDE",
+  HEALTH: "SAUDE",
+  RADIOATIVO: "RADIOATIVO",
+  RADIOACTIVE: "RADIOATIVO",
+  ORGANICO: "ORGANICO",
+  ORGANIC: "ORGANICO",
+  NAO_RECICLAVEL: "NAO_RECICLAVEL",
+  MIXED: "NAO_RECICLAVEL",
+  TEXTILE: "NAO_RECICLAVEL",
 };
+
+export function categoriaDaApi(valor: string | null | undefined): CategoriaResiduoApi {
+  const chave = semAcentos(valor ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+  return CATEGORIA_POR_SINONIMO[chave] ?? "NAO_RECICLAVEL";
+}
 
 const CATEGORIA_POR_MATERIAL_ACEITO: Readonly<
   Record<MaterialAceito, CategoriaResiduoApi>
@@ -350,12 +379,26 @@ export function especialidadesDosMateriais(
   return [...new Set(materiais.map((m) => CATEGORIA_POR_MATERIAL_ACEITO[m]))].join(",");
 }
 
-function materiaisDasEspecialidades(especialidades: string): MaterialAceito[] {
-  const encontrados = especialidades
-    .split(",")
-    .map((item) => MATERIAL_ACEITO_POR_CATEGORIA[item.trim() as CategoriaResiduoApi])
-    .filter((material): material is MaterialAceito => material !== undefined);
-  return [...new Set(encontrados)];
+/**
+ * Trechos que indicam cada material, em português ou inglês. A API devolve as
+ * categorias separadas por vírgula (PAPEL,PLASTICO), mas as cooperativas da
+ * carga antiga têm texto livre ("Papel, plástico e vidro"); procurar o trecho
+ * cobre os dois.
+ */
+const TRECHOS_POR_MATERIAL: ReadonlyArray<readonly [MaterialAceito, readonly string[]]> = [
+  ["papelao", ["papel", "paper"]],
+  ["plastico", ["plastic"]],
+  ["metal", ["metal", "aluminio"]],
+  ["vidro", ["vidro", "glass"]],
+  ["organico", ["organic"]],
+  ["oleo", ["oleo", "perigos", "quimic", "chemical", "eletron", "electron"]],
+];
+
+function materiaisDasEspecialidades(especialidades: string | null): MaterialAceito[] {
+  const texto = semAcentos(especialidades ?? "");
+  return TRECHOS_POR_MATERIAL.filter(([, trechos]) =>
+    trechos.some((trecho) => texto.includes(trecho)),
+  ).map(([material]) => material);
 }
 
 /** CNPJ numérico ganha máscara; o alfanumérico (formato novo) fica como a API devolve. */

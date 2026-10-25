@@ -23,6 +23,7 @@ import { arquivoDaFoto } from "../utils/arquivo";
 import {
   PRIORIDADE_PARA_API,
   analiseInconclusiva,
+  categoriaDaApi,
   categoriaDoTexto,
   classificacaoDaAnalise,
   eventoDaColeta,
@@ -174,7 +175,9 @@ function carregarCatalogo(): Promise<CatalogoApi> {
     ])
       .then(([areas, tipos]) => ({
         areas: new Map(areas.map((area) => [area.id, area])),
-        tipos: new Map(tipos.map((tipo) => [tipo.id, tipo])),
+        tipos: new Map(
+          tipos.map((tipo) => [tipo.id, { ...tipo, category: categoriaDaApi(tipo.category) }]),
+        ),
       }))
       .catch((excecao: unknown) => {
         catalogo = null;
