@@ -1,0 +1,17 @@
+.rodape {
+  padding: 16px 32px 24px;
+  text-align: center;
+}
+
+.rodape__texto {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .rodape {
+    padding: 12px 16px 20px;
+  }
+}

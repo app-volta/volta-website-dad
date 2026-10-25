@@ -1,0 +1,89 @@
+.ocorrencia-card {
+  background: var(--superficie);
+  border-radius: var(--raio-forte);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ocorrencia-card__foto {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: var(--borda);
+}
+
+.ocorrencia-card__conteudo {
+  padding: 1rem 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+}
+
+.ocorrencia-card__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ocorrencia-card__codigo {
+  font-size: 1rem;
+  color: var(--verde-escuro);
+  margin: 0;
+}
+
+.ocorrencia-card__descricao {
+  color: var(--texto);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ocorrencia-card__meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.ocorrencia-card__meta dt {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.ocorrencia-card__meta dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.ocorrencia-card__rodape {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.ocorrencia-card__aguardando {
+  color: var(--texto-suave);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ocorrencia-card__link {
+  color: var(--verde-medio);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ocorrencia-card__link:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}

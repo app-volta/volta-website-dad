@@ -1,0 +1,82 @@
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition:
+    transform 0.05s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+  min-height: 44px;
+  line-height: 1;
+}
+
+.botao--primario {
+  background: var(--verde-primario);
+  color: #fff;
+}
+
+.botao--primario:hover:not(:disabled) {
+  background: var(--verde-brilhante);
+}
+
+.botao--secundario {
+  background: var(--superficie);
+  color: var(--verde-escuro);
+  border-color: var(--borda-forte);
+}
+
+.botao--secundario:hover:not(:disabled) {
+  border-color: var(--verde-primario);
+  background: var(--verde-suave);
+}
+
+.botao--sutil {
+  background: transparent;
+  color: var(--verde-escuro);
+}
+
+.botao--sutil:hover:not(:disabled) {
+  background: rgba(14, 59, 46, 0.05);
+}
+
+.botao--perigo {
+  background: transparent;
+  color: var(--erro-fg);
+  border-color: rgba(138, 20, 20, 0.35);
+}
+
+.botao--perigo:hover:not(:disabled) {
+  background: var(--erro-bg);
+}
+
+.botao--largo {
+  width: 100%;
+}
+
+.botao__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: girar 0.7s linear infinite;
+}
+
+.botao--secundario .botao__spinner,
+.botao--sutil .botao__spinner,
+.botao--perigo .botao__spinner {
+  border: 2px solid rgba(14, 59, 46, 0.2);
+  border-top-color: var(--verde-escuro);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

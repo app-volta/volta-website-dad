@@ -1,0 +1,27 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  color: var(--texto-suave);
+  font-weight: 500;
+}
+
+.spinner--compacto {
+  padding: 0.25rem;
+}
+
+.spinner__circulo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--borda);
+  border-top-color: var(--verde-destaque);
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

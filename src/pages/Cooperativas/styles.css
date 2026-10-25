@@ -1,0 +1,641 @@
+.coops {
+  --coop-texto: #16211b;
+  --coop-mudo: #5d6961;
+  --coop-borda: #e8ede9;
+  --coop-verde: #0e7c48;
+  --coop-sombra:
+    0 1px 2px rgba(5, 43, 26, 0.04), 0 8px 24px rgba(5, 43, 26, 0.05);
+
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+/* Cores por cooperativa: o logo, o pino do mapa e o selo usam as mesmas. */
+.coops [data-cor="verde"] {
+  --coop-bg: #e2f7ec;
+  --coop-fg: #0e7c48;
+  --coop-pino: #0f7d47;
+}
+
+.coops [data-cor="ambar"] {
+  --coop-bg: #fdf3de;
+  --coop-fg: #92660c;
+  --coop-pino: #92660c;
+}
+
+.coops [data-cor="azul"] {
+  --coop-bg: #e4efff;
+  --coop-fg: #0b60ec;
+  --coop-pino: #0b60ec;
+}
+
+.coops [data-cor="roxo"] {
+  --coop-bg: #efeafb;
+  --coop-fg: #7250d9;
+  --coop-pino: #7250d9;
+}
+
+.coops [data-cor="turquesa"] {
+  --coop-bg: #dff6f4;
+  --coop-fg: #12a3a3;
+  --coop-pino: #12a3a3;
+}
+
+/* Filtros e ação principal */
+.coops__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.coops__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.coops__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 14px;
+  border: 0.8px solid var(--coop-borda);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--coop-mudo);
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.coops__chip:hover:not(.coops__chip--ativo) {
+  background: #f4f7f5;
+}
+
+.coops__chip--ativo {
+  border-color: var(--coop-verde);
+  background: var(--coop-verde);
+  color: #fff;
+}
+
+.coops__botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 42px;
+  padding: 0 22px;
+  border: 0.8px solid transparent;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.coops__botao--primario {
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
+  box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
+  color: #fff;
+}
+
+.coops__botao--primario:hover:not(:disabled) {
+  background: linear-gradient(186deg, #28cc79 30%, #0e7c48 100%);
+}
+
+.coops__botao--primario:disabled {
+  background: #b8d9c8;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.coops__botao--contorno {
+  border-color: var(--coop-borda);
+  background: #fff;
+  color: var(--coop-texto);
+}
+
+.coops__botao--contorno:hover:not(:disabled) {
+  background: #f4f7f5;
+}
+
+.coops__botao--topo {
+  padding: 0 21px;
+}
+
+/* Tabela e painel lado a lado */
+.coops__grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: 20px;
+}
+
+.coops__tabela-card,
+.coops__painel {
+  overflow: hidden;
+  border: 0.8px solid var(--coop-borda);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: var(--coop-sombra);
+}
+
+.coops__tabela-card {
+  padding-top: 14px;
+}
+
+.coops__rolagem {
+  overflow-x: auto;
+}
+
+.coops__rolagem:focus-visible {
+  outline: 0;
+  box-shadow: inset var(--foco);
+}
+
+.coops__tabela {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.coops__tabela th {
+  height: 28px;
+  padding: 0 12px;
+  border-bottom: 0.8px solid var(--coop-borda);
+  color: #63736a;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.coops__tabela th:nth-child(1) {
+  width: 32%;
+}
+
+.coops__tabela th:nth-child(2) {
+  width: 25%;
+}
+
+.coops__tabela th:nth-child(3) {
+  width: 21%;
+}
+
+.coops__tabela th:nth-child(4) {
+  width: 22%;
+  padding-left: 14px;
+}
+
+.coops__tabela td {
+  padding: 12px;
+  border-bottom: 0.8px solid var(--coop-borda);
+  vertical-align: middle;
+}
+
+.coops__tabela td:nth-child(4) {
+  padding-left: 14px;
+}
+
+.coops__tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.coops__linha {
+  position: relative;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.coops__linha:hover {
+  background: #f6f9f7;
+}
+
+.coops__linha--selecionada,
+.coops__linha--selecionada:hover {
+  background: #effaf4;
+}
+
+.coops__ident {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coops__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--coop-bg);
+}
+
+.coops__logo > span {
+  width: 20px;
+  height: 21px;
+  border-radius: 5px;
+  background: var(--coop-fg);
+}
+
+.coops__logo--grande {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+
+.coops__nome {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--coop-texto);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: left;
+}
+
+/* A linha inteira seleciona a cooperativa pelo botão do nome. */
+.coops__nome::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.coops__nome:focus-visible {
+  outline: 0;
+  box-shadow: var(--foco);
+}
+
+.coops__sub {
+  margin: 2px 0 0;
+  color: var(--coop-mudo);
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.coops__sub-homologacao {
+  color: #0b60ec;
+  font-weight: 700;
+}
+
+.coops__selo {
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  margin-top: 6px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--coop-verde);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.coops__materiais {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coops__materiais li {
+  display: inline-flex;
+  align-items: center;
+  height: 19px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f0f3f1;
+  color: var(--coop-mudo);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.coops__cap {
+  max-width: 128px;
+}
+
+.coops__cap-texto {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  color: var(--coop-mudo);
+  font-size: 11.5px;
+  line-height: 14px;
+}
+
+.coops__cap-barra {
+  height: 8px;
+  margin-top: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf2ee;
+}
+
+.coops__cap-barra span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
+}
+
+.coops__lic {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.coops__lic svg {
+  flex-shrink: 0;
+}
+
+.coops__lic--valida {
+  color: var(--coop-verde);
+}
+
+.coops__lic--vencendo {
+  color: #b45d15;
+}
+
+.coops__lic--vencida {
+  color: #cf1c38;
+}
+
+.coops__lic--em_analise,
+.coops__lic--sem_licenca {
+  color: #0b60ec;
+}
+
+.coops__lic--nao_informada {
+  color: var(--texto-suave);
+}
+
+/* Painel da cooperativa selecionada */
+.coops__mapa {
+  position: relative;
+  height: 290px;
+  overflow: hidden;
+  background: #e4edf9;
+}
+
+.coops__via {
+  position: absolute;
+  background: #fff;
+}
+
+.coops__via--h1,
+.coops__via--h2 {
+  right: 0;
+  left: 0;
+  height: 10px;
+}
+
+.coops__via--h1 {
+  top: 99px;
+}
+
+.coops__via--h2 {
+  top: 203px;
+}
+
+.coops__via--v1,
+.coops__via--v2 {
+  top: 0;
+  bottom: 0;
+  width: 10px;
+}
+
+.coops__via--v1 {
+  left: 27.9%;
+}
+
+.coops__via--v2 {
+  left: 64%;
+}
+
+.coops__raio {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 238px;
+  height: 238px;
+  transform: translate(-50%, -50%);
+}
+
+.coops__voce {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #e0435c;
+  box-shadow: 0 0 0 3px rgba(224, 67, 92, 0.25);
+  transform: translate(-50%, -50%);
+}
+
+.coops__pin {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--coop-pino);
+  line-height: 0;
+  transform: translate(-50%, -100%);
+}
+
+.coops__pin svg {
+  width: 26px;
+  height: 36px;
+  transition: width 0.15s ease, height 0.15s ease;
+}
+
+.coops__pin--selecionado {
+  z-index: 2;
+}
+
+.coops__pin--selecionado svg {
+  width: 36px;
+  height: 49px;
+}
+
+.coops__pin:focus-visible {
+  outline: 2px solid var(--coop-texto);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.coops__mapa-nota {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 35px;
+  margin: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--coop-texto);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.coops__detalhe {
+  padding: 18px 22px 22px;
+}
+
+.coops__painel-vazio {
+  margin: 0;
+  padding: 24px;
+  color: var(--coop-mudo);
+  font-size: 14px;
+  text-align: center;
+}
+
+.coops__detalhe-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coops__detalhe-nome {
+  margin: 0;
+  color: var(--coop-texto);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 26px;
+}
+
+.coops__kv {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.coops__kv-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f6f9f7;
+}
+
+.coops__kv-item dt {
+  color: var(--coop-mudo);
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.coops__kv-item dd {
+  margin: 1px 0 0;
+  color: var(--coop-texto);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 19px;
+}
+
+.coops__kv-item dd.coops__kv-licenca--valida {
+  color: var(--coop-verde);
+}
+
+.coops__kv-item dd.coops__kv-licenca--vencendo {
+  color: #b45d15;
+}
+
+.coops__kv-item dd.coops__kv-licenca--vencida {
+  color: #cf1c38;
+}
+
+.coops__kv-item dd.coops__kv-licenca--em_analise,
+.coops__kv-item dd.coops__kv-licenca--sem_licenca {
+  color: #0b60ec;
+}
+
+.coops__kv-item dd.coops__kv-licenca--nao_informada {
+  color: var(--texto-suave);
+}
+
+.coops__grafico-titulo {
+  margin: 20px 0 0;
+  color: var(--coop-texto);
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.coops__grafico {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 110px;
+  margin: 9px 0 0;
+  padding: 0 6px;
+  list-style: none;
+}
+
+.coops__grafico li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 52px;
+}
+
+.coops__barra-volume {
+  width: 100%;
+  border-radius: 10px;
+  background: #d8ece0;
+}
+
+.coops__barra-volume--atual {
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
+}
+
+.coops__grafico-mes {
+  margin-top: 8px;
+  color: var(--coop-mudo);
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.coops__acoes {
+  display: grid;
+  grid-template-columns: 156fr 148fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.coops__acoes .coops__botao {
+  padding: 0 8px;
+}
+
+@media (max-width: 1180px) {
+  .coops__grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .coops__botao--topo {
+    width: 100%;
+  }
+}
