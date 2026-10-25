@@ -47,7 +47,7 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
 | `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
-| `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
+| `VITE_USAR_MOCKS` | `false` liga as APIs; `true` usa os mocks locais. A Vercel usa `false` via `.env.production`; o Docker usa `true` por padrão (sobrescreva com `--build-arg VITE_USAR_MOCKS=false`). |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
 | `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
@@ -55,9 +55,10 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 
 ### Integração com a volta-api
 
-Por padrão o app roda com mocks (`src/services/*.mock.ts` e o mock embutido de
-`auth.ts`), então `npm run dev` funciona sem backend. Para usar a API real,
-crie um `.env.local` (não versionado):
+O `.env.example` mantém os mocks para desenvolvimento local. Na Vercel, builds
+usam as APIs por padrão; confirme que uma variável do painel não sobrescreve
+`VITE_USAR_MOCKS` com `true`. O Docker usa mocks por padrão. Para desenvolvimento
+com a API real, crie um `.env.local` (não versionado):
 
 ```
 VITE_API_BASE_URL=/api
