@@ -14,6 +14,14 @@ const DETALHES_CONHECIDOS: Readonly<Record<string, string>> = {
     "Esta ocorrência tem uma coleta ativa e será encerrada quando a coleta terminar.",
   "Hazardous waste incidents can only be closed after a completed collection":
     "Resíduos perigosos só podem ser encerrados depois de uma coleta concluída.",
+  "CNPJ already registered": "Já existe um cadastro com esse CNPJ.",
+  "Email already registered": "Já existe uma pessoa com esse e-mail.",
+  "You cannot change your own role":
+    "Você não pode alterar o seu próprio perfil de acesso.",
+  "Company coordinates are not registered":
+    "A empresa ainda não tem coordenadas cadastradas, então não dá para indicar cooperativas.",
+  "Radioactive waste cannot be sent to cooperatives":
+    "Resíduo radioativo não pode ser enviado a cooperativas.",
   "Internal Error":
     "O servidor da VOLTA teve um problema. Tente novamente em instantes.",
 };

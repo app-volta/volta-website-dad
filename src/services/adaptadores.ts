@@ -3,12 +3,16 @@ import type {
   AnaliseResiduoApi,
   AreaApi,
   CategoriaResiduoApi,
+  CooperativaApi,
+  HistoricoColetaApi,
   IncidenteApi,
+  NotasDasCooperativasApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
   RespostaChatApi,
   RiscoApi,
+  StatusColetaApi,
   TipoResiduoApi,
   UsuarioApi,
 } from "../types/api";
@@ -16,6 +20,13 @@ import type {
   ClassificacaoIA,
   NivelContaminacao,
 } from "../types/classificacao";
+import type {
+  Cooperativa,
+  IndicacaoDeCooperativas,
+  MaterialAceito,
+  PosicaoMapa,
+} from "../types/cooperativa";
+import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
 import type {
@@ -27,6 +38,9 @@ import type {
 import type { AcaoMensagem } from "../types/assistente";
 import type { Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
+import { instanteUtc } from "../utils/datas";
+import { mascararCnpj } from "../utils/formatacao";
+import type { VolumeDaCooperativa } from "../utils/volumeCooperativas";
 
 /**
  * Tradução entre os contratos da volta-api (src/types/api.ts) e os tipos de
@@ -50,6 +64,9 @@ export function usuarioDaApi(dto: UsuarioApi): Usuario {
     email: dto.email,
     papel: PAPEL_POR_PERFIL[dto.role] ?? "operador",
     unidade: UNIDADE_PADRAO,
+    cargo: dto.position,
+    empresaId: dto.companyId,
+    perfil: dto.role,
   };
 }
 
@@ -105,13 +122,6 @@ const CONTAMINACAO_DA_API: Readonly<Record<RiscoApi, NivelContaminacao>> = {
   MEDIUM: "media",
   HIGH: "alta",
 };
-
-/** O backend serializa LocalDateTime em UTC e sem fuso. */
-export function instanteUtc(valor: string): string {
-  const temFuso = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(valor);
-  const data = new Date(temFuso ? valor : `${valor}Z`);
-  return Number.isNaN(data.getTime()) ? valor : data.toISOString();
-}
 
 /** Código curto e estável derivado do UUID, no formato OCC-12345. */
 export function codigoDaOcorrencia(id: string): string {
@@ -270,8 +280,244 @@ export function conteudoDaRespostaChat(resposta: RespostaChatApi): ConteudoAssis
   };
 }
 
+/**
+ * Perfil da API → papel mostrado na equipe. Pelas descrições da tela, o
+ * responsável técnico "revisa, encaminha e aprova" (MANAGER) e o gestor tem
+ * "tudo" (ADMIN); quem só registra é colaborador (EMPLOYEE e OPERATOR).
+ */
+const PAPEL_DA_EQUIPE_POR_PERFIL: Readonly<Record<PerfilApi, PapelEquipe>> = {
+  ADMIN: "gestor",
+  MANAGER: "responsavel_tecnico",
+  EMPLOYEE: "colaborador",
+  OPERATOR: "colaborador",
+};
+
+const PERFIL_POR_PAPEL_DA_EQUIPE: Readonly<Record<PapelEquipe, PerfilApi>> = {
+  gestor: "ADMIN",
+  responsavel_tecnico: "MANAGER",
+  colaborador: "EMPLOYEE",
+};
+
+export function perfilDoPapel(papel: PapelEquipe): PerfilApi {
+  return PERFIL_POR_PAPEL_DA_EQUIPE[papel];
+}
+
+/** Pessoa da API na tabela da equipe. Setor a API não informa; "convite pendente" não existe lá. */
+export function membroDaApi(
+  dto: UsuarioApi,
+  registrosNoMes: number,
+  ultimaAtividade: string | null,
+): MembroEquipe {
+  return {
+    id: dto.id,
+    nome: dto.name,
+    email: dto.email,
+    papel: PAPEL_DA_EQUIPE_POR_PERFIL[dto.role] ?? "colaborador",
+    setor: null,
+    registrosNoMes,
+    ultimaAtividade,
+    convitePendente: false,
+  };
+}
+
+/**
+ * O banco do QA veio da carga antiga, com as categorias dos tipos de resíduo em
+ * inglês (PAPER, PLASTIC, GLASS...). A API devolve o texto como está, então o app
+ * traduz para as categorias que ele conhece. Sem correspondência: não reciclável.
+ */
+const CATEGORIA_POR_SINONIMO: Readonly<Record<string, CategoriaResiduoApi>> = {
+  PAPEL: "PAPEL",
+  PAPER: "PAPEL",
+  PAPELAO: "PAPEL",
+  PLASTICO: "PLASTICO",
+  PLASTIC: "PLASTICO",
+  VIDRO: "VIDRO",
+  GLASS: "VIDRO",
+  METAL: "METAL",
+  MADEIRA: "MADEIRA",
+  WOOD: "MADEIRA",
+  PERIGOSO: "PERIGOSO",
+  CHEMICAL: "PERIGOSO",
+  QUIMICO: "PERIGOSO",
+  ELECTRONIC: "PERIGOSO",
+  ELETRONICO: "PERIGOSO",
+  SAUDE: "SAUDE",
+  HEALTH: "SAUDE",
+  RADIOATIVO: "RADIOATIVO",
+  RADIOACTIVE: "RADIOATIVO",
+  ORGANICO: "ORGANICO",
+  ORGANIC: "ORGANICO",
+  NAO_RECICLAVEL: "NAO_RECICLAVEL",
+  MIXED: "NAO_RECICLAVEL",
+  TEXTILE: "NAO_RECICLAVEL",
+};
+
+export function categoriaDaApi(valor: string | null | undefined): CategoriaResiduoApi {
+  const chave = semAcentos(valor ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, "_");
+  return CATEGORIA_POR_SINONIMO[chave] ?? "NAO_RECICLAVEL";
+}
+
+const CATEGORIA_POR_MATERIAL_ACEITO: Readonly<
+  Record<MaterialAceito, CategoriaResiduoApi>
+> = {
+  papelao: "PAPEL",
+  papel_misto: "PAPEL",
+  plastico: "PLASTICO",
+  metal: "METAL",
+  vidro: "VIDRO",
+  organico: "ORGANICO",
+  oleo: "PERIGOSO",
+};
+
+/** "PAPEL,PLASTICO" para o cadastro na API, sem repetir categoria. */
+export function especialidadesDosMateriais(
+  materiais: readonly MaterialAceito[],
+): string {
+  return [...new Set(materiais.map((m) => CATEGORIA_POR_MATERIAL_ACEITO[m]))].join(",");
+}
+
+/**
+ * Trechos que indicam cada material, em português ou inglês. A API devolve as
+ * categorias separadas por vírgula (PAPEL,PLASTICO), mas as cooperativas da
+ * carga antiga têm texto livre ("Papel, plástico e vidro"); procurar o trecho
+ * cobre os dois.
+ */
+const TRECHOS_POR_MATERIAL: ReadonlyArray<readonly [MaterialAceito, readonly string[]]> = [
+  ["papelao", ["papel", "paper"]],
+  ["plastico", ["plastic"]],
+  ["metal", ["metal", "aluminio"]],
+  ["vidro", ["vidro", "glass"]],
+  ["organico", ["organic"]],
+  ["oleo", ["oleo", "perigos", "quimic", "chemical", "eletron", "electron"]],
+];
+
+function materiaisDasEspecialidades(especialidades: string | null): MaterialAceito[] {
+  const texto = semAcentos(especialidades ?? "");
+  return TRECHOS_POR_MATERIAL.filter(([, trechos]) =>
+    trechos.some((trecho) => texto.includes(trecho)),
+  ).map(([material]) => material);
+}
+
+/** CNPJ numérico ganha máscara; o alfanumérico (formato novo) fica como a API devolve. */
+function cnpjParaExibir(cnpj: string): string {
+  return /^\d{14}$/.test(cnpj) ? mascararCnpj(cnpj) : cnpj;
+}
+
+const MARGEM_MAPA_X = { min: 12, max: 88 } as const;
+const MARGEM_MAPA_Y = { min: 18, max: 82 } as const;
+
+function escalar(
+  valor: number,
+  menor: number,
+  maior: number,
+  margem: { readonly min: number; readonly max: number },
+): number {
+  if (maior === menor) return (margem.min + margem.max) / 2;
+  return margem.min + ((valor - menor) / (maior - menor)) * (margem.max - margem.min);
+}
+
+/**
+ * Posição ilustrativa no mapa: as coordenadas reais, proporcionais entre si e
+ * ajustadas ao quadro (norte em cima). Não é um mapa de verdade.
+ */
+export function posicoesNoMapa(
+  lista: readonly CooperativaApi[],
+): ReadonlyMap<string, PosicaoMapa> {
+  const latitudes = lista.map((c) => c.latitude);
+  const longitudes = lista.map((c) => c.longitude);
+  const [sul, norte] = [Math.min(...latitudes), Math.max(...latitudes)];
+  const [oeste, leste] = [Math.min(...longitudes), Math.max(...longitudes)];
+  return new Map(
+    lista.map((c) => [
+      c.id,
+      {
+        x: Number(escalar(c.longitude, oeste, leste, MARGEM_MAPA_X).toFixed(1)),
+        y: Number((MARGEM_MAPA_Y.min + MARGEM_MAPA_Y.max - escalar(c.latitude, sul, norte, MARGEM_MAPA_Y)).toFixed(1)),
+      },
+    ]),
+  );
+}
+
+/**
+ * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
+ * nota e as categorias aceitas; contato, capacidade e licença não existem lá e
+ * ficam vazios. A distância só entra quando se sabe de onde a empresa envia.
+ */
+export function cooperativaDaApi(
+  dto: CooperativaApi,
+  posicaoMapa: PosicaoMapa,
+  volume: VolumeDaCooperativa,
+  distanciaKm: number | null = null,
+): Cooperativa {
+  return {
+    id: dto.id,
+    nome: dto.name,
+    cnpj: cnpjParaExibir(dto.cnpj),
+    cidade: "",
+    estado: "",
+    materiaisAceitos: materiaisDasEspecialidades(dto.specialties),
+    contato: null,
+    telefone: null,
+    email: null,
+    distanciaKm,
+    avaliacao: dto.averageRating,
+    situacao: "ativa",
+    parceiraGrupo: false,
+    capacidadeMesKg: null,
+    usadoMesKg: volume.usadoMesKg,
+    licencaMonitorada: false,
+    licencaValidaAte: null,
+    licencaDocumento: null,
+    volumeMensalKg: volume.volumeMensalKg,
+    posicaoMapa,
+  };
+}
+
+const TEXTO_DO_STATUS_DA_COLETA: Readonly<Record<StatusColetaApi, string>> = {
+  REQUESTED: "recebeu o pedido de coleta",
+  SCHEDULED: "agendou a coleta",
+  IN_PROGRESS: "iniciou a coleta",
+  COMPLETED: "concluiu a coleta",
+  CANCELED: "cancelou a coleta",
+};
+
+/** Uma mudança de status da coleta como evento da linha do tempo da ocorrência. */
+export function eventoDaColeta(
+  historico: HistoricoColetaApi,
+  nomeDaCooperativa: string | undefined,
+): EventoOcorrencia {
+  const observacao = historico.observation?.trim();
+  const texto = TEXTO_DO_STATUS_DA_COLETA[historico.status] ?? "atualizou a coleta";
+  return {
+    id: `coleta-${historico.id}`,
+    tipo: "coleta",
+    autor: nomeDaCooperativa ?? "Cooperativa",
+    texto: observacao ? `${texto} · ${observacao}` : texto,
+    em: instanteUtc(historico.changedAt),
+  };
+}
+
+/** Resposta da API de ranking no formato das telas. */
+export function indicacaoDaApi(
+  resposta: NotasDasCooperativasApi,
+): IndicacaoDeCooperativas {
+  return {
+    raioKm: resposta.radiusKm,
+    cooperativas: resposta.cooperatives.map((c) => ({
+      id: c.cooperativeId,
+      nome: c.name,
+      nota: c.score,
+      distanciaKm: c.distanceKm,
+    })),
+  };
+}
+
 export interface ExtrasOcorrencia {
   readonly relatorio?: RelatorioIaApi | null;
+  readonly coleta?: readonly EventoOcorrencia[];
   readonly classificacao?: ClassificacaoIA | null;
   readonly autorNome?: string;
 }
@@ -322,6 +568,10 @@ export function ocorrenciaDaApi(
       em: instanteUtc(extras.relatorio.generatedAt),
     });
   }
+
+  // A coleta acontece depois do registro: mantém a linha do tempo em ordem.
+  historico.push(...(extras.coleta ?? []));
+  historico.sort((a, b) => a.em.localeCompare(b.em));
 
   return {
     id: dto.id,

@@ -86,7 +86,7 @@ export function filtrarBusca(base: BaseBusca, consulta: string): readonly GrupoB
       .map<ResultadoBusca>((c) => ({
         id: `cooperativa-${c.id}`,
         rotulo: c.nome,
-        apoio: formatarKm(c.distanciaKm),
+        apoio: c.distanciaKm === null ? "" : formatarKm(c.distanciaKm),
         destino: "/cooperativas",
         icone: "folha",
       }));

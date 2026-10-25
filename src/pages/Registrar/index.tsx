@@ -221,7 +221,7 @@ export default function Registrar(): ReactNode {
         </Alerta>
       ) : null}
       {estado.erroEnvio ? (
-        <Alerta variante="erro" titulo="Falha na análise">
+        <Alerta variante="erro" titulo="Não foi possível registrar">
           {estado.erroEnvio}
         </Alerta>
       ) : null}

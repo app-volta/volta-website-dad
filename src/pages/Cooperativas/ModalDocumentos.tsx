@@ -57,7 +57,7 @@ export function ModalDocumentos({
           </span>
           <div>
             <p className="coops-docs__titulo">CNPJ</p>
-            <p className="coops-docs__texto">{coop.cnpj}</p>
+            <p className="coops-docs__texto">{coop.cnpj || "Não informado"}</p>
           </div>
         </li>
       </ul>

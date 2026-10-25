@@ -5,7 +5,8 @@ export type EstadoLicenca =
   | "vencendo"
   | "vencida"
   | "em_analise"
-  | "sem_licenca";
+  | "sem_licenca"
+  | "nao_informada";
 
 /** A licença passa a "vencendo" quando faltam 30 dias ou menos. */
 const LIMITE_VENCENDO_DIAS = 30;
@@ -26,7 +27,10 @@ const MESES: readonly string[] = [
   "dez",
 ];
 
-type DadosLicenca = Pick<Cooperativa, "licencaValidaAte" | "licencaDocumento">;
+type DadosLicenca = Pick<
+  Cooperativa,
+  "licencaValidaAte" | "licencaDocumento" | "licencaMonitorada"
+>;
 
 function meiaNoite(data: Date): number {
   return new Date(data.getFullYear(), data.getMonth(), data.getDate()).getTime();
@@ -46,6 +50,7 @@ export function estadoLicenca(
   coop: DadosLicenca,
   agora: Date = new Date(),
 ): EstadoLicenca {
+  if (coop.licencaMonitorada === false) return "nao_informada";
   if (coop.licencaValidaAte) {
     const dias = diasParaVencer(coop.licencaValidaAte, agora);
     if (dias < 0) return "vencida";
@@ -87,6 +92,8 @@ export function rotuloLicenca(
       return "Docs em análise";
     case "sem_licenca":
       return "Sem licença";
+    case "nao_informada":
+      return "Não informada";
   }
 }
 
@@ -143,5 +150,11 @@ export function cooperativasNoRaio(
   lista: readonly Cooperativa[],
   raioKm = 10,
 ): number {
-  return lista.filter((c) => c.distanciaKm <= raioKm).length;
+  return lista.filter((c) => c.distanciaKm !== null && c.distanciaKm <= raioKm)
+    .length;
+}
+
+/** Todas as distâncias são conhecidas? Sem elas, "no raio de 10 km" não faz sentido. */
+export function temDistancias(lista: readonly Cooperativa[]): boolean {
+  return lista.every((c) => c.distanciaKm !== null);
 }

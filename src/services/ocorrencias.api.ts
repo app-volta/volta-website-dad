@@ -1,5 +1,6 @@
 import type {
   AreaApi,
+  HistoricoColetaApi,
   IncidenteApi,
   NovoIncidenteApi,
   RelatorioIaApi,
@@ -22,13 +23,17 @@ import { arquivoDaFoto } from "../utils/arquivo";
 import {
   PRIORIDADE_PARA_API,
   analiseInconclusiva,
+  categoriaDaApi,
   categoriaDoTexto,
   classificacaoDaAnalise,
+  eventoDaColeta,
   ocorrenciaDaApi,
   riscoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
 import { analisarFoto } from "./chatbot";
+import { historicoDaColeta, listarColetas } from "./coletas";
+import { nomesDasCooperativas } from "./cooperativasBrutas";
 import {
   ErroHttp,
   aoEncerrarSessao,
@@ -74,6 +79,7 @@ let catalogo: Promise<CatalogoApi> | null = null;
 let carregouLista = false;
 let carregandoLista = false;
 const relatorios = new Map<string, RelatorioIaApi>();
+const eventosDeColeta = new Map<string, readonly EventoOcorrencia[]>();
 const classificacoes = new Map<string, ClassificacaoIA>();
 const ouvintes = new Set<() => void>();
 
@@ -140,6 +146,11 @@ function aguardaAprovacao(status: StatusOcorrencia): boolean {
   return status === "classificada" || status === "aguardando_classificacao";
 }
 
+/** Ocorrências já carregadas, na ordem da lista; troca de referência a cada mudança. */
+export function lerOcorrencias(): readonly Ocorrencia[] {
+  return cache;
+}
+
 export function quantidadeAguardando(): number {
   return cache.filter((item) => aguardaAprovacao(item.status)).length;
 }
@@ -164,7 +175,9 @@ function carregarCatalogo(): Promise<CatalogoApi> {
     ])
       .then(([areas, tipos]) => ({
         areas: new Map(areas.map((area) => [area.id, area])),
-        tipos: new Map(tipos.map((tipo) => [tipo.id, tipo])),
+        tipos: new Map(
+          tipos.map((tipo) => [tipo.id, { ...tipo, category: categoriaDaApi(tipo.category) }]),
+        ),
       }))
       .catch((excecao: unknown) => {
         catalogo = null;
@@ -172,6 +185,12 @@ function carregarCatalogo(): Promise<CatalogoApi> {
       });
   }
   return catalogo;
+}
+
+/** Áreas (setores) da empresa da pessoa logada, com o id que a API usa. */
+export async function listarAreas(): Promise<readonly AreaApi[]> {
+  const cat = await carregarCatalogo();
+  return [...cat.areas.values()];
 }
 
 /** Setores da empresa da pessoa logada (GET /areas/mine). */
@@ -191,6 +210,7 @@ function daApi(dto: IncidenteApi, cat: CatalogoApi): Ocorrencia {
   return ocorrenciaDaApi(dto, cat, {
     relatorio: relatorios.get(dto.id) ?? null,
     classificacao: classificacoes.get(dto.id) ?? null,
+    coleta: eventosDeColeta.get(dto.id),
     autorNome: nomeDoAutor(dto.userId),
   });
 }
@@ -238,6 +258,38 @@ function buscarRelatorio(
   });
 }
 
+/**
+ * Linha do tempo da coleta da ocorrência (GET /collections e
+ * /collections/{id}/history, só ADMIN e MANAGER). Sem permissão ou sem coleta,
+ * não há eventos; qualquer falha aqui não impede de abrir a ocorrência.
+ */
+async function buscarEventosDeColeta(
+  incidenteId: string,
+  sinal?: AbortSignal,
+): Promise<readonly EventoOcorrencia[]> {
+  try {
+    const coletas = (await listarColetas()).filter(
+      (coleta) => coleta.incidentId === incidenteId,
+    );
+    if (coletas.length === 0) return [];
+    const nomes = await nomesDasCooperativas().catch(() => new Map<string, string>());
+    const historicos = await Promise.all(
+      coletas.map(async (coleta) => {
+        const itens: readonly HistoricoColetaApi[] = await historicoDaColeta(
+          coleta.id,
+          sinal,
+        ).catch(() => []);
+        return itens.map((item) =>
+          eventoDaColeta(item, nomes.get(coleta.cooperativeId)),
+        );
+      }),
+    );
+    return historicos.flat();
+  } catch {
+    return [];
+  }
+}
+
 const FORMATO_UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -248,12 +300,14 @@ export async function obterOcorrencia(
   if (!FORMATO_UUID.test(id)) {
     throw new Error("Ocorrência não encontrada.");
   }
-  const [incidente, cat, relatorio] = await Promise.all([
+  const [incidente, cat, relatorio, coleta] = await Promise.all([
     requisitar<IncidenteApi>(`/incidents/${id}`, { sinal }),
     carregarCatalogo(),
     buscarRelatorio(id, sinal),
+    buscarEventosDeColeta(id, sinal),
   ]);
   if (relatorio) relatorios.set(id, relatorio);
+  eventosDeColeta.set(id, coleta);
   const anterior = bases.find((item) => item.id === id);
   const base = daApi(incidente, cat);
   substituirBase(
@@ -271,10 +325,26 @@ function localizar(id: string): Ocorrencia {
   return encontrada;
 }
 
+const NOME_DO_PERFIL: Readonly<Record<string, string>> = {
+  ADMIN: "administrador",
+  MANAGER: "gestor",
+  OPERATOR: "operador",
+};
+
+/** A volta-api só deixa o perfil EMPLOYEE criar ocorrência; avisar antes poupa a análise da IA. */
+function mensagemSePerfilNaoRegistra(): string | null {
+  const perfil = obterUsuarioAtual()?.perfil;
+  if (perfil === undefined || perfil === "EMPLOYEE") return null;
+  return `Só colaboradores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador.`;
+}
+
 export async function criarOcorrencia(
   entrada: NovaOcorrencia,
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
+  const semPermissao = mensagemSePerfilNaoRegistra();
+  if (semPermissao) throw new Error(semPermissao);
+
   const foto = await arquivoDaFoto(entrada.fotoBase64);
   const [cat, analise] = await Promise.all([
     carregarCatalogo(),
@@ -323,6 +393,14 @@ export async function criarOcorrencia(
     metodo: "POST",
     corpo,
     sinal,
+  }).catch((excecao: unknown) => {
+    // Sessão antiga, sem o perfil guardado: a API recusa e a mensagem explica o motivo.
+    if (excecao instanceof ErroHttp && excecao.status === 403) {
+      throw new Error(
+        "Só colaboradores registram ocorrências. Saia e entre com um usuário colaborador.",
+      );
+    }
+    throw excecao;
   });
   classificacoes.set(criado.id, classificacao);
   substituirBase({
@@ -491,6 +569,7 @@ function reiniciar(): void {
   catalogo = null;
   carregouLista = false;
   relatorios.clear();
+  eventosDeColeta.clear();
   classificacoes.clear();
   notificar();
 }

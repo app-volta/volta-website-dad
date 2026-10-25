@@ -22,4 +22,7 @@ export interface MembroEquipe {
 export interface NovoConvite {
   readonly email: string;
   readonly papel: PapelEquipe;
+  /** Só na volta-api, que cria a conta na hora em vez de mandar convite por e-mail. */
+  readonly nome?: string;
+  readonly senha?: string;
 }

@@ -10,6 +10,8 @@ import type { ReactNode } from "react";
 
 import { autenticar, cadastrar } from "../../services/auth";
 import { configurarSessaoHttp, encerrarSessaoHttp } from "../../services/http";
+import { atualizarPerfil } from "../../services/perfil";
+import type { AlteracoesPerfil } from "../../services/perfil";
 import type {
   CredenciaisLogin,
   DadosCadastro,
@@ -45,7 +47,12 @@ configurarSessaoHttp({
   obterToken: () => sessaoAtual?.token ?? null,
   obterUsuario: () =>
     sessaoAtual
-      ? { id: sessaoAtual.usuario.id, nome: sessaoAtual.usuario.nome }
+      ? {
+          id: sessaoAtual.usuario.id,
+          nome: sessaoAtual.usuario.nome,
+          empresaId: sessaoAtual.usuario.empresaId,
+          perfil: sessaoAtual.usuario.perfil,
+        }
       : null,
   aoNaoAutorizado: () => aoSessaoExpirar?.(),
 });
@@ -64,12 +71,13 @@ interface ValorAuthContext {
   readonly entrar: (credenciais: CredenciaisLogin) => Promise<void>;
   readonly cadastrarNovo: (dados: DadosCadastro) => Promise<void>;
   readonly sair: () => void;
-  readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => void;
+  /** Grava o perfil (PUT /users/me) e só então atualiza a sessão; rejeita se a gravação falhar. */
+  readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => Promise<void>;
   readonly limparErro: () => void;
 }
 
 /** O que a própria pessoa pode alterar no perfil. */
-export type AlteracoesUsuario = Partial<Pick<Usuario, "nome">>;
+export type AlteracoesUsuario = AlteracoesPerfil;
 
 const AuthContext = createContext<ValorAuthContext | null>(null);
 
@@ -168,15 +176,24 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     setErro(null);
   }, [aplicarSessao]);
 
-  const atualizarUsuario = useCallback((alteracoes: AlteracoesUsuario) => {
-    setSessao((atual) => {
-      const proxima = atual
-        ? { ...atual, usuario: { ...atual.usuario, ...alteracoes } }
-        : atual;
-      sessaoAtual = proxima;
-      return proxima;
-    });
-  }, []);
+  const atualizarUsuario = useCallback(
+    async (alteracoes: AlteracoesUsuario) => {
+      const atual = sessaoAtual;
+      if (!atual) return;
+      const gravado = await atualizarPerfil(atual.usuario, alteracoes);
+      setSessao((corrente) => {
+        // A pessoa pode ter saído enquanto a gravação voltava.
+        if (!corrente || corrente.usuario.id !== atual.usuario.id) return corrente;
+        const proxima = {
+          ...corrente,
+          usuario: { ...corrente.usuario, ...gravado },
+        };
+        sessaoAtual = proxima;
+        return proxima;
+      });
+    },
+    [],
+  );
 
   const limparErro = useCallback(() => setErro(null), []);
 

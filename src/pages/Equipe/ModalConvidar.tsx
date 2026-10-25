@@ -15,6 +15,8 @@ import { OpcaoRadio } from "../OcorrenciaDetalhe/modais/OpcaoRadio";
 import "./modal.css";
 
 interface ModalConvidarProps {
+  /** Na volta-api não há convite por e-mail: a conta é criada na hora, com nome e senha. */
+  readonly criaAcesso?: boolean;
   readonly salvando: boolean;
   readonly erro: string | null;
   readonly aoConfirmar: (convite: NovoConvite) => void;
@@ -22,6 +24,7 @@ interface ModalConvidarProps {
 }
 
 export function ModalConvidar({
+  criaAcesso = false,
   salvando,
   erro,
   aoConfirmar,
@@ -29,12 +32,21 @@ export function ModalConvidar({
 }: ModalConvidarProps): ReactNode {
   const idFormulario = useId();
   const idEmail = useId();
+  const idNome = useId();
+  const idSenha = useId();
   const emailRef = useRef<HTMLInputElement | null>(null);
   const [email, setEmail] = useState<string>("");
+  const [nome, setNome] = useState<string>("");
+  const [senha, setSenha] = useState<string>("");
   const [papel, setPapel] = useState<PapelEquipe>("colaborador");
   const [tentou, setTentou] = useState<boolean>(false);
 
   const erroEmail = validarEmailConvite(email);
+  const erroNome = criaAcesso && nome.trim().length < 3 ? "Informe o nome da pessoa." : null;
+  const erroSenha =
+    criaAcesso && (senha.length < 8 || senha.length > 72)
+      ? "A senha precisa ter de 8 a 72 caracteres."
+      : null;
 
   function enviar(evento: FormEvent<HTMLFormElement>): void {
     evento.preventDefault();
@@ -44,7 +56,8 @@ export function ModalConvidar({
       emailRef.current?.focus();
       return;
     }
-    aoConfirmar({ email, papel });
+    if (erroNome || erroSenha) return;
+    aoConfirmar(criaAcesso ? { email, papel, nome: nome.trim(), senha } : { email, papel });
   }
 
   return (
@@ -54,8 +67,12 @@ export function ModalConvidar({
       icone="equipe"
       tom="verde"
       largura={520}
-      titulo="Convidar pra equipe"
-      subtitulo="A pessoa recebe um e-mail pra criar a conta."
+      titulo={criaAcesso ? "Cadastrar na equipe" : "Convidar pra equipe"}
+      subtitulo={
+        criaAcesso
+          ? "A conta é criada na hora, com a senha que você definir."
+          : "A pessoa recebe um e-mail pra criar a conta."
+      }
       aoFechar={aoFechar}
       rodape={
         <>
@@ -74,12 +91,40 @@ export function ModalConvidar({
             disabled={salvando}
           >
             <Icone nome="enviar" tamanho={16} />
-            {salvando ? "Enviando…" : "Enviar convite"}
+            {salvando ? "Enviando…" : criaAcesso ? "Criar acesso" : "Enviar convite"}
           </button>
         </>
       }
     >
       <form id={idFormulario} className="eq-form" onSubmit={enviar} noValidate>
+        {criaAcesso ? (
+          <div className="eq-form__grupo">
+            <label className="eq-form__rotulo" htmlFor={idNome}>
+              Nome
+            </label>
+            <div className={`eq-form__campo${tentou && erroNome ? " eq-form__campo--erro" : ""}`}>
+              <span className="eq-form__campo-icone" aria-hidden="true">
+                <Icone nome="usuario" tamanho={16} />
+              </span>
+              <input
+                id={idNome}
+                type="text"
+                value={nome}
+                maxLength={150}
+                autoComplete="off"
+                aria-invalid={tentou && erroNome ? true : undefined}
+                aria-describedby={tentou && erroNome ? `${idNome}-erro` : undefined}
+                onChange={(evento) => setNome(evento.target.value)}
+              />
+            </div>
+            {tentou && erroNome ? (
+              <p className="eq-form__erro" id={`${idNome}-erro`}>
+                {erroNome}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="eq-form__grupo">
           <label className="eq-form__rotulo" htmlFor={idEmail}>
             E-mail
@@ -108,6 +153,34 @@ export function ModalConvidar({
             </p>
           ) : null}
         </div>
+
+        {criaAcesso ? (
+          <div className="eq-form__grupo">
+            <label className="eq-form__rotulo" htmlFor={idSenha}>
+              Senha de acesso
+            </label>
+            <div className={`eq-form__campo${tentou && erroSenha ? " eq-form__campo--erro" : ""}`}>
+              <span className="eq-form__campo-icone" aria-hidden="true">
+                <Icone nome="cadeado" tamanho={16} />
+              </span>
+              <input
+                id={idSenha}
+                type="password"
+                value={senha}
+                maxLength={72}
+                autoComplete="new-password"
+                aria-invalid={tentou && erroSenha ? true : undefined}
+                aria-describedby={tentou && erroSenha ? `${idSenha}-erro` : undefined}
+                onChange={(evento) => setSenha(evento.target.value)}
+              />
+            </div>
+            {tentou && erroSenha ? (
+              <p className="eq-form__erro" id={`${idSenha}-erro`}>
+                {erroSenha}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <fieldset className="eq-form__grupo">
           <legend className="eq-form__rotulo">Papel</legend>

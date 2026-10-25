@@ -7,9 +7,11 @@ import {
   marcarTodasComoLidas,
   montarNotificacoes,
 } from "../services/notificacoes";
+import { metaRecuperacaoAtual } from "../services/configuracoes";
 import {
   assinarMudancas,
   garantirCarregado,
+  lerOcorrencias,
   quantidadeAguardando,
 } from "../services/ocorrencias";
 import type { Notificacao } from "../types/notificacao";
@@ -21,12 +23,13 @@ export function useNotificacoes(): readonly Notificacao[] {
   }, []);
   const lidas = useSyncExternalStore(assinarNotificacoes, lerNotificacoesLidas);
   const pendentes = useSyncExternalStore(assinarMudancas, quantidadeAguardando);
-  return montarNotificacoes(lidas, pendentes);
+  const ocorrencias = useSyncExternalStore(assinarMudancas, lerOcorrencias);
+  return montarNotificacoes(lidas, pendentes, ocorrencias, metaRecuperacaoAtual());
 }
 
 interface AcoesNotificacoes {
   readonly marcarComoLida: (id: string) => void;
-  readonly marcarTodasComoLidas: () => void;
+  readonly marcarTodasComoLidas: (ids: readonly string[]) => void;
 }
 
 const ACOES: AcoesNotificacoes = { marcarComoLida, marcarTodasComoLidas };

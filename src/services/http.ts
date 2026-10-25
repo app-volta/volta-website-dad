@@ -26,6 +26,15 @@ export const BASE_CHATBOT: string = (
 ).replace(/\/+$/, "");
 
 /**
+ * Base da API de ranking (volta-api-redis): ranking de empresas, cooperativas
+ * próximas e pontuação de cooperativas por ocorrência. Também por proxy.
+ */
+export const BASE_RANKING: string = (
+  (import.meta.env.VITE_RANKING_API_BASE_URL as string | undefined) ??
+  "/ranking-api"
+).replace(/\/+$/, "");
+
+/**
  * Os mocks locais ficam ligados por padrão: o app roda sem backend, no CI e no
  * Docker. A API real só entra com VITE_USAR_MOCKS=false.
  */
@@ -53,6 +62,8 @@ export class ErroHttp extends Error {
 export interface UsuarioAtual {
   readonly id: string;
   readonly nome: string;
+  readonly empresaId?: string;
+  readonly perfil?: "ADMIN" | "MANAGER" | "EMPLOYEE" | "OPERATOR";
 }
 
 /** Ligação entre a camada HTTP e a sessão, sem os services conhecerem React. */

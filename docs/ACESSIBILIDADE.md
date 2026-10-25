@@ -163,6 +163,13 @@ contraste acima.
 A rodada foi repetida em 16/10/2026, depois da integração com a volta-api, com o
 mesmo resultado: nenhuma violação nas 30 telas e estados.
 
+Em 20/10/2026, depois de ligar Início, relatórios, cooperativas, equipe e
+configurações à API, o axe rodou em 1440 px com dados vindos da API (servidor
+simulado) em dez telas e estados: início, relatórios, cooperativas, equipe,
+configurações, perfil, os modais de cadastro de cooperativa, de pessoa e de
+perfil, e as notificações. Nenhuma violação, inclusive nos campos novos de
+latitude, longitude, nome e senha.
+
 ## Reflow em 320 px (16/10/2026)
 
 Critério 1.4.10 (nível AA): em 320 px de largura o conteúdo não pode exigir

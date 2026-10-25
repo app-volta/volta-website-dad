@@ -51,8 +51,8 @@ export default function Configuracoes(): ReactNode {
     return salvou;
   }
 
-  function salvarPerfil(nome: string): void {
-    atualizarUsuario({ nome });
+  async function salvarPerfil(nome: string): Promise<void> {
+    await atualizarUsuario({ nome });
     setEditandoPerfil(false);
     setAviso({ titulo: "Perfil atualizado", descricao: `Agora você aparece como ${nome}.` });
   }

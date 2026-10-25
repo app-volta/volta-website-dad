@@ -10,7 +10,8 @@ const NOME_MINIMO = 3;
 interface ModalPerfilProps {
   readonly nomeAtual: string;
   readonly email: string;
-  readonly aoSalvar: (nome: string) => void;
+  /** Grava o perfil; rejeita com o motivo quando o servidor recusa. */
+  readonly aoSalvar: (nome: string) => Promise<void>;
   readonly aoFechar: () => void;
 }
 
@@ -34,17 +35,30 @@ export function ModalPerfil({
   const nomeRef = useRef<HTMLInputElement | null>(null);
   const [nome, setNome] = useState<string>(nomeAtual);
   const [tentou, setTentou] = useState<boolean>(false);
+  const [salvando, setSalvando] = useState<boolean>(false);
+  const [erroServidor, setErroServidor] = useState<string | null>(null);
 
   const erro = validarNome(nome);
 
-  function enviar(evento: FormEvent<HTMLFormElement>): void {
+  async function enviar(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     setTentou(true);
     if (erro) {
       nomeRef.current?.focus();
       return;
     }
-    aoSalvar(nome.trim());
+    setSalvando(true);
+    setErroServidor(null);
+    try {
+      await aoSalvar(nome.trim());
+    } catch (excecao: unknown) {
+      setErroServidor(
+        excecao instanceof Error
+          ? excecao.message
+          : "Não foi possível salvar o perfil.",
+      );
+      setSalvando(false);
+    }
   }
 
   return (
@@ -69,13 +83,19 @@ export function ModalPerfil({
             type="submit"
             form={idFormulario}
             className="modal-acao__botao modal-acao__botao--primario"
+            disabled={salvando}
           >
-            Salvar
+            {salvando ? "Salvando…" : "Salvar"}
           </button>
         </>
       }
     >
-      <form id={idFormulario} className="cfg-form" onSubmit={enviar} noValidate>
+      <form
+        id={idFormulario}
+        className="cfg-form"
+        onSubmit={(evento) => void enviar(evento)}
+        noValidate
+      >
         <div className="cfg-form__grupo">
           <label className="cfg-form__rotulo" htmlFor={idNome}>
             Nome
@@ -102,6 +122,11 @@ export function ModalPerfil({
           <span className="cfg-form__rotulo">E-mail</span>
           <p className="cfg-form__somente-leitura">{email}</p>
         </div>
+        {erroServidor ? (
+          <p className="cfg-form__erro" role="alert">
+            {erroServidor}
+          </p>
+        ) : null}
       </form>
     </ModalAcao>
   );

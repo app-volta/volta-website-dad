@@ -49,15 +49,15 @@ function montarCartoes(relatorio: RelatorioPgrs): readonly CartaoResumo[] {
     },
     {
       rotulo: "Taxa de aprovação",
-      valor: String(relatorio.taxaAprovacao),
-      unidade: "%",
+      valor: relatorio.taxaAprovacao === null ? "—" : String(relatorio.taxaAprovacao),
+      unidade: relatorio.taxaAprovacao === null ? undefined : "%",
       icone: "check-circulo",
       tom: "azul",
     },
     {
       rotulo: "Desviado de aterro",
-      valor: String(relatorio.desvioAterro),
-      unidade: "%",
+      valor: relatorio.desvioAterro === null ? "—" : String(relatorio.desvioAterro),
+      unidade: relatorio.desvioAterro === null ? undefined : "%",
       icone: "alvo",
       tom: "roxo",
     },
@@ -164,6 +164,8 @@ export default function Relatorios(): ReactNode {
             </section>
             <CartaoPgrs
               periodo={dados.periodo}
+              scoreEsg={dados.scoreEsg ?? null}
+              posicaoNoRanking={dados.posicaoNoRanking ?? null}
               gerando={gerando}
               temUltimo={ultimo !== null}
               aoGerar={() => void gerar(dados)}
@@ -176,13 +178,21 @@ export default function Relatorios(): ReactNode {
               <h2 id="rel-setores" className="rel__cartao-titulo">
                 Setores que mais geram resíduo
               </h2>
-              <RankingSetores setores={dados.setores} />
+              {dados.setores.length > 0 ? (
+                <RankingSetores setores={dados.setores} />
+              ) : (
+                <p className="rel__vazio">Nenhum peso registrado neste período.</p>
+              )}
             </section>
             <section className="rel__cartao rel__cartao--destino" aria-labelledby="rel-destino">
               <h2 id="rel-destino" className="rel__cartao-titulo">
                 Destinação por cooperativa
               </h2>
-              <DestinacaoCooperativas destinos={dados.destinacao} />
+              {dados.destinacao.length > 0 ? (
+                <DestinacaoCooperativas destinos={dados.destinacao} />
+              ) : (
+                <p className="rel__vazio">Nenhuma coleta neste período.</p>
+              )}
             </section>
           </div>
         </div>

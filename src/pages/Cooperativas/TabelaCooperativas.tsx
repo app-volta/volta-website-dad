@@ -6,7 +6,11 @@ import { ROTULOS_MATERIAL_ACEITO } from "../../types/cooperativa";
 import type { Cooperativa } from "../../types/cooperativa";
 import { estadoLicenca, rotuloLicenca } from "../../utils/cooperativas";
 import type { EstadoLicenca } from "../../utils/cooperativas";
-import { formatarKg, formatarKm, formatarNota } from "../../utils/formatacao";
+import {
+  formatarKg,
+  formatarKmOpcional,
+  formatarNota,
+} from "../../utils/formatacao";
 import { corDaCooperativa } from "./cores";
 
 const MATERIAIS_VISIVEIS = 2;
@@ -17,6 +21,7 @@ const ICONE_LICENCA: Readonly<Record<EstadoLicenca, NomeIcone>> = {
   vencida: "alerta",
   em_analise: "relogio",
   sem_licenca: "relogio",
+  nao_informada: "relogio",
 };
 
 interface TabelaCooperativasProps {
@@ -84,10 +89,10 @@ function Linha({ coop, cor, selecionada, aoSelecionar }: LinhaProps): ReactNode 
   const estado = estadoLicenca(coop);
   const visiveis = coop.materiaisAceitos.slice(0, MATERIAIS_VISIVEIS);
   const restantes = coop.materiaisAceitos.length - visiveis.length;
-  const percentual = Math.min(
-    100,
-    Math.round((coop.usadoMesKg / coop.capacidadeMesKg) * 100),
-  );
+  const percentual =
+    coop.capacidadeMesKg === null || coop.capacidadeMesKg <= 0
+      ? null
+      : Math.min(100, Math.round((coop.usadoMesKg / coop.capacidadeMesKg) * 100));
 
   return (
     <tr
@@ -111,14 +116,22 @@ function Linha({ coop, cor, selecionada, aoSelecionar }: LinhaProps): ReactNode 
               {coop.situacao === "em_homologacao" ? (
                 <>
                   <span className="coops__sub-homologacao">Em homologação</span>
-                  {` · ${formatarKm(coop.distanciaKm)}`}
+                  {coop.distanciaKm === null
+                    ? ""
+                    : ` · ${formatarKmOpcional(coop.distanciaKm)}`}
                 </>
               ) : (
                 <>
-                  {formatarKm(coop.distanciaKm)}
-                  {coop.avaliacao !== null
-                    ? ` · ★ ${formatarNota(coop.avaliacao)}`
-                    : ""}
+                  {[
+                    coop.distanciaKm === null
+                      ? null
+                      : formatarKmOpcional(coop.distanciaKm),
+                    coop.avaliacao === null
+                      ? null
+                      : `★ ${formatarNota(coop.avaliacao)}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Sem avaliações"}
                 </>
               )}
             </p>
@@ -142,11 +155,17 @@ function Linha({ coop, cor, selecionada, aoSelecionar }: LinhaProps): ReactNode 
         <div className="coops__cap">
           <p className="coops__cap-texto">
             <span>{formatarKg(coop.usadoMesKg)}</span>
-            <span>de {coop.capacidadeMesKg.toLocaleString("pt-BR")}</span>
+            <span>
+              {coop.capacidadeMesKg === null
+                ? "neste mês"
+                : `de ${coop.capacidadeMesKg.toLocaleString("pt-BR")}`}
+            </span>
           </p>
-          <div className="coops__cap-barra" aria-hidden="true">
-            <span style={{ width: `${percentual}%` }} />
-          </div>
+          {percentual === null ? null : (
+            <div className="coops__cap-barra" aria-hidden="true">
+              <span style={{ width: `${percentual}%` }} />
+            </div>
+          )}
         </div>
       </td>
       <td>

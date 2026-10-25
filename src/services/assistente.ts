@@ -23,10 +23,16 @@ const SUGESTOES_MOCK: readonly string[] = [
   "Licenças vencendo",
 ];
 
+/**
+ * O chatbot trata como relato de ocorrência, e responde com análise e um
+ * rascunho para registrar, o que descreve uma situação concreta. Perguntas
+ * explicativas ("como descartar óleo?") dependem da base de documentos dele e
+ * nem sempre têm resposta, então as sugestões são relatos.
+ */
 const SUGESTOES_CHATBOT: readonly string[] = [
-  "Como descartar óleo de cozinha?",
-  "Quais normas valem para resíduo perigoso?",
-  "Como está o desempenho da unidade?",
+  "Encontrei papelão molhado na doca",
+  "Tem óleo vazando perto da caldeira",
+  "Achei um tambor sem identificação",
 ];
 
 export const SUGESTOES_ASSISTENTE: readonly string[] = USAR_MOCKS

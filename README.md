@@ -46,9 +46,11 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 |------|-----------|
 | `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
+| `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
 | `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
+| `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
 | `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
@@ -70,20 +72,62 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Tela | Endpoints |
 |------|-----------|
 | Login | `POST /auth/login`, `GET /users/me` |
-| Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` |
+| Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
 | Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict` |
 | Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
+| Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
+| Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
+| Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
+| Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
+| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
+| Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
+| Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 
 O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
 um assistente de IA, não um canal de mensagens com a cooperativa.
 
-O que a API ainda não oferece fica só neste navegador: recusar, encaminhar,
-observação e reclassificação (salvos em `localStorage`, por usuário). A foto do
-registro vai para a IA do chatbot, mas não é guardada: a volta-api recebe uma
-URL, e o upload depende do armazenamento (S3). Se a IA não confirma o resíduo
-na foto, o app não cria a ocorrência e pede outra foto. Os contratos estão em `src/types/api.ts`; a tradução para os
-tipos do app, em `src/services/adaptadores.ts`.
+Quem não tem permissão para um endpoint vê o aviso "Você não tem permissão para
+esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
+calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
+usuário ADMIN.
+
+Alguns números não têm endpoint e são calculados no app: o Início e os
+Relatórios contam as ocorrências por data de registro (a API não informa a data
+da aprovação), o desvio do aterro usa as métricas ESG quando existem e, sem
+elas, o que foi aprovado sobre o registrado, e o volume das cooperativas vem do
+peso estimado das ocorrências que originaram cada coleta. A API de usuários
+devolve as pessoas de todas as empresas; a tela filtra pela empresa de quem
+está logado.
+
+O que a volta-api não guarda aparece como "—" ou "Não informada": cidade,
+contato, distância, capacidade e licença das cooperativas, setor das pessoas e
+confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
+licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
+porque não há convite por e-mail.
+
+A API de ranking usa o mesmo token e é um complemento: se ela estiver fora do ar
+ou sem dados, a tela segue sem o que vem dela. A distância das cooperativas sai
+do índice do Redis e, para a cooperativa que ainda não está nele, é calculada
+das coordenadas da volta-api. O ponto de partida são as coordenadas da empresa,
+que a volta-api só expõe em `GET /incidents/{id}/scoring-context`; sem nenhuma
+ocorrência, não há distância. As cooperativas indicadas aparecem só enquanto a
+ocorrência espera decisão. Nada disso roda no modo mock.
+
+Ainda sem conexão: avaliação de coleta (`POST /collections/{id}/review`) e
+pedido, agendamento e status de coleta (`POST /collections`,
+`PATCH /collections/{id}/schedule` e `/status`), que não têm tela no layout, e
+o cadastro de pontuação do ranking (`POST /api/v1/ranking/score`).
+
+O que a API ainda não oferece fica só neste navegador (`localStorage`, por
+usuário): meta, notificações e insights, em Configurações, e recusar, encaminhar,
+observação e reclassificação das ocorrências. A foto do registro vai para a IA
+do chatbot, mas não é guardada: a volta-api recebe uma URL, e o upload depende
+do armazenamento (S3). Se a IA não confirma o resíduo na foto, o app não cria a
+ocorrência e pede outra foto.
+
+Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
+`src/services/adaptadores.ts`.
 
 ## Estrutura de pastas
 

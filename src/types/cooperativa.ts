@@ -46,15 +46,19 @@ export interface Cooperativa {
   readonly contato: string | null;
   readonly telefone: string | null;
   readonly email: string | null;
-  readonly distanciaKm: number;
+  /** Nula quando a fonte não informa (a volta-api guarda só latitude e longitude). */
+  readonly distanciaKm: number | null;
   /** Nota de 0 a 5. Fica nula enquanto a cooperativa está em homologação. */
   readonly avaliacao: number | null;
   readonly situacao: SituacaoCooperativa;
   /** Parceira do grupo J&F, que ganha o selo no painel. */
   readonly parceiraGrupo: boolean;
-  readonly capacidadeMesKg: number;
+  /** Nula quando a fonte não informa a capacidade. */
+  readonly capacidadeMesKg: number | null;
   /** Parte da capacidade do mês já comprometida com ocorrências. */
   readonly usadoMesKg: number;
+  /** Falso quando a fonte não controla licenças (volta-api); ausente significa que controla. */
+  readonly licencaMonitorada?: boolean;
   /** Data (AAAA-MM-DD) até a qual a licença é válida; nula sem licença. */
   readonly licencaValidaAte: string | null;
   /** Nome do PDF da licença enviado para análise, quando há. */
@@ -66,9 +70,28 @@ export interface Cooperativa {
   readonly logoUrl?: string;
 }
 
+/** Cooperativa que a API de ranking indica para uma ocorrência. */
+export interface CooperativaIndicada {
+  readonly id: string;
+  readonly nome: string;
+  /** Nota de 0 a 100 (distância, avaliação e adequação ao resíduo). */
+  readonly nota: number;
+  readonly distanciaKm: number;
+}
+
+export interface IndicacaoDeCooperativas {
+  /** Raio, em km, em que a API procurou cooperativas. */
+  readonly raioKm: number;
+  /** Da mais indicada para a menos; vazia quando nenhuma atende o resíduo no raio. */
+  readonly cooperativas: readonly CooperativaIndicada[];
+}
+
 export interface NovaCooperativa {
   readonly nome: string;
   readonly cnpj: string;
   readonly materiais: readonly MaterialAceito[];
   readonly licenca: File | null;
+  /** Localização da sede, exigida pela volta-api. */
+  readonly latitude?: number;
+  readonly longitude?: number;
 }

@@ -4,6 +4,18 @@
   gap: 18px;
 }
 
+.coops-form__linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .coops-form__linha {
+    grid-template-columns: 1fr;
+  }
+}
+
 .coops-form__grupo {
   display: flex;
   flex-direction: column;

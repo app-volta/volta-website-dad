@@ -54,7 +54,7 @@ export function Notificacoes({
         <button
           type="button"
           className="notif__marcar"
-          onClick={marcarTodasComoLidas}
+          onClick={() => marcarTodasComoLidas(notificacoes.map((item) => item.id))}
           disabled={naoLidas === 0}
         >
           Marcar todas como lidas

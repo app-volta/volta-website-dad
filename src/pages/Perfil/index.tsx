@@ -5,6 +5,8 @@ import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { useAuth } from "../../context/AuthContext";
+import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { usePainel, useRegistradasPor } from "../../hooks/usePainel";
 import "./styles.css";
 
 const ROTULO_PAPEL = {
@@ -52,6 +54,9 @@ function iniciais(nome: string): string {
 export default function Perfil(): ReactNode {
   const { usuario, sair } = useAuth();
   const navegar = useNavigate();
+  const { dados } = useOcorrencias();
+  const { painel, dadosReais } = usePainel(dados);
+  const registradas = useRegistradasPor(dados, usuario?.id ?? "");
 
   if (!usuario) {
     return (
@@ -96,28 +101,32 @@ export default function Perfil(): ReactNode {
           </div>
           <div className="perfil__stat">
             <dt>Cargo</dt>
-            <dd>{ROTULO_PAPEL[usuario.papel]}</dd>
+            <dd>{usuario.cargo?.trim() || ROTULO_PAPEL[usuario.papel]}</dd>
           </div>
-          <div className="perfil__stat">
-            <dt>Membro desde</dt>
-            <dd>Março de 2024</dd>
-          </div>
+          {dadosReais ? null : (
+            <div className="perfil__stat">
+              <dt>Membro desde</dt>
+              <dd>Março de 2024</dd>
+            </div>
+          )}
           <div className="perfil__stat">
             <dt>Ocorrências registradas</dt>
-            <dd>12</dd>
+            <dd>{registradas}</dd>
           </div>
           <div className="perfil__stat">
             <dt>Recuperado no mês</dt>
-            <dd>1.147 kg</dd>
+            <dd>{painel.recuperadoMesKg.toLocaleString("pt-BR")} kg</dd>
           </div>
           <div className="perfil__stat">
             <dt>Taxa de aprovação</dt>
-            <dd>94%</dd>
+            <dd>{painel.taxaAprovacao === null ? "—" : `${painel.taxaAprovacao}%`}</dd>
           </div>
-          <div className="perfil__stat">
-            <dt>Cooperativa preferida</dt>
-            <dd>JBS Ambiental</dd>
-          </div>
+          {dadosReais ? null : (
+            <div className="perfil__stat">
+              <dt>Cooperativa preferida</dt>
+              <dd>JBS Ambiental</dd>
+            </div>
+          )}
         </dl>
       </section>
 

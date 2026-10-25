@@ -20,6 +20,13 @@ export default defineConfig(({ mode }) => {
       changeOrigin: true,
       rewrite: (caminho: string) => caminho.replace(/^\/chat-api/, ''),
     },
+    '/ranking-api': {
+      target:
+        env.VITE_RANKING_PROXY_TARGET ||
+        'https://ranking.qa.54.210.1.34.sslip.io',
+      changeOrigin: true,
+      rewrite: (caminho: string) => caminho.replace(/^\/ranking-api/, ''),
+    },
   }
 
   return {

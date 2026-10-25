@@ -12,7 +12,11 @@ export function useBaseBusca(): BaseBusca | null {
 
   useEffect(() => {
     let ativo = true;
-    Promise.all([listarOcorrencias(), listarCooperativas()])
+    // Só quem administra a empresa lista cooperativas na API: sem permissão, a busca segue sem elas.
+    Promise.all([
+      listarOcorrencias(),
+      listarCooperativas().catch(() => []),
+    ])
       .then(([ocorrencias, cooperativas]) => {
         if (ativo) setBase({ ocorrencias, cooperativas });
       })
