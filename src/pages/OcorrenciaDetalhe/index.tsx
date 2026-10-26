@@ -10,6 +10,7 @@ import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useDadosReais } from "../../hooks/useModo";
 import { useCooperativasIndicadas } from "../../hooks/useCooperativasIndicadas";
 import {
   useOcorrencia,
@@ -105,6 +106,9 @@ function numeroDe(id: string | undefined): string {
 export default function OcorrenciaDetalhe(): ReactNode {
   const { id } = useParams();
   const { usuario } = useAuth();
+  const dadosReais = useDadosReais();
+  const podeRevisar =
+    usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
   const acoes = useAcoesOcorrencia();
@@ -409,65 +413,67 @@ export default function OcorrenciaDetalhe(): ReactNode {
         <aside className="detalhe__lateral" aria-label="Ações">
           <section className="detalhe__cartao" aria-labelledby="detalhe-acoes">
             <h2 id="detalhe-acoes" className="detalhe__titulo-secao">
-              Ações do responsável
+              {dadosReais && !podeRevisar ? "Acompanhamento" : "Ações do responsável"}
             </h2>
 
-            <ul className="detalhe__acoes">
-              <li>
-                <button
-                  type="button"
-                  className="detalhe__acao"
-                  aria-haspopup="dialog"
-                  onClick={() => abrir("classificar")}
-                >
-                  <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
-                    <Icone nome="editar" tamanho={15} />
-                  </span>
-                  <span className="detalhe__acao-textos">
-                    <strong>Alterar classificação</strong>
-                    {ocorrencia.ultimaAlteracao ? (
-                      <small>{ocorrencia.ultimaAlteracao}</small>
-                    ) : null}
-                  </span>
-                  <Icone nome="seta-direita" tamanho={14} />
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  className="detalhe__acao"
-                  aria-haspopup="dialog"
-                  onClick={() => abrir("encaminhar")}
-                >
-                  <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
-                    <Icone nome="seta-direita" tamanho={15} />
-                  </span>
-                  <span className="detalhe__acao-textos">
-                    <strong>Encaminhar para outro setor</strong>
-                    {ocorrencia.setorDestino ? (
-                      <small>Encaminhada para {ocorrencia.setorDestino}</small>
-                    ) : null}
-                  </span>
-                  <Icone nome="seta-direita" tamanho={14} />
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  className="detalhe__acao"
-                  aria-haspopup="dialog"
-                  onClick={() => abrir("observacao")}
-                >
-                  <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
-                    <Icone nome="mais" tamanho={15} />
-                  </span>
-                  <span className="detalhe__acao-textos">
-                    <strong>Adicionar observação</strong>
-                  </span>
-                  <Icone nome="seta-direita" tamanho={14} />
-                </button>
-              </li>
-            </ul>
+            {!dadosReais ? (
+              <ul className="detalhe__acoes">
+                <li>
+                  <button
+                    type="button"
+                    className="detalhe__acao"
+                    aria-haspopup="dialog"
+                    onClick={() => abrir("classificar")}
+                  >
+                    <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
+                      <Icone nome="editar" tamanho={15} />
+                    </span>
+                    <span className="detalhe__acao-textos">
+                      <strong>Alterar classificação</strong>
+                      {ocorrencia.ultimaAlteracao ? (
+                        <small>{ocorrencia.ultimaAlteracao}</small>
+                      ) : null}
+                    </span>
+                    <Icone nome="seta-direita" tamanho={14} />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="detalhe__acao"
+                    aria-haspopup="dialog"
+                    onClick={() => abrir("encaminhar")}
+                  >
+                    <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
+                      <Icone nome="seta-direita" tamanho={15} />
+                    </span>
+                    <span className="detalhe__acao-textos">
+                      <strong>Encaminhar para outro setor</strong>
+                      {ocorrencia.setorDestino ? (
+                        <small>Encaminhada para {ocorrencia.setorDestino}</small>
+                      ) : null}
+                    </span>
+                    <Icone nome="seta-direita" tamanho={14} />
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className="detalhe__acao"
+                    aria-haspopup="dialog"
+                    onClick={() => abrir("observacao")}
+                  >
+                    <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
+                      <Icone nome="mais" tamanho={15} />
+                    </span>
+                    <span className="detalhe__acao-textos">
+                      <strong>Adicionar observação</strong>
+                    </span>
+                    <Icone nome="seta-direita" tamanho={14} />
+                  </button>
+                </li>
+              </ul>
+            ) : null}
 
             {decidida ? (
               <p className={`detalhe__decisao detalhe__decisao--${categoria}`}>
@@ -489,6 +495,29 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   </>
                 )}
               </p>
+            ) : dadosReais ? (
+              podeRevisar ? (
+                <>
+                  <div className="detalhe__decidir">
+                    <button
+                      type="button"
+                      className="detalhe__aprovar"
+                      aria-haspopup="dialog"
+                      onClick={() => abrir("aprovar")}
+                    >
+                      <Icone nome="check" tamanho={16} />
+                      Aprovar ocorrência
+                    </button>
+                  </div>
+                  <Alerta variante="info" titulo="Outras ações indisponíveis">
+                    A API ainda não salva reclassificação, recusa, encaminhamento ou observações.
+                  </Alerta>
+                </>
+              ) : (
+                <Alerta variante="info" titulo="Aguardando aprovação do gestor">
+                  Seu perfil pode acompanhar os detalhes, mas não pode aprovar ou recusar esta ocorrência.
+                </Alerta>
+              )
             ) : (
               <div className="detalhe__decidir">
                 <button

@@ -70,9 +70,16 @@ function saudacao(): string {
 }
 
 /** Frase da saudação sobre a fila: muda quando não sobra nada para aprovar. */
-function tituloDaFila(carregou: boolean, pendentes: number): string {
+function tituloDaFila(carregou: boolean, pendentes: number, podeRevisar: boolean): string {
   if (!carregou) return "Veja como está a sua unidade hoje.";
-  if (pendentes === 0) return "Tudo aprovado por aqui.";
+  if (pendentes === 0) {
+    return podeRevisar
+      ? "Tudo aprovado por aqui."
+      : "Nenhuma ocorrência aguarda aprovação do gestor.";
+  }
+  if (!podeRevisar) {
+    return `${pendentes} ${pendentes === 1 ? "ocorrência aguarda" : "ocorrências aguardam"} aprovação do gestor.`;
+  }
   return pendentes === 1
     ? "Tem 1 ocorrência esperando você."
     : `Tem ${pendentes} ocorrências esperando você.`;
@@ -118,6 +125,8 @@ export default function Home(): ReactNode {
   const [aviso, setAviso] = useState<string | null>(null);
 
   const primeiroNome = usuario?.nome.split(" ")[0] ?? "você";
+  const podeRevisar =
+    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
 
   const fila = useMemo<readonly ItemFila[]>(() => {
     if (!dados) return [];
@@ -212,21 +221,23 @@ export default function Home(): ReactNode {
         </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
-            {saudacao()}, {primeiroNome}! {tituloDaFila(dados !== null, pendentes)}
+            {saudacao()}, {primeiroNome}! {tituloDaFila(dados !== null, pendentes, podeRevisar)}
           </h2>
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
             este mês — <strong>{Math.round(progressoMeta)}%</strong> da meta.
-            {dadosReais
+            {podeRevisar && dadosReais
               ? kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
                 ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
                 : ""
-              : " Aprovando a fila de hoje, vocês passam de 80%."}
+              : !dadosReais
+                ? " Aprovando a fila de hoje, vocês passam de 80%."
+                : ""}
           </p>
           <div className="home-hero__acoes">
             <Link to="/ocorrencias?status=aguardando" className="home-hero__botao home-hero__botao--primario">
               <Icone nome="grafico" tamanho={16} />
-              Revisar fila
+              {podeRevisar ? "Revisar fila" : "Ver ocorrências"}
             </Link>
             <Link to="/registrar" className="home-hero__botao home-hero__botao--secundario">
               <Icone nome="camera" tamanho={16} />
@@ -497,15 +508,21 @@ export default function Home(): ReactNode {
                     >
                       Revisar
                     </Link>
-                    <button
-                      type="button"
-                      className="home-fila__botao home-fila__botao--primario"
-                      disabled={aprovandoId !== null}
-                      onClick={() => void aprovar(item.id, item.titulo)}
-                    >
-                      <Icone nome="check" tamanho={14} />
-                      {aprovandoId === item.id ? "Aprovando…" : "Aprovar"}
-                    </button>
+                    {podeRevisar ? (
+                      <button
+                        type="button"
+                        className="home-fila__botao home-fila__botao--primario"
+                        disabled={aprovandoId !== null}
+                        onClick={() => void aprovar(item.id, item.titulo)}
+                      >
+                        <Icone nome="check" tamanho={14} />
+                        {aprovandoId === item.id ? "Aprovando…" : "Aprovar"}
+                      </button>
+                    ) : (
+                      <span className="home-fila__aguardando">
+                        Aguardando aprovação do gestor
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}
@@ -514,9 +531,13 @@ export default function Home(): ReactNode {
             !erro && (
               <div className="home-fila-vazia">
                 <Mascote tamanho={78} altura={130} />
-                <p className="home-fila-vazia__titulo">Fila zerada!</p>
+                <p className="home-fila-vazia__titulo">
+                  {podeRevisar ? "Fila zerada!" : "Sem pendências."}
+                </p>
                 <p className="home-fila-vazia__texto">
-                  Todas as ocorrências foram revisadas.
+                  {podeRevisar
+                    ? "Todas as ocorrências foram revisadas."
+                    : "Novas ocorrências aguardarão revisão de um gestor."}
                 </p>
               </div>
             )

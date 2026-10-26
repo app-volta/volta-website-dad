@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useDadosReais } from "../../hooks/useModo";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { useAuth } from "../../context/AuthContext";
 import { METADADOS_MATERIAL } from "../../types/material";
@@ -64,6 +65,9 @@ export default function Ocorrencias(): ReactNode {
   const [gavetaId, setGavetaId] = useState<string | null>(null);
   const navegar = useNavigate();
   const { usuario } = useAuth();
+  const dadosReais = useDadosReais();
+  const podeRevisar =
+    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const acoes = useAcoesOcorrencia();
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
@@ -230,6 +234,11 @@ export default function Ocorrencias(): ReactNode {
       </div>
 
       {aviso ? <Alerta variante="sucesso">{aviso}</Alerta> : null}
+      {dadosReais && !podeRevisar ? (
+        <Alerta variante="info" titulo="Aprovação restrita a gestor ou administrador">
+          Seu perfil pode acompanhar as ocorrências. Para aprovar, entre com um perfil de gestão.
+        </Alerta>
+      ) : null}
       {erroAcao ? (
         <Alerta variante="erro" titulo="Não foi possível aprovar">
           {erroAcao}
@@ -262,23 +271,25 @@ export default function Ocorrencias(): ReactNode {
             <table className="ocorrencias__tabela">
               <thead>
                 <tr>
-                  <th scope="col" className="ocorrencias__col-check">
-                    <label className="ocorrencias__check">
-                      <input
-                        type="checkbox"
-                        checked={todasVisiveis}
-                        ref={(el) => {
-                          if (el) el.indeterminate = algumaVisivel && !todasVisiveis;
-                        }}
-                        onChange={alternarPagina}
-                        disabled={visiveis.length === 0}
-                        aria-label="Selecionar todas as ocorrências desta página"
-                      />
-                      <span className="ocorrencias__check-caixa" aria-hidden="true">
-                        <Icone nome="check" tamanho={11} />
-                      </span>
-                    </label>
-                  </th>
+                  {podeRevisar ? (
+                    <th scope="col" className="ocorrencias__col-check">
+                      <label className="ocorrencias__check">
+                        <input
+                          type="checkbox"
+                          checked={todasVisiveis}
+                          ref={(el) => {
+                            if (el) el.indeterminate = algumaVisivel && !todasVisiveis;
+                          }}
+                          onChange={alternarPagina}
+                          disabled={visiveis.length === 0}
+                          aria-label="Selecionar todas as ocorrências desta página"
+                        />
+                        <span className="ocorrencias__check-caixa" aria-hidden="true">
+                          <Icone nome="check" tamanho={11} />
+                        </span>
+                      </label>
+                    </th>
+                  ) : null}
                   <th scope="col">Ocorrência</th>
                   <th scope="col">Setor</th>
                   <th scope="col">Peso</th>
@@ -294,7 +305,7 @@ export default function Ocorrencias(): ReactNode {
               <tbody>
                 {visiveis.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="ocorrencias__vazio">
+                    <td colSpan={podeRevisar ? 9 : 8} className="ocorrencias__vazio">
                       Nenhuma ocorrência encontrada.
                     </td>
                   </tr>
@@ -310,22 +321,24 @@ export default function Ocorrencias(): ReactNode {
                             : "ocorrencias__linha"
                         }
                       >
-                        <td className="ocorrencias__col-check">
-                          <label className="ocorrencias__check">
-                            <input
-                              type="checkbox"
-                              checked={selecionadas.has(o.id)}
-                              onChange={() => alternar(o.id)}
-                              aria-label={`Selecionar ocorrência ${o.codigo}`}
-                            />
-                            <span
-                              className="ocorrencias__check-caixa"
-                              aria-hidden="true"
-                            >
-                              <Icone nome="check" tamanho={11} />
-                            </span>
-                          </label>
-                        </td>
+                        {podeRevisar ? (
+                          <td className="ocorrencias__col-check">
+                            <label className="ocorrencias__check">
+                              <input
+                                type="checkbox"
+                                checked={selecionadas.has(o.id)}
+                                onChange={() => alternar(o.id)}
+                                aria-label={`Selecionar ocorrência ${o.codigo}`}
+                              />
+                              <span
+                                className="ocorrencias__check-caixa"
+                                aria-hidden="true"
+                              >
+                                <Icone nome="check" tamanho={11} />
+                              </span>
+                            </label>
+                          </td>
+                        ) : null}
                         <td>
                           <button
                             type="button"
@@ -437,7 +450,7 @@ export default function Ocorrencias(): ReactNode {
         </div>
       )}
 
-      <div
+      {podeRevisar ? <div
         className="ocorrencias__lote"
         role="region"
         aria-label="Ações em lote"
@@ -463,11 +476,12 @@ export default function Ocorrencias(): ReactNode {
           <Icone nome="check" tamanho={14} />
           {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
         </button>
-      </div>
+      </div> : null}
 
       <GavetaOcorrencia
         ocorrencia={ocorrenciaGaveta}
         aprovando={aprovando}
+        podeAprovar={podeRevisar}
         aoFechar={() => setGavetaId(null)}
         aoAprovar={(id) => aprovar([id])}
         aoAbrirCompleta={(id) => navegar(`/ocorrencias/${id}`)}

@@ -30,6 +30,10 @@
   box-shadow: var(--foco);
 }
 
+.campo__wrapper:hover:not(:focus-within):not(.campo__wrapper--erro) {
+  border-color: var(--verde-medio);
+}
+
 .campo__wrapper--erro {
   border-color: var(--erro-fg);
 }

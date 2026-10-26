@@ -624,8 +624,20 @@
   margin-top: 18px;
 }
 
+.coops__email-aviso {
+  color: var(--coop-mudo);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .coops__acoes .coops__botao {
   padding: 0 8px;
+}
+
+.coops__email {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 @media (max-width: 1180px) {

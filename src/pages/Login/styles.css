@@ -2,7 +2,7 @@
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 738fr) minmax(0, 702fr);
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(min-content, 1fr) auto;
 }
 
 .login-tela > .painel-acesso {
@@ -175,36 +175,6 @@
 
 .login-tela .botao--primario:hover:not(:disabled) {
   background: linear-gradient(186deg, #28cc79 30%, #0e7c48 100%);
-}
-
-.login-tela__separador {
-  margin: 16px 0 16px;
-  text-align: center;
-  color: #63736a;
-  font-size: 12px;
-  line-height: 15px;
-}
-
-.login-tela__google {
-  width: 100%;
-  min-height: 52px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0.8px solid #e8ede9;
-  border-radius: 12px;
-  background: #fff;
-  color: #16211b;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.login-tela__google:disabled {
-  opacity: 1;
-}
-
-.login-tela__google:hover:not(:disabled) {
-  background: #fafcfb;
 }
 
 .login-tela__cadastro {

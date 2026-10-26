@@ -24,6 +24,7 @@ interface PainelCooperativaProps {
   readonly selecionada: Cooperativa | null;
   readonly aoSelecionar: (id: string) => void;
   readonly aoAbrirDocumentos: () => void;
+  readonly dadosReais: boolean;
 }
 
 export function PainelCooperativa({
@@ -31,6 +32,7 @@ export function PainelCooperativa({
   selecionada,
   aoSelecionar,
   aoAbrirDocumentos,
+  dadosReais,
 }: PainelCooperativaProps): ReactNode {
   return (
     <section className="coops__painel" aria-label="Detalhes da cooperativa">
@@ -44,6 +46,7 @@ export function PainelCooperativa({
           coop={selecionada}
           cor={corDaCooperativa(selecionada.id, todas)}
           aoAbrirDocumentos={aoAbrirDocumentos}
+          dadosReais={dadosReais}
         />
       ) : (
         <p className="coops__painel-vazio">
@@ -58,9 +61,10 @@ interface DetalheProps {
   readonly coop: Cooperativa;
   readonly cor: string;
   readonly aoAbrirDocumentos: () => void;
+  readonly dadosReais: boolean;
 }
 
-function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
+function Detalhe({ coop, cor, aoAbrirDocumentos, dadosReais }: DetalheProps): ReactNode {
   const estado = estadoLicenca(coop);
   const contato = [coop.contato, coop.telefone].filter(Boolean).join(" · ");
   const meses = mesesDoGrafico();
@@ -127,25 +131,37 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
       </ul>
 
       <div className="coops__acoes">
-        {coop.email ? (
-          <a
-            className="coops__botao coops__botao--primario"
-            href={`mailto:${coop.email}`}
-          >
-            <Icone nome="email" tamanho={14} />
-            Enviar e-mail
-          </a>
-        ) : (
-          <button
-            type="button"
-            className="coops__botao coops__botao--primario"
-            disabled
-            title="O e-mail fica disponível depois da homologação"
-          >
-            <Icone nome="email" tamanho={14} />
-            Enviar e-mail
-          </button>
-        )}
+        <div className="coops__email">
+          {coop.email ? (
+            <a
+              className="coops__botao coops__botao--primario"
+              href={`mailto:${coop.email}`}
+              title="Abre seu aplicativo de e-mail; você ainda precisa enviar a mensagem."
+            >
+              <Icone nome="email" tamanho={14} />
+              Enviar e-mail
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="coops__botao coops__botao--primario"
+              disabled
+              title={
+                dadosReais
+                  ? "A API atual não fornece o e-mail da cooperativa."
+                  : "O e-mail fica disponível depois da homologação"
+              }
+            >
+              <Icone nome="email" tamanho={14} />
+              Enviar e-mail
+            </button>
+          )}
+          {dadosReais && !coop.email ? (
+            <small className="coops__email-aviso">
+              Não é uma permissão do seu perfil: a API ainda não fornece o e-mail da cooperativa.
+            </small>
+          ) : null}
+        </div>
         <button
           type="button"
           className="coops__botao coops__botao--contorno"

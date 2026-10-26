@@ -18,6 +18,7 @@ import "./styles.css";
 interface GavetaOcorrenciaProps {
   readonly ocorrencia: Ocorrencia | null;
   readonly aprovando: boolean;
+  readonly podeAprovar: boolean;
   readonly aoFechar: () => void;
   readonly aoAprovar: (id: string) => void;
   readonly aoAbrirCompleta: (id: string) => void;
@@ -29,6 +30,7 @@ const SELETOR_FOCAVEL =
 export function GavetaOcorrencia({
   ocorrencia,
   aprovando,
+  podeAprovar: perfilPodeAprovar,
   aoFechar,
   aoAprovar,
   aoAbrirCompleta,
@@ -75,7 +77,8 @@ export function GavetaOcorrencia({
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
   const tipo = material ? `${material} A` : ocorrencia.titulo;
-  const podeAprovar = aguardaAprovacao(ocorrencia.status);
+  const aguardandoAprovacao = aguardaAprovacao(ocorrencia.status);
+  const podeAprovar = perfilPodeAprovar && aguardandoAprovacao;
   const categoria = categoriaDe(ocorrencia.status);
 
   return (
@@ -201,6 +204,10 @@ export function GavetaOcorrencia({
                 <Icone nome="check" tamanho={14} />
                 {aprovando ? "Aprovando…" : "Aprovar"}
               </button>
+            ) : aguardandoAprovacao ? (
+              <p className="gaveta__aviso-aprovacao">
+                A aprovação está disponível para gestor ou administrador.
+              </p>
             ) : null}
           </div>
         </div>
