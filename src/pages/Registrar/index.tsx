@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
+import { ModalCamera } from "../../components/ModalCamera";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useSetores } from "../../hooks/useSetores";
 import { METADADOS_MATERIAL } from "../../types/material";
+import { modoDaCamera } from "../../utils/camera";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
 import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
@@ -66,6 +68,8 @@ export default function Registrar(): ReactNode {
     }
   }, [setores, estado.setor]);
   const [arrastando, setArrastando] = useState<boolean>(false);
+  const [cameraAberta, setCameraAberta] = useState<boolean>(false);
+  const [modoCamera] = useState(modoDaCamera);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
   const inputCamera = useRef<HTMLInputElement | null>(null);
 
@@ -82,6 +86,11 @@ export default function Registrar(): ReactNode {
     const arquivo = evento.dataTransfer.files?.[0];
     if (!arquivo || !arquivo.type.startsWith("image/")) return;
     lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
+  }
+
+  function usarCamera(): void {
+    if (modoCamera === "navegador") setCameraAberta(true);
+    else inputCamera.current?.click();
   }
 
   function trocarFoto(): void {
@@ -190,6 +199,15 @@ export default function Registrar(): ReactNode {
         tabIndex={-1}
         aria-hidden="true"
         onChange={selecionarFoto}
+      />
+
+      <ModalCamera
+        aberto={cameraAberta}
+        onFechar={() => setCameraAberta(false)}
+        onCapturar={(foto) => {
+          despachar({ tipo: "definir_foto", foto });
+          setCameraAberta(false);
+        }}
       />
 
       <div
@@ -305,13 +323,15 @@ export default function Registrar(): ReactNode {
                 >
                   <Icone nome="upload" tamanho={16} /> Enviar foto
                 </button>
-                <button
-                  type="button"
-                  className="registrar__botao registrar__botao--suave"
-                  onClick={() => inputCamera.current?.click()}
-                >
-                  <Icone nome="camera" tamanho={16} /> Usar câmera
-                </button>
+                {modoCamera === null ? null : (
+                  <button
+                    type="button"
+                    className="registrar__botao registrar__botao--suave"
+                    onClick={usarCamera}
+                  >
+                    <Icone nome="camera" tamanho={16} /> Usar câmera
+                  </button>
+                )}
               </div>
               {estado.erroCampo.foto ? (
                 <p role="alert" className="registrar__erro-campo">
