@@ -25,6 +25,10 @@ interface ModalAcaoProps {
 const SELETOR_FOCAVEL =
   'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Janela de ação (`role=dialog`, `aria-modal`): o foco inicial vai para o primeiro item,
+ * Tab fica preso dentro, Esc fecha e o foco volta a quem abriu.
+ */
 export function ModalAcao({
   aberto,
   titulo,

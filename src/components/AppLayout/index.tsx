@@ -16,6 +16,10 @@ interface AppLayoutProps {
   readonly children: ReactNode;
 }
 
+/**
+ * Casca das telas internas: barra lateral, topo, conteúdo principal (`<main>`) e rodapé.
+ * Também abre o assistente VOLTA e a busca rápida, que responde a Ctrl K quando `comBusca` está ligado.
+ */
 export function AppLayout({
   titulo,
   subtitulo,

@@ -12,6 +12,7 @@ interface ToastProps {
   readonly aoFechar: () => void;
 }
 
+/** Aviso rápido (`role=status`, `aria-live=polite`) que chama `aoFechar` sozinho depois de `duracaoMs` (padrão: 4,5 s). */
 export function Toast({
   aberto,
   titulo,

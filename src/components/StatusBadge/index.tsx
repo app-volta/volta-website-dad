@@ -18,6 +18,7 @@ const CORES: Readonly<
   finalizada: { bg: "#e0e0e0", fg: "#2a2a2a" },
 };
 
+/** Selo com o status da ocorrência; o `aria-label` ("Status: …") informa o estado a leitores de tela. */
 export function StatusBadge({ status }: StatusBadgeProps): ReactNode {
   const cor = CORES[status];
   return (

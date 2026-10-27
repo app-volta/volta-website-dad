@@ -1,6 +1,6 @@
 import type { CooperativaApi, NovaCooperativaApi } from "../types/api";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
-import { distanciaEmKm } from "../utils/geo";
+import { distanciaEmKm, maisProximasPrimeiro } from "../utils/geo";
 import { validarCnpj } from "../utils/validadores";
 import { volumeDaCooperativa, volumesPorCooperativa } from "../utils/volumeCooperativas";
 import {
@@ -67,12 +67,14 @@ export async function listarCooperativas(
     volumesPorCooperativa(coletas, ocorrencias),
     await distanciasAteAEmpresa(cooperativas),
   ];
-  return cooperativas.map((dto) =>
-    cooperativaDaApi(
-      dto,
-      posicoes.get(dto.id) ?? { x: 50, y: 50 },
-      volumeDaCooperativa(volumes, dto.id),
-      distancias.get(dto.id) ?? null,
+  return maisProximasPrimeiro(
+    cooperativas.map((dto) =>
+      cooperativaDaApi(
+        dto,
+        posicoes.get(dto.id) ?? { x: 50, y: 50 },
+        volumeDaCooperativa(volumes, dto.id),
+        distancias.get(dto.id) ?? null,
+      ),
     ),
   );
 }

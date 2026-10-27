@@ -16,6 +16,10 @@ const PROPORCAO: Readonly<Record<VarianteLogo, number>> = {
   escura: 806 / 236,
 };
 
+/**
+ * Logo da VOLTA como imagem. `variante` escolhe a versão ("escura" ou "clara")
+ * e `altura` define o tamanho; a largura segue a proporção da imagem.
+ */
 export function LogoVolta({
   altura = 32,
   rotulo = "VOLTA",
