@@ -9,6 +9,7 @@ import { Icone } from "../../components/Icone";
 import { KpiCard } from "../../components/KpiCard";
 import { Mascote } from "../../components/Mascote";
 import { SkeletonList } from "../../components/SkeletonList";
+import { TextoComDestaque } from "../../components/TextoComDestaque";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
@@ -586,13 +587,7 @@ export default function Home(): ReactNode {
                   <span aria-hidden="true">✦</span> Dica do VOLTA
                 </p>
                 <p>
-                  {dica.trechos.map((trecho, indice) =>
-                    trecho.destaque ? (
-                      <strong key={indice}>{trecho.texto}</strong>
-                    ) : (
-                      <span key={indice}>{trecho.texto}</span>
-                    ),
-                  )}
+                  <TextoComDestaque trechos={dica.trechos} />
                 </p>
                 <Link to={dica.destino} className="home-painel__link">
                   {dica.rotuloDestino}
