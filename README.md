@@ -1,5 +1,7 @@
 # VOLTA — reciclagem industrial inteligente
 
+**Aplicação publicada:** https://volta-website-dad.vercel.app
+
 Plataforma que conecta indústrias (frigoríficos) a cooperativas de
 reciclagem: o operador registra um resíduo com foto, uma IA classifica o
 material (papelão, plástico, metal ou vidro) e o responsável PGRS acompanha
@@ -189,6 +191,12 @@ Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 - Contraste conferido nas variáveis da paleta
 
 ## Deploy na Vercel
+
+A branch `main` é publicada em https://volta-website-dad.vercel.app. O build
+de produção lê o `.env.production`, que liga as APIs (`VITE_USAR_MOCKS=false`);
+por isso o login e as telas dependem do ambiente de QA estar ligado. Para um
+deploy só com os mocks (qualquer e-mail e senha com 6 caracteres ou mais
+entram), defina `VITE_USAR_MOCKS=true` nas variáveis do projeto na Vercel.
 
 O `vercel.json` já contém o rewrite de SPA (`/(.*)` → `/index.html`) para
 que rotas como `/ocorrencias/1234` funcionem em recarga direta. Ao
