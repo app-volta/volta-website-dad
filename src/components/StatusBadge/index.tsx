@@ -11,10 +11,10 @@ const CORES: Readonly<
   Record<StatusOcorrencia, { readonly bg: string; readonly fg: string }>
 > = {
   aguardando_classificacao: { bg: "#fff3cd", fg: "#5a4300" },
-  classificada: { bg: "#fdf3de", fg: "#c68a10" },
+  classificada: { bg: "#fdf3de", fg: "#92660c" },
   aprovada: { bg: "#d3ebd9", fg: "#0e7c48" },
   encaminhada: { bg: "#cfe0ff", fg: "#0b2b6b" },
-  recusada: { bg: "#fdeaec", fg: "#e8556c" },
+  recusada: { bg: "#fdeaec", fg: "#cf1c38" },
   finalizada: { bg: "#e0e0e0", fg: "#2a2a2a" },
 };
 

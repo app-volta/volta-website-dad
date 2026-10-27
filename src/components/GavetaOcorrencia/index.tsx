@@ -4,7 +4,8 @@ import type { KeyboardEvent, ReactNode } from "react";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
-import { formatarPorcentagem } from "../../utils/formatacao";
+import { contaminacao } from "../../utils/analiseOcorrencia";
+import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -17,6 +18,7 @@ import "./styles.css";
 interface GavetaOcorrenciaProps {
   readonly ocorrencia: Ocorrencia | null;
   readonly aprovando: boolean;
+  readonly podeAprovar: boolean;
   readonly aoFechar: () => void;
   readonly aoAprovar: (id: string) => void;
   readonly aoAbrirCompleta: (id: string) => void;
@@ -25,20 +27,15 @@ interface GavetaOcorrenciaProps {
 const SELETOR_FOCAVEL =
   'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
-function contaminacao(confianca: number): string {
-  if (confianca >= 0.85) return "Baixa";
-  if (confianca >= 0.75) return "Média";
-  return "Alta";
-}
-
 export function GavetaOcorrencia({
   ocorrencia,
   aprovando,
+  podeAprovar: perfilPodeAprovar,
   aoFechar,
   aoAprovar,
   aoAbrirCompleta,
 }: GavetaOcorrenciaProps): ReactNode {
-  const painel = useRef<HTMLElement | null>(null);
+  const painel = useRef<HTMLDivElement | null>(null);
   const botaoFechar = useRef<HTMLButtonElement | null>(null);
   const aberta = ocorrencia !== null;
 
@@ -75,18 +72,25 @@ export function GavetaOcorrencia({
     }
   }
 
-  const confianca = ocorrencia.classificacao?.confianca ?? 0;
+  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
   const tipo = material ? `${material} A` : ocorrencia.titulo;
-  const podeAprovar = aguardaAprovacao(ocorrencia.status);
+  const aguardandoAprovacao = aguardaAprovacao(ocorrencia.status);
+  const podeAprovar = perfilPodeAprovar && aguardandoAprovacao;
   const categoria = categoriaDe(ocorrencia.status);
 
   return (
     <>
-      <div className="gaveta__fundo" onClick={aoFechar} aria-hidden="true" />
-      <aside
+      <button
+        type="button"
+        className="gaveta__fundo"
+        onClick={aoFechar}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+      <div
         ref={painel}
         className="gaveta"
         role="dialog"
@@ -94,7 +98,7 @@ export function GavetaOcorrencia({
         aria-labelledby="gaveta-titulo"
         onKeyDown={prenderFoco}
       >
-        <header className="gaveta__cabecalho">
+        <div className="gaveta__cabecalho">
           <span
             className="gaveta__tile"
             data-material={ocorrencia.material ?? "outro"}
@@ -120,7 +124,7 @@ export function GavetaOcorrencia({
           >
             <Icone nome="fechar" tamanho={16} />
           </button>
-        </header>
+        </div>
 
         <div className="gaveta__corpo">
           <div className="gaveta__foto">
@@ -130,7 +134,7 @@ export function GavetaOcorrencia({
             />
             <span className="gaveta__selo">
               <Icone nome="brilho" tamanho={12} />
-              Confiança da IA {formatarPorcentagem(confianca)}
+              Confiança da IA {formatarConfianca(confianca)}
             </span>
           </div>
 
@@ -151,11 +155,11 @@ export function GavetaOcorrencia({
             </div>
             <div className="gaveta__card gaveta__card--contaminacao">
               <p>Contaminação</p>
-              <strong>{contaminacao(confianca)}</strong>
+              <strong>{contaminacao(ocorrencia.classificacao)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--quantidade">
               <p>Quantidade</p>
-              <strong>≈ {ocorrencia.pesoKg} kg</strong>
+              <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--autor">
               <p>Registrada por</p>
@@ -200,10 +204,14 @@ export function GavetaOcorrencia({
                 <Icone nome="check" tamanho={14} />
                 {aprovando ? "Aprovando…" : "Aprovar"}
               </button>
+            ) : aguardandoAprovacao ? (
+              <p className="gaveta__aviso-aprovacao">
+                A aprovação está disponível para gestor ou administrador.
+              </p>
             ) : null}
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 }

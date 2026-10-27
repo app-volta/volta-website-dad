@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
+import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
 import { combinar, validarEmail, validarSenha } from "../../utils/validadores";
 import "./styles.css";
@@ -115,7 +116,7 @@ export default function Login(): ReactNode {
               erro={errosCampo.senha}
               iconeEsquerdo="cadeado"
               acaoDireita={{
-                icone: "olho",
+                icone: mostrarSenha ? "olho" : "olho-riscado",
                 rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
                 aoClicar: () => setMostrarSenha((v) => !v),
               }}
@@ -145,24 +146,12 @@ export default function Login(): ReactNode {
             </Button>
           </form>
 
-          <div className="login-tela__separador" aria-hidden="true">
-            <span>ou</span>
-          </div>
-
-          <button
-            type="button"
-            className="login-tela__google"
-            aria-label="Continuar com Google (indisponível na versão mock)"
-            disabled
-          >
-            Continuar com Google
-          </button>
-
           <p className="login-tela__cadastro">
             Novo por aqui? <Link to="/cadastro">Criar conta</Link>
           </p>
         </div>
       </main>
+      <Rodape className="login-tela__rodape" />
     </div>
   );
 }

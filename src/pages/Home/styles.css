@@ -429,7 +429,14 @@
 
 .home-fila__acoes {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+.home-fila__aguardando {
+  color: var(--texto-suave);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .home-fila__botao {
@@ -591,4 +598,27 @@
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+/* Fila de aprovação zerada */
+.home-fila-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 32px 16px 28px;
+  text-align: center;
+}
+
+.home-fila-vazia__titulo {
+  margin: 12px 0 0;
+  color: #5d6961;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.home-fila-vazia__texto {
+  margin: 0;
+  color: #5d6961;
+  font-size: 15px;
 }

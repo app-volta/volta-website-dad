@@ -9,7 +9,17 @@
   z-index: 100;
 }
 
+.modal-backdrop__fechar {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .modal {
+  position: relative;
   background: var(--superficie);
   border-radius: var(--raio-forte);
   box-shadow: var(--sombra-forte);

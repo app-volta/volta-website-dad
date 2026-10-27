@@ -2,6 +2,9 @@
   position: fixed;
   inset: 0;
   z-index: 60;
+  padding: 0;
+  border: 0;
+  cursor: default;
   background: rgba(8, 40, 26, 0.5);
   animation: gaveta-fundo 0.15s ease;
 }
@@ -37,22 +40,22 @@
   height: 36px;
   border-radius: 10px;
   background: #ffefe2;
-  color: #e8893a;
+  color: #b45d15;
 }
 
 .gaveta__tile[data-material="papelao"] {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .gaveta__tile[data-material="plastico"] {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .gaveta__tile[data-material="metal"] {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .gaveta__tile[data-material="vidro"] {
@@ -78,7 +81,7 @@
 
 .gaveta__sub {
   margin: 1px 0 0;
-  color: #6f7d74;
+  color: #5d6961;
   font-size: 12.5px;
 }
 
@@ -160,13 +163,13 @@
 .gaveta__pill--alta,
 .gaveta__status--recusadas {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .gaveta__pill--media,
 .gaveta__status--aguardando {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .gaveta__pill--baixa,
@@ -177,12 +180,12 @@
 
 .gaveta__status--encaminhadas {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .gaveta__pill--neutro {
   background: #eef2ef;
-  color: #6f7d74;
+  color: #5d6961;
 }
 
 .gaveta__cards {
@@ -217,7 +220,7 @@
 
 .gaveta__card--tipo {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .gaveta__card--contaminacao {
@@ -227,12 +230,12 @@
 
 .gaveta__card--quantidade {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .gaveta__card--autor {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .gaveta__recomenda {
@@ -273,6 +276,15 @@
   gap: 12px;
 }
 
+.gaveta__aviso-aprovacao {
+  flex: 1;
+  margin: 0;
+  color: #63736a;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .gaveta__botao {
   display: inline-flex;
   flex: 1;
@@ -301,7 +313,7 @@
 }
 
 .gaveta__botao--primario {
-  background: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
   box-shadow: 0 10px 22px rgba(13, 125, 71, 0.45);
   color: #fff;
 }

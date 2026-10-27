@@ -11,6 +11,27 @@ export type StatusOcorrencia =
 
 export type PrioridadeOcorrencia = "alta" | "media" | "baixa";
 
+export type QualidadeMaterial = "A" | "B" | "C";
+
+export type TipoEvento =
+  | "registro"
+  | "ia"
+  | "classificacao"
+  | "encaminhamento"
+  | "observacao"
+  | "aprovacao"
+  | "recusa"
+  | "coleta";
+
+export interface EventoOcorrencia {
+  readonly id: string;
+  readonly tipo: TipoEvento;
+  readonly autor: string;
+  readonly texto: string;
+  readonly em: string;
+  readonly rotuloTempo?: string;
+}
+
 export interface Localizacao {
   readonly setor: string;
   readonly unidade: string;
@@ -35,6 +56,12 @@ export interface Ocorrencia {
   readonly atualizadaEm: string;
   readonly criadaPor: string;
   readonly criadaPorNome: string;
+  readonly qualidade: QualidadeMaterial;
+  readonly perigoso: boolean;
+  readonly setorDestino: string | null;
+  readonly motivoRecusa: string | null;
+  readonly ultimaAlteracao: string | null;
+  readonly historico: readonly EventoOcorrencia[];
 }
 
 export interface NovaOcorrencia {
@@ -59,3 +86,11 @@ export const ROTULOS_STATUS: Readonly<Record<StatusOcorrencia, string>> = {
   recusada: "Recusada",
   finalizada: "Finalizada",
 };
+
+/** Nova classificação escolhida pelo responsável ao revisar a ocorrência. */
+export interface NovaClassificacao {
+  readonly material: Material;
+  readonly qualidade: QualidadeMaterial;
+  readonly prioridade: PrioridadeOcorrencia;
+  readonly perigoso: boolean;
+}

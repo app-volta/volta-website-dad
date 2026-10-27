@@ -5,10 +5,8 @@ import { useParams } from "react-router-dom";
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
-import { useChatCooperativa } from "../../hooks/useChatCooperativa";
-import { obterCooperativa } from "../../services/cooperativas";
-import { enviarMensagem } from "../../services/chat";
-import type { Cooperativa } from "../../types/cooperativa";
+import { useAcoesChat, useChatCooperativa } from "../../hooks/useChatCooperativa";
+import { useCooperativa } from "../../hooks/useCooperativas";
 import "./styles.css";
 
 export default function ChatCooperativa(): ReactNode {
@@ -19,31 +17,13 @@ export default function ChatCooperativa(): ReactNode {
     chaveRecarga,
   );
 
-  const [cooperativa, setCooperativa] = useState<Cooperativa | null>(null);
-  const [erroCoop, setErroCoop] = useState<string | null>(null);
+  const { dados: cooperativa, erro: erroCoop } = useCooperativa(id);
+  const acoes = useAcoesChat();
   const [texto, setTexto] = useState<string>("");
   const [erroCampo, setErroCampo] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<boolean>(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
   const listaRef = useRef<HTMLUListElement | null>(null);
-
-  useEffect(() => {
-    if (!id) return;
-    const controle = new AbortController();
-    obterCooperativa(id, controle.signal)
-      .then((coop) => {
-        if (!controle.signal.aborted) setCooperativa(coop);
-      })
-      .catch((excecao: unknown) => {
-        if (controle.signal.aborted) return;
-        setErroCoop(
-          excecao instanceof Error
-            ? excecao.message
-            : "Falha ao carregar cooperativa.",
-        );
-      });
-    return () => controle.abort();
-  }, [id]);
 
   useEffect(() => {
     if (listaRef.current) {
@@ -74,7 +54,7 @@ export default function ChatCooperativa(): ReactNode {
     }
     setEnviando(true);
     try {
-      await enviarMensagem({ cooperativaId: id!, conteudo: limpo });
+      await acoes.enviar({ cooperativaId: id!, conteudo: limpo });
       setTexto("");
       setChaveRecarga((v) => v + 1);
     } catch (excecao) {
@@ -105,11 +85,14 @@ export default function ChatCooperativa(): ReactNode {
             {cooperativa.nome.substring(0, 2).toUpperCase()}
           </span>
           <div className="chat-tela__destaque-info">
-            <h3 className="chat-tela__destaque-nome">{cooperativa.nome}</h3>
+            <h2 className="chat-tela__destaque-nome">{cooperativa.nome}</h2>
             <span className="chip chat-tela__badge">Parceira J&amp;F</span>
             <p className="chat-tela__destaque-desc">
-              Responde rápido · {cooperativa.distanciaKm.toFixed(1)} km · coleta
-              em até 24h · aceita todos os materiais
+              Responde rápido ·{" "}
+              {cooperativa.distanciaKm === null
+                ? ""
+                : `${cooperativa.distanciaKm.toFixed(1)} km · `}
+              coleta em até 24h · aceita todos os materiais
             </p>
           </div>
         </section>

@@ -1,4 +1,4 @@
-import { useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,9 +7,12 @@ import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
-import { criarOcorrencia } from "../../services/ocorrencias";
+import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useSetores } from "../../hooks/useSetores";
 import { METADADOS_MATERIAL } from "../../types/material";
-import { formatarPorcentagem } from "../../utils/formatacao";
+import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
+import { contaminacao } from "../../utils/analiseOcorrencia";
+import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
@@ -32,30 +35,7 @@ const PRIORIDADES: readonly {
   { valor: "baixa", rotulo: "Baixa" },
 ];
 
-const SETORES: readonly string[] = [
-  "Frigorífico — Setor B2",
-  "Embalagens B",
-  "Caldeira",
-  "Pátio Norte",
-  "Laboratório",
-  "Expedição",
-];
-
-interface Deteccao {
-  readonly esquerda: number;
-  readonly topo: number;
-  readonly largura: number;
-  readonly altura: number;
-  readonly acrescimo: number | null;
-  readonly rotulo: string | null;
-}
-
-// A IA é um mock: as caixas são posições ilustrativas, não detecção real.
-const DETECCOES: readonly Deteccao[] = [
-  { esquerda: 9.4, topo: 42.1, largura: 33.6, altura: 43.3, acrescimo: 6, rotulo: null },
-  { esquerda: 44.2, topo: 26.2, largura: 37.5, altura: 59, acrescimo: 3, rotulo: null },
-  { esquerda: 79, topo: 60, largura: 17.7, altura: 27.4, acrescimo: null, rotulo: "umidade" },
-];
+const SEM_SETORES: readonly string[] = [];
 
 function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
   const leitor = new FileReader();
@@ -67,12 +47,24 @@ function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
 
 export default function Registrar(): ReactNode {
   const { usuario } = useAuth();
+  const acoes = useAcoesOcorrencia();
+  const { dados: setoresCarregados, erro: erroSetores } = useSetores();
+  const setores = setoresCarregados ?? SEM_SETORES;
   const navegar = useNavigate();
   const [estado, despachar] = useReducer(
     redutor,
     usuario?.unidade ?? "Frigorífico — Setor B2",
     estadoInicial,
   );
+  const setorInicial = useRef<string>(estado.setor);
+
+  // O setor sugerido no início pode não existir na empresa; troca pelo primeiro cadastrado.
+  useEffect(() => {
+    if (setores.length === 0) return;
+    if (estado.setor === setorInicial.current && !setores.includes(estado.setor)) {
+      despachar({ tipo: "definir_setor", setor: setores[0] });
+    }
+  }, [setores, estado.setor]);
   const [arrastando, setArrastando] = useState<boolean>(false);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
   const inputCamera = useRef<HTMLInputElement | null>(null);
@@ -110,7 +102,7 @@ export default function Registrar(): ReactNode {
     }
     despachar({ tipo: "iniciar_envio" });
     try {
-      const criada = await criarOcorrencia({
+      const criada = await acoes.criar({
         descricao: descricaoInformada
           ? estado.descricao
           : `Resíduo registrado em ${estado.setor}`,
@@ -170,12 +162,13 @@ export default function Registrar(): ReactNode {
   const passo = estado.etapa === "detalhes" ? 1 : 2;
   const rotuloPrioridade =
     PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
-  const confiancaPct = estado.classificacao
-    ? Math.round(estado.classificacao.confianca * 100)
-    : 0;
-  const materialRotulo = estado.classificacao
+  const confianca = estado.classificacao?.confianca ?? null;
+  const confiancaPct = Math.round((confianca ?? 0) * 100);
+  const materialRotulo = estado.classificacao?.material
     ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
     : "";
+  const tipoRotulo = estado.classificacao?.tipoDetectado ?? materialRotulo;
+  const unidades = estado.classificacao?.unidades ?? null;
 
   return (
     <div className="registrar">
@@ -222,8 +215,13 @@ export default function Registrar(): ReactNode {
         {concluida ? "Análise concluída." : null}
       </p>
 
+      {erroSetores ? (
+        <Alerta variante="erro" titulo="Não foi possível carregar os setores">
+          {erroSetores}
+        </Alerta>
+      ) : null}
       {estado.erroEnvio ? (
-        <Alerta variante="erro" titulo="Falha na análise">
+        <Alerta variante="erro" titulo="Não foi possível registrar">
           {estado.erroEnvio}
         </Alerta>
       ) : null}
@@ -267,7 +265,7 @@ export default function Registrar(): ReactNode {
                 <Icone nome="galeria" tamanho={15} />
                 Trocar
               </button>
-              {concluida && estado.classificacao
+              {concluida && estado.classificacao && confianca !== null
                 ? DETECCOES.map((d) => (
                     <span
                       key={`${d.esquerda}-${d.topo}`}
@@ -281,11 +279,7 @@ export default function Registrar(): ReactNode {
                       }}
                     >
                       <span className="registrar__deteccao-rotulo">
-                        {d.rotulo ??
-                          `${materialRotulo.toLowerCase()} · ${Math.min(
-                            99,
-                            confiancaPct + (d.acrescimo ?? 0),
-                          )}%`}
+                        {rotuloDeteccao(d, materialRotulo, confiancaPct)}
                       </span>
                     </span>
                   ))
@@ -370,7 +364,7 @@ export default function Registrar(): ReactNode {
                 Onde está?
               </label>
               <div className="registrar__select">
-                <Icone nome="pin" tamanho={17} />
+                <Icone nome="pin" tamanho={18} />
                 <select
                   id="reg-setor"
                   value={estado.setor}
@@ -378,16 +372,16 @@ export default function Registrar(): ReactNode {
                     despachar({ tipo: "definir_setor", setor: e.target.value })
                   }
                 >
-                  {SETORES.includes(estado.setor) ? null : (
+                  {setores.includes(estado.setor) ? null : (
                     <option value={estado.setor}>{estado.setor}</option>
                   )}
-                  {SETORES.map((s) => (
+                  {setores.map((s) => (
                     <option key={s} value={s}>
                       {s}
                     </option>
                   ))}
                 </select>
-                <Icone nome="seta-baixo" tamanho={14} />
+                <Icone nome="seta-baixo" tamanho={18} />
               </div>
             </div>
 
@@ -483,7 +477,7 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="papelao">
                 <p className="registrar__ia-rotulo">Tipo</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">{materialRotulo}</p>
+                  <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -491,7 +485,9 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="vidro">
                 <p className="registrar__ia-rotulo">Contaminação</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">Baixa</p>
+                  <p className="registrar__ia-valor">
+                    {contaminacao(estado.classificacao)}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -499,15 +495,25 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="plastico">
                 <p className="registrar__ia-rotulo">Quantidade</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">≈ 38 kg</p>
+                  <p className="registrar__ia-valor">
+                    {formatarPeso(estado.classificacao?.pesoEstimadoKg ?? 0)}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="metal">
-                <p className="registrar__ia-rotulo">Caixas</p>
+                <p className="registrar__ia-rotulo">
+                  {unidades !== null ? "Caixas" : "Revisão"}
+                </p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">11 un.</p>
+                  <p className="registrar__ia-valor">
+                    {unidades !== null
+                      ? `${unidades} un.`
+                      : estado.classificacao?.exigeValidacao
+                        ? "Pelo gestor"
+                        : "—"}
+                  </p>
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -529,17 +535,15 @@ export default function Registrar(): ReactNode {
 
             {concluida && estado.classificacao ? (
               <>
-                <div className="registrar__confianca">
-                  <span>Confiança da IA</span>
-                  <div className="registrar__confianca-barra">
-                    <span
-                      style={{ width: `${estado.classificacao.confianca * 100}%` }}
-                    />
+                {confianca !== null ? (
+                  <div className="registrar__confianca">
+                    <span>Confiança da IA</span>
+                    <div className="registrar__confianca-barra">
+                      <span style={{ width: `${confianca * 100}%` }} />
+                    </div>
+                    <strong>{formatarConfianca(confianca)}</strong>
                   </div>
-                  <strong>
-                    {formatarPorcentagem(estado.classificacao.confianca)}
-                  </strong>
-                </div>
+                ) : null}
 
                 <div className="registrar__recomenda">
                   <img

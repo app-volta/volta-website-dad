@@ -1,7 +1,7 @@
 import type { MensagemChat, NovaMensagem } from "../types/chat";
 import { aguardar } from "./http";
 
-const MENSAGENS: MensagemChat[] = [
+let MENSAGENS: readonly MensagemChat[] = [
   {
     id: "msg-1",
     cooperativaId: "coop-1",
@@ -51,6 +51,6 @@ export async function enviarMensagem(
     enviadaEm: new Date().toISOString(),
     lida: true,
   };
-  MENSAGENS.push(nova);
+  MENSAGENS = [...MENSAGENS, nova];
   return nova;
 }

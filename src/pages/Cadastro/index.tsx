@@ -7,6 +7,7 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
+import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
 import type { PapelUsuario } from "../../types/usuario";
 import {
@@ -179,6 +180,7 @@ export default function Cadastro(): ReactNode {
           </p>
         </div>
       </main>
+      <Rodape className="login-tela__rodape" />
     </div>
   );
 }

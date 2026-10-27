@@ -46,6 +46,7 @@
   font-size: 2rem;
   font-weight: 800;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .kpi-card__valor small {

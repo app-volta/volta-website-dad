@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useParams } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -49,6 +49,18 @@ function RotaPrivada({
   );
 }
 
+function RotaDetalheOcorrencia(): ReactNode {
+  const { id } = useParams();
+  return (
+    <RotaPrivada
+      titulo={`Ocorrência #${(id ?? "").replace(/\D/g, "")}`}
+      subtitulo="Revisão e ações do responsável"
+    >
+      <OcorrenciaDetalhe />
+    </RotaPrivada>
+  );
+}
+
 export default function App(): ReactNode {
   return (
     <Suspense fallback={<Spinner rotulo="Carregando página…" />}>
@@ -86,23 +98,13 @@ export default function App(): ReactNode {
             </RotaPrivada>
           }
         />
-        <Route
-          path="/ocorrencias/:id"
-          element={
-            <RotaPrivada
-              titulo="Detalhe da ocorrência"
-              subtitulo="Acompanhamento e ações do responsável"
-            >
-              <OcorrenciaDetalhe />
-            </RotaPrivada>
-          }
-        />
+        <Route path="/ocorrencias/:id" element={<RotaDetalheOcorrencia />} />
         <Route
           path="/cooperativas"
           element={
             <RotaPrivada
               titulo="Cooperativas"
-              subtitulo="Parceiras próximas da sua unidade"
+              subtitulo="Parcerias, homologação e licenças ambientais"
             >
               <Cooperativas />
             </RotaPrivada>
@@ -126,8 +128,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Relatórios PGRS"
-              subtitulo="Gere relatórios por período, setor e material"
-              comCta={false}
+              subtitulo="Indicadores e relatório do plano de resíduos"
             >
               <Relatorios />
             </RotaPrivada>
@@ -138,8 +139,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Equipe"
-              subtitulo="Responsáveis e permissões da sua unidade"
-              comCta={false}
+              subtitulo="Quem registra, revisa e aprova na unidade"
             >
               <Equipe />
             </RotaPrivada>
@@ -150,9 +150,7 @@ export default function App(): ReactNode {
           element={
             <RotaPrivada
               titulo="Configurações"
-              subtitulo="Preferências de notificação e integração"
-              comCta={false}
-              comBusca={false}
+              subtitulo="Seu perfil, a unidade e as metas"
             >
               <Configuracoes />
             </RotaPrivada>

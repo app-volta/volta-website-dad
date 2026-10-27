@@ -27,8 +27,8 @@ export type NomeIcone =
   | "reciclagem"
   | "pin"
   | "olho"
+  | "olho-riscado"
   | "cadeado"
-  | "google"
   | "estrela"
   | "chip"
   | "relatorio"
@@ -36,7 +36,20 @@ export type NomeIcone =
   | "engrenagem"
   | "upload"
   | "brilho"
-  | "download";
+  | "download"
+  | "alerta"
+  | "ciclo"
+  | "relogio"
+  | "escudo"
+  | "predio"
+  | "documento"
+  | "email"
+  | "bandeira"
+  | "check-circulo"
+  | "alvo"
+  | "reticencias"
+  | "lixeira"
+  | "lista";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -144,14 +157,18 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  "olho-riscado": (
+    <>
+      <path d="M2 12 C4 6 7.5 4 12 4 C16.5 4 20 6 22 12 C20 18 16.5 20 12 20 C7.5 20 4 18 2 12 Z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M3 3 L21 21" />
+    </>
+  ),
   cadeado: (
     <>
       <rect x="4" y="11" width="16" height="10" rx="2" />
       <path d="M8 11 V7 A4 4 0 0 1 16 7 V11" />
     </>
-  ),
-  google: (
-    <path d="M12 11 V13.5 H17 C16.7 15 15.4 17 12 17 A5 5 0 1 1 12 7 C13.5 7 14.6 7.5 15.4 8.2 L17.2 6.4 C15.9 5.2 14.1 4.5 12 4.5 A7.5 7.5 0 1 0 12 19.5 C16.5 19.5 19.5 16.5 19.5 12 C19.5 11.6 19.5 11.3 19.4 11 Z" />
   ),
   estrela: (
     <path d="M12 3 L14.5 9 L21 9.7 L16 14 L17.5 20.5 L12 17 L6.5 20.5 L8 14 L3 9.7 L9.5 9 Z" />
@@ -181,11 +198,68 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   upload: (
     <path d="M12 16 V4 M6 10 L12 4 L18 10 M4 20 H20" />
   ),
+  alerta: (
+    <path d="M12 3.5 L21.5 20 H2.5 Z M12 10 V14 M12 17 V17.2" />
+  ),
   download: (
     <path d="M12 4 V16 M6 10 L12 16 L18 10 M4 20 H20" />
   ),
   brilho: (
     <path d="M12 3 C12.7 8.3 15.7 10.3 21 11 C15.7 11.7 12.7 13.7 12 19 C11.3 13.7 8.3 11.7 3 11 C8.3 10.3 11.3 8.3 12 3 Z" />
+  ),
+  ciclo: <path d="M21 4 V10 H15 M20 14 A8 8 0 1 1 17.7 6.3 L21 10" />,
+  relogio: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7 V12 L15 14" />
+    </>
+  ),
+  escudo: (
+    <path d="M12 3 L19.5 6 V11.5 C19.5 16 16.5 19.5 12 21 C7.5 19.5 4.5 16 4.5 11.5 V6 Z M8.5 12 L11 14.5 L15.5 9.5" />
+  ),
+  predio: (
+    <path d="M5 21 V4 A1 1 0 0 1 6 3 H14 A1 1 0 0 1 15 4 V21 M15 9 H19 A1 1 0 0 1 20 10 V21 M3 21 H21 M9 7 H11 M9 11 H11 M9 15 H11" />
+  ),
+  documento: (
+    <path d="M14 3 H7 A1 1 0 0 0 6 4 V20 A1 1 0 0 0 7 21 H17 A1 1 0 0 0 18 20 V7 Z M14 3 V7 H18 M9 12 H15 M9 16 H15" />
+  ),
+  email: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3.5 7 L12 13 L20.5 7" />
+    </>
+  ),
+  bandeira: <path d="M5 21 V4 M5 4 H17 L14.5 8.5 L17 13 H5" />,
+  "check-circulo": (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.5 L11 15.5 L16 9.5" />
+    </>
+  ),
+  alvo: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" />
+    </>
+  ),
+  reticencias: (
+    <>
+      <circle cx="5.5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="18.5" cy="12" r="1.2" />
+    </>
+  ),
+  lixeira: (
+    <path d="M4 7 H20 M10 7 V4 H14 V7 M6 7 L7 20 H17 L18 7 M10 11 V16 M14 11 V16" />
+  ),
+  lista: (
+    <>
+      <path d="M9.5 6 H20 M9.5 12 H20 M9.5 18 H20" />
+      <circle cx="4.8" cy="6" r="0.9" />
+      <circle cx="4.8" cy="12" r="0.9" />
+      <circle cx="4.8" cy="18" r="0.9" />
+    </>
   ),
 };
 

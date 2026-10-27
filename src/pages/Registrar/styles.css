@@ -1,9 +1,9 @@
 .registrar {
   --reg-texto: #16211b;
-  --reg-mudo: #6f7d74;
+  --reg-mudo: #5d6961;
   --reg-borda: #e8ede9;
   --reg-verde: #0e7c48;
-  --reg-gradiente: linear-gradient(186deg, #22c06f 30%, #0e7c48 100%);
+  --reg-gradiente: linear-gradient(186deg, #15874c 30%, #0e7c48 100%);
 
   display: flex;
   flex-direction: column;
@@ -28,7 +28,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
 }
 
 .registrar__linha {
@@ -52,7 +52,7 @@
 }
 
 .registrar__foto--arrastando {
-  border-color: #1ba463;
+  border-color: #0f7d47;
   background: #e2f7ec;
 }
 
@@ -279,11 +279,11 @@
 .registrar__select {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 49px;
-  padding: 0 18px;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
   border: 0.8px solid var(--reg-borda);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
   color: var(--reg-mudo);
 }
@@ -295,7 +295,7 @@
   background: transparent;
   color: var(--reg-texto);
   font: inherit;
-  font-size: 14.5px;
+  font-size: 15.5px;
   appearance: none;
 }
 
@@ -324,19 +324,19 @@
 }
 
 .registrar__prio--alta.registrar__prio--ativa {
-  border-color: #e8556c;
+  border-color: #cf1c38;
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .registrar__prio--media.registrar__prio--ativa {
-  border-color: #c68a10;
+  border-color: #92660c;
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .registrar__prio--baixa.registrar__prio--ativa {
-  border-color: #1ba463;
+  border-color: #0f7d47;
   background: #e2f7ec;
   color: var(--reg-verde);
 }
@@ -376,7 +376,7 @@
 }
 
 .registrar__toggle--on {
-  background: linear-gradient(135deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
 }
 
 .registrar__toggle-bolinha {
@@ -483,7 +483,7 @@
 
 .registrar__ia-card[data-cor="papelao"] {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .registrar__ia-card[data-cor="vidro"] {
@@ -493,12 +493,12 @@
 
 .registrar__ia-card[data-cor="plastico"] {
   background: #e4efff;
-  color: #3b82f6;
+  color: #0b60ec;
 }
 
 .registrar__ia-card[data-cor="metal"] {
   background: #efeafb;
-  color: #8b6fe0;
+  color: #7250d9;
 }
 
 .registrar__ia-grid--carregando .registrar__ia-card {
@@ -568,7 +568,7 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #22c06f 30%, #0e7c48 100%);
+  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
 }
 
 .registrar__confianca strong {
@@ -622,12 +622,12 @@
 
 .registrar__chip-prio--alta {
   background: #fdeaec;
-  color: #e8556c;
+  color: #cf1c38;
 }
 
 .registrar__chip-prio--media {
   background: #fdf3de;
-  color: #c68a10;
+  color: #92660c;
 }
 
 .registrar__chip-prio--baixa {

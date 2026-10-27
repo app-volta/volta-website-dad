@@ -1,15 +1,17 @@
+import type { TokenApi, UsuarioApi } from "../types/api";
 import type {
   CredenciaisLogin,
   DadosCadastro,
   SessaoAutenticada,
   Usuario,
 } from "../types/usuario";
-import { aguardar } from "./http";
+import { usuarioDaApi } from "./adaptadores";
+import { aguardar, ErroHttp, requisitar, USAR_MOCKS } from "./http";
 
 /**
- * MOCK: substitua por chamada real quando o backend estiver disponível.
- * Motivo: enquanto o backend não expõe /auth, este mock garante que o fluxo
- * completo (login → rota privada → contexto) já funcione em desenvolvimento.
+ * Autenticação. Com VITE_USAR_MOCKS=false conversa com a volta-api
+ * (POST /auth/login e GET /users/me); no resto do tempo usa o mock local, que
+ * mantém o fluxo completo (login → rota privada → contexto) sem backend.
  */
 
 const USUARIO_DEMO: Usuario = {
@@ -20,7 +22,7 @@ const USUARIO_DEMO: Usuario = {
   unidade: "Frigorífico JBS — Lins/SP",
 };
 
-export async function autenticar(
+async function autenticarMock(
   credenciais: CredenciaisLogin,
   sinal?: AbortSignal,
 ): Promise<SessaoAutenticada> {
@@ -38,7 +40,40 @@ export async function autenticar(
   };
 }
 
-export async function cadastrar(
+async function autenticarNaApi(
+  credenciais: CredenciaisLogin,
+  sinal?: AbortSignal,
+): Promise<SessaoAutenticada> {
+  const acesso = await requisitar<TokenApi>("/auth/login", {
+    metodo: "POST",
+    corpo: { email: credenciais.email, password: credenciais.senha },
+    token: null,
+    sinal,
+  });
+
+  // O token ainda não está na sessão: ele vai explícito nesta chamada.
+  const eu = await requisitar<UsuarioApi>("/users/me", {
+    token: acesso.token,
+    sinal,
+  });
+
+  return {
+    usuario: usuarioDaApi(eu),
+    token: acesso.token,
+    expiraEm: new Date(Date.now() + acesso.expiresIn).toISOString(),
+  };
+}
+
+export function autenticar(
+  credenciais: CredenciaisLogin,
+  sinal?: AbortSignal,
+): Promise<SessaoAutenticada> {
+  return USAR_MOCKS
+    ? autenticarMock(credenciais, sinal)
+    : autenticarNaApi(credenciais, sinal);
+}
+
+async function cadastrarMock(
   dados: DadosCadastro,
   sinal?: AbortSignal,
 ): Promise<SessaoAutenticada> {
@@ -55,4 +90,18 @@ export async function cadastrar(
     token: `token-${usuario.id}`,
     expiraEm: new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString(),
   };
+}
+
+export function cadastrar(
+  dados: DadosCadastro,
+  sinal?: AbortSignal,
+): Promise<SessaoAutenticada> {
+  if (USAR_MOCKS) return cadastrarMock(dados, sinal);
+  // Na volta-api só o ADMIN da empresa cria usuários (POST /users).
+  return Promise.reject(
+    new ErroHttp(
+      "O cadastro é feito pelo administrador da sua empresa. Peça seu acesso a ele.",
+      403,
+    ),
+  );
 }

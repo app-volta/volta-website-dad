@@ -38,18 +38,20 @@ export function Modal({
   if (!aberto) return null;
 
   return (
-    <div
-      className="modal-backdrop"
-      onClick={onFechar}
-      aria-hidden="false"
-    >
+    <div className="modal-backdrop">
+      <button
+        type="button"
+        className="modal-backdrop__fechar"
+        onClick={onFechar}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <div
         className="modal"
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-titulo"
         ref={referenciaModal}
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="modal__cabecalho">
           <h2 id="modal-titulo" className="modal__titulo">

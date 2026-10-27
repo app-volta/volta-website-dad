@@ -9,14 +9,24 @@ import { Icone } from "../../components/Icone";
 import { KpiCard } from "../../components/KpiCard";
 import { Mascote } from "../../components/Mascote";
 import { SkeletonList } from "../../components/SkeletonList";
+import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useMetaRecuperacao } from "../../hooks/useConfiguracoes";
+import { useDicaVolta, useInsightVolta } from "../../hooks/useInsights";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { usePainel } from "../../hooks/usePainel";
 import type { Material } from "../../types/material";
+import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
+import { iniciais } from "../../utils/pessoa";
+import { tempoRelativo } from "../../utils/painel";
 import "./styles.css";
 
 type Prioridade = "alta" | "media" | "baixa";
 type JanelaGrafico = "semanas" | "trimestre";
+
+const COR_OUTROS = "var(--texto-suave)";
 
 interface ItemFila {
   readonly id: string;
@@ -24,13 +34,6 @@ interface ItemFila {
   readonly subtitulo: string;
   readonly prioridade: Prioridade;
   readonly material: Material | null;
-}
-
-interface AtividadeEquipe {
-  readonly iniciais: string;
-  readonly cor: string;
-  readonly texto: ReactNode;
-  readonly tempo: string;
 }
 
 const ROTULO_PRIORIDADE: Readonly<Record<Prioridade, string>> = {
@@ -59,17 +62,6 @@ function inferirPrioridade(o: Ocorrencia): Prioridade {
   return "baixa";
 }
 
-function tempoRelativo(iso: string): string {
-  const delta = Date.now() - new Date(iso).getTime();
-  const minutos = Math.round(delta / 60000);
-  if (minutos < 60) return `há ${Math.max(minutos, 1)} min`;
-  const horas = Math.round(minutos / 60);
-  if (horas < 24) return `${horas}h hoje`;
-  const dias = Math.round(horas / 24);
-  if (dias === 1) return "ontem";
-  return `${dias} dias`;
-}
-
 function saudacao(): string {
   const hora = new Date().getHours();
   if (hora < 12) return "Bom dia";
@@ -77,83 +69,64 @@ function saudacao(): string {
   return "Boa noite";
 }
 
-const DADOS_RECUPERACAO: Readonly<
-  Record<JanelaGrafico, readonly { rotulo: string; valor: number; meta: number }[]>
-> = {
-  semanas: [
-    { rotulo: "S1", valor: 108, meta: 140 },
-    { rotulo: "S2", valor: 128, meta: 140 },
-    { rotulo: "S3", valor: 141, meta: 140 },
-    { rotulo: "S4", valor: 134, meta: 140 },
-    { rotulo: "S5", valor: 155, meta: 140 },
-    { rotulo: "S6", valor: 162, meta: 140 },
-    { rotulo: "S7", valor: 178, meta: 140 },
-    { rotulo: "S8", valor: 191, meta: 140 },
-  ],
-  trimestre: [
-    { rotulo: "Jan", valor: 320, meta: 420 },
-    { rotulo: "Fev", valor: 410, meta: 420 },
-    { rotulo: "Mar", valor: 485, meta: 420 },
-  ],
-};
+/** Frase da saudação sobre a fila: muda quando não sobra nada para aprovar. */
+function tituloDaFila(carregou: boolean, pendentes: number, podeRevisar: boolean): string {
+  if (!carregou) return "Veja como está a sua unidade hoje.";
+  if (pendentes === 0) {
+    return podeRevisar
+      ? "Tudo aprovado por aqui."
+      : "Nenhuma ocorrência aguarda aprovação do gestor.";
+  }
+  if (!podeRevisar) {
+    return `${pendentes} ${pendentes === 1 ? "ocorrência aguarda" : "ocorrências aguardam"} aprovação do gestor.`;
+  }
+  return pendentes === 1
+    ? "Tem 1 ocorrência esperando você."
+    : `Tem ${pendentes} ocorrências esperando você.`;
+}
 
-const MATERIAIS_MES = [
-  { material: "papelao" as const, rotulo: "Papelão", kg: 542 },
-  { material: "plastico" as const, rotulo: "Plástico", kg: 318 },
-  { material: "metal" as const, rotulo: "Metal", kg: 176 },
-  { material: "vidro" as const, rotulo: "Vidro", kg: 111 },
-];
+/** "+12 vs. mês passado": o sinal acompanha a direção, sem ruído quando não há o que comparar. */
+function deltaDeOcorrencias(variacao: number | null): {
+  readonly texto?: string;
+  readonly direcao: "sobe" | "desce" | "neutro";
+} {
+  if (variacao === null) return { direcao: "neutro" };
+  if (variacao === 0) return { texto: "igual ao mês passado", direcao: "neutro" };
+  return {
+    texto: `${variacao > 0 ? "+" : "−"}${Math.abs(variacao)} vs. mês passado`,
+    direcao: variacao > 0 ? "sobe" : "desce",
+  };
+}
 
-const ATIVIDADES: readonly AtividadeEquipe[] = [
-  {
-    iniciais: "AS",
-    cor: "var(--metal-bg)",
-    texto: (
-      <>
-        <strong>Ana Souza</strong> aprovou #0481 · Sucata metálica
-      </>
-    ),
-    tempo: "há 5 min",
-  },
-  {
-    iniciais: "CM",
-    cor: "var(--plastico-bg)",
-    texto: (
-      <>
-        <strong>Carla Mendes</strong> registrou #0482 · Plástico
-      </>
-    ),
-    tempo: "há 32 min",
-  },
-  {
-    iniciais: "RL",
-    cor: "var(--vidro-bg)",
-    texto: (
-      <>
-        <strong>Rafael Lima</strong> encaminhou #0479 pra Qualidade
-      </>
-    ),
-    tempo: "ontem",
-  },
-  {
-    iniciais: "JP",
-    cor: "var(--papelao-bg)",
-    texto: (
-      <>
-        <strong>João Pereira</strong> adicionou uma observação em #0475
-      </>
-    ),
-    tempo: "ontem",
-  },
-];
+function deltaDePontos(pontos: number | null): {
+  readonly texto?: string;
+  readonly direcao: "sobe" | "desce" | "neutro";
+} {
+  if (pontos === null) return { direcao: "neutro" };
+  if (pontos === 0) return { texto: "igual ao mês passado", direcao: "neutro" };
+  const unidade = Math.abs(pontos) === 1 ? "ponto" : "pontos";
+  return {
+    texto: `${pontos > 0 ? "+" : "−"}${Math.abs(pontos)} ${unidade}`,
+    direcao: pontos > 0 ? "sobe" : "desce",
+  };
+}
 
 export default function Home(): ReactNode {
   const { usuario } = useAuth();
+  const acoes = useAcoesOcorrencia();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [janela, setJanela] = useState<JanelaGrafico>("semanas");
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
+  const { painel, dadosReais } = usePainel(dados);
+  const insight = useInsightVolta();
+  const dica = useDicaVolta();
+  const [aprovandoId, setAprovandoId] = useState<string | null>(null);
+  const [erroAprovacao, setErroAprovacao] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   const primeiroNome = usuario?.nome.split(" ")[0] ?? "você";
+  const podeRevisar =
+    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
 
   const fila = useMemo<readonly ItemFila[]>(() => {
     if (!dados) return [];
@@ -163,7 +136,6 @@ export default function Home(): ReactNode {
           o.status === "classificada" ||
           o.status === "aguardando_classificacao",
       )
-      .slice(0, 4)
       .map((o) => ({
         id: o.id,
         titulo: o.descricao.split(".")[0] ?? o.descricao,
@@ -174,14 +146,50 @@ export default function Home(): ReactNode {
   }, [dados]);
 
   const pendentes = fila.length;
-  const totalMes = MATERIAIS_MES.reduce((acc, m) => acc + m.kg, 0);
-  const metaMes = 1500;
+  const totalMes = painel.recuperadoMesKg;
+  const metaMes = useMetaRecuperacao();
   const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
+  // Com a API ainda carregando, os números reais ainda não existem: mostra "—".
+  const aguardandoDados = dadosReais && dados === null;
+  const kgNaFila = (dados ?? [])
+    .filter((o) => fila.some((item) => item.id === o.id))
+    .reduce((soma, o) => soma + o.pesoKg, 0);
+  const projecaoMeta = Math.round(((totalMes + kgNaFila) / metaMes) * 100);
+  const deltaOcorrencias = deltaDeOcorrencias(painel.ocorrenciasVariacao);
+  const deltaTaxa = deltaDePontos(painel.taxaVariacaoPontos);
+  const materiaisMes = [
+    ...painel.porMaterial.map((m) => ({
+      chave: m.material as string,
+      rotulo: METADADOS_MATERIAL[m.material].rotulo,
+      kg: m.kg,
+      cor: COR_MATERIAL[m.material],
+    })),
+    ...(painel.outrosKg > 0
+      ? [{ chave: "outros", rotulo: "Outros", kg: painel.outrosKg, cor: COR_OUTROS }]
+      : []),
+  ];
+  const somaDonut = materiaisMes.reduce((soma, m) => soma + m.kg, 0);
 
-  const fatiasDonut = MATERIAIS_MES.map((m) => ({
+  async function aprovar(id: string, titulo: string): Promise<void> {
+    setAprovandoId(id);
+    setErroAprovacao(null);
+    try {
+      await acoes.aprovar(id, usuario?.nome ?? "Equipe");
+      setChaveRecarga((v) => v + 1);
+      setAviso(`#${id.slice(-4)} · ${titulo}`);
+    } catch (excecao: unknown) {
+      setErroAprovacao(
+        excecao instanceof Error ? excecao.message : "Falha ao aprovar a ocorrência.",
+      );
+    } finally {
+      setAprovandoId(null);
+    }
+  }
+
+  const fatiasDonut = materiaisMes.map((m) => ({
     rotulo: m.rotulo,
     valor: m.kg,
-    cor: COR_MATERIAL[m.material],
+    cor: m.cor,
   }));
 
   return (
@@ -213,18 +221,23 @@ export default function Home(): ReactNode {
         </svg>
         <div className="home-hero__conteudo">
           <h2 id="home-hero-titulo" className="home-hero__titulo">
-            {saudacao()}, {primeiroNome}! Tem {pendentes || 4} ocorrências
-            esperando você.
+            {saudacao()}, {primeiroNome}! {tituloDaFila(dados !== null, pendentes, podeRevisar)}
           </h2>
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
             este mês — <strong>{Math.round(progressoMeta)}%</strong> da meta.
-            Aprovando a fila de hoje, vocês passam de 80%.
+            {podeRevisar && dadosReais
+              ? kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
+                ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
+                : ""
+              : !dadosReais
+                ? " Aprovando a fila de hoje, vocês passam de 80%."
+                : ""}
           </p>
           <div className="home-hero__acoes">
             <Link to="/ocorrencias?status=aguardando" className="home-hero__botao home-hero__botao--primario">
               <Icone nome="grafico" tamanho={16} />
-              Revisar fila
+              {podeRevisar ? "Revisar fila" : "Ver ocorrências"}
             </Link>
             <Link to="/registrar" className="home-hero__botao home-hero__botao--secundario">
               <Icone nome="camera" tamanho={16} />
@@ -232,11 +245,13 @@ export default function Home(): ReactNode {
             </Link>
           </div>
         </div>
-        <aside className="home-hero__dica" aria-label="Dica do assistente VOLTA">
-          <p>
-            <strong>VOLTA notou:</strong> o Setor B2 registrou papelão molhado 3 vezes essa semana. Que tal uma área coberta perto da câmara fria?
-          </p>
-        </aside>
+        {insight ? (
+          <div className="home-hero__dica" role="note" aria-label="Dica do assistente VOLTA">
+            <p>
+              <strong>VOLTA notou:</strong> {insight.texto}
+            </p>
+          </div>
+        ) : null}
         <div className="home-hero__mascote" aria-hidden="true">
           <Mascote tamanho={122} altura={182} />
         </div>
@@ -247,20 +262,20 @@ export default function Home(): ReactNode {
           <KpiCard
             icone="grafico"
             rotulo="Ocorrências no mês"
-            valor="52"
-            delta="+12 vs. mês passado"
-            direcao="sobe"
-            sparkline={[32, 36, 40, 38, 44, 48, 52]}
+            valor={aguardandoDados ? "—" : painel.ocorrenciasMes}
+            delta={deltaOcorrencias.texto}
+            direcao={deltaOcorrencias.direcao}
+            sparkline={painel.sparkOcorrencias ?? undefined}
           />
         </li>
         <li>
           <KpiCard
             icone="sino"
             rotulo="Aguardando aprovação"
-            valor={pendentes || 4}
-            delta="média de 2,4 h pra aprovar"
+            valor={dados ? pendentes : "—"}
+            delta={dados ? painel.textoEspera : undefined}
             direcao="neutro"
-            sparkline={[6, 4, 7, 5, 8, 3, 4]}
+            sparkline={painel.sparkPendentes ?? undefined}
           />
         </li>
         <li>
@@ -268,13 +283,25 @@ export default function Home(): ReactNode {
             icone="reciclagem"
             rotulo="Recuperado no mês"
             valor={
-              <>
-                {totalMes.toLocaleString("pt-BR")} <small>kg</small>
-              </>
+              aguardandoDados ? (
+                "—"
+              ) : (
+                <>
+                  {totalMes.toLocaleString("pt-BR")} <small>kg</small>
+                </>
+              )
             }
-            delta={`+8% · ${Math.round(progressoMeta)}% da meta`}
-            direcao="sobe"
-            sparkline={[720, 810, 860, 920, 980, 1050, 1147]}
+            delta={
+              painel.recuperadoVariacaoPct === null
+                ? `${Math.round(progressoMeta)}% da meta`
+                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}% · ${Math.round(progressoMeta)}% da meta`
+            }
+            direcao={
+              painel.recuperadoVariacaoPct !== null && painel.recuperadoVariacaoPct < 0
+                ? "desce"
+                : "sobe"
+            }
+            sparkline={painel.sparkRecuperado ?? undefined}
           />
         </li>
         <li>
@@ -282,13 +309,17 @@ export default function Home(): ReactNode {
             icone="check"
             rotulo="Taxa de aprovação"
             valor={
-              <>
-                94 <small>%</small>
-              </>
+              painel.taxaAprovacao === null || aguardandoDados ? (
+                "—"
+              ) : (
+                <>
+                  {painel.taxaAprovacao} <small>%</small>
+                </>
+              )
             }
-            delta="+3 pontos"
-            direcao="sobe"
-            sparkline={[88, 90, 89, 91, 92, 93, 94]}
+            delta={deltaTaxa.texto}
+            direcao={deltaTaxa.direcao}
+            sparkline={painel.sparkTaxa ?? undefined}
           />
         </li>
       </ul>
@@ -299,11 +330,10 @@ export default function Home(): ReactNode {
             <h2 id="titulo-recuperacao" className="home-painel__titulo">
               Recuperação semanal
             </h2>
-            <div className="home-toggle" role="tablist" aria-label="Período">
+            <div className="home-toggle" role="group" aria-label="Período">
               <button
                 type="button"
-                role="tab"
-                aria-selected={janela === "semanas"}
+                aria-pressed={janela === "semanas"}
                 className={
                   janela === "semanas"
                     ? "home-toggle__opcao home-toggle__opcao--ativa"
@@ -315,8 +345,7 @@ export default function Home(): ReactNode {
               </button>
               <button
                 type="button"
-                role="tab"
-                aria-selected={janela === "trimestre"}
+                aria-pressed={janela === "trimestre"}
                 className={
                   janela === "trimestre"
                     ? "home-toggle__opcao home-toggle__opcao--ativa"
@@ -329,7 +358,7 @@ export default function Home(): ReactNode {
             </div>
           </header>
           <GraficoLinha
-            pontos={DADOS_RECUPERACAO[janela]}
+            pontos={janela === "semanas" ? painel.semanas : painel.meses}
             rotulo="Recuperação de resíduos ao longo do tempo"
           />
           <div className="home-legenda">
@@ -356,15 +385,15 @@ export default function Home(): ReactNode {
           <div className="home-donut">
             <GraficoDonut
               fatias={fatiasDonut}
-              centroTitulo={totalMes.toLocaleString("pt-BR")}
+              centroTitulo={somaDonut.toLocaleString("pt-BR")}
               centroRotulo="kg no mês"
             />
             <ul className="home-donut__lista">
-              {MATERIAIS_MES.map((m) => (
-                <li key={m.material} className="home-donut__item">
+              {materiaisMes.map((m) => (
+                <li key={m.chave} className="home-donut__item">
                   <span
                     className="home-donut__ponto"
-                    style={{ background: COR_MATERIAL[m.material] }}
+                    style={{ background: m.cor }}
                     aria-hidden="true"
                   />
                   <span className="home-donut__rotulo">{m.rotulo}</span>
@@ -386,6 +415,7 @@ export default function Home(): ReactNode {
             <div
               className="home-meta__barra"
               role="progressbar"
+              aria-label="Progresso da meta de recuperação do mês"
               aria-valuenow={Math.round(progressoMeta)}
               aria-valuemin={0}
               aria-valuemax={100}
@@ -407,7 +437,7 @@ export default function Home(): ReactNode {
                 Fila de aprovação
               </h2>
               <span className="home-painel__contador">
-                {pendentes || 4} PENDENTES
+                {dados ? pendentes : "—"} {pendentes === 1 ? "PENDENTE" : "PENDENTES"}
               </span>
             </div>
             <Link to="/ocorrencias" className="home-painel__link">
@@ -433,11 +463,17 @@ export default function Home(): ReactNode {
             </Alerta>
           ) : null}
 
+          {erroAprovacao ? (
+            <Alerta variante="erro" titulo="Aprovação não concluída">
+              {erroAprovacao}
+            </Alerta>
+          ) : null}
+
           {carregando ? (
             <SkeletonList quantidade={4} rotulo="Carregando fila de aprovação" />
           ) : fila.length > 0 ? (
             <ul className="home-fila">
-              {fila.map((item) => (
+              {fila.slice(0, 4).map((item) => (
                 <li key={item.id} className="home-fila__item">
                   <span
                     className="home-fila__material"
@@ -472,20 +508,38 @@ export default function Home(): ReactNode {
                     >
                       Revisar
                     </Link>
-                    <button
-                      type="button"
-                      className="home-fila__botao home-fila__botao--primario"
-                    >
-                      <Icone nome="check" tamanho={14} />
-                      Aprovar
-                    </button>
+                    {podeRevisar ? (
+                      <button
+                        type="button"
+                        className="home-fila__botao home-fila__botao--primario"
+                        disabled={aprovandoId !== null}
+                        onClick={() => void aprovar(item.id, item.titulo)}
+                      >
+                        <Icone nome="check" tamanho={14} />
+                        {aprovandoId === item.id ? "Aprovando…" : "Aprovar"}
+                      </button>
+                    ) : (
+                      <span className="home-fila__aguardando">
+                        Aguardando aprovação do gestor
+                      </span>
+                    )}
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
             !erro && (
-              <p className="lista-vazia">Nenhuma ocorrência aguardando aprovação.</p>
+              <div className="home-fila-vazia">
+                <Mascote tamanho={78} altura={130} />
+                <p className="home-fila-vazia__titulo">
+                  {podeRevisar ? "Fila zerada!" : "Sem pendências."}
+                </p>
+                <p className="home-fila-vazia__texto">
+                  {podeRevisar
+                    ? "Todas as ocorrências foram revisadas."
+                    : "Novas ocorrências aguardarão revisão de um gestor."}
+                </p>
+              </div>
             )
           )}
         </section>
@@ -496,42 +550,65 @@ export default function Home(): ReactNode {
               Atividade da equipe
             </h2>
           </header>
-          <ul className="home-timeline">
-            {ATIVIDADES.map((a) => (
-              <li key={`${a.iniciais}-${a.tempo}`} className="home-timeline__item">
-                <span
-                  className="home-timeline__avatar"
-                  style={{ background: a.cor }}
-                  aria-hidden="true"
-                >
-                  {a.iniciais}
-                </span>
-                <div className="home-timeline__corpo">
-                  <p className="home-timeline__texto">{a.texto}</p>
-                  <span className="home-timeline__tempo">{a.tempo}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {painel.atividades.length > 0 ? (
+            <ul className="home-timeline">
+              {painel.atividades.map((a) => (
+                <li key={a.id} className="home-timeline__item">
+                  <span
+                    className="home-timeline__avatar"
+                    style={{ background: a.cor }}
+                    aria-hidden="true"
+                  >
+                    {iniciais(a.autor)}
+                  </span>
+                  <div className="home-timeline__corpo">
+                    <p className="home-timeline__texto">
+                      <strong>{a.autor}</strong> {a.acao}
+                    </p>
+                    <span className="home-timeline__tempo">{a.tempo}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="home-fila-vazia__texto">
+              {dados ? "Nenhuma atividade ainda." : "Carregando atividade…"}
+            </p>
+          )}
 
-          <div className="home-dica">
-            <div className="home-dica__mascote" aria-hidden="true">
-              <Mascote tamanho={56} />
+          {dica ? (
+            <div className="home-dica">
+              <div className="home-dica__mascote" aria-hidden="true">
+                <Mascote tamanho={56} />
+              </div>
+              <div className="home-dica__texto">
+                <p className="home-dica__titulo">
+                  <span aria-hidden="true">✦</span> Dica do VOLTA
+                </p>
+                <p>
+                  {dica.trechos.map((trecho, indice) =>
+                    trecho.destaque ? (
+                      <strong key={indice}>{trecho.texto}</strong>
+                    ) : (
+                      <span key={indice}>{trecho.texto}</span>
+                    ),
+                  )}
+                </p>
+                <Link to={dica.destino} className="home-painel__link">
+                  {dica.rotuloDestino}
+                </Link>
+              </div>
             </div>
-            <div className="home-dica__texto">
-              <p className="home-dica__titulo">
-                <span aria-hidden="true">✦</span> Dica do VOLTA
-              </p>
-              <p>
-                A licença da <strong>Recicla Vida</strong> vence em 12 dias. Peça a renovação antes de mandar mais material.
-              </p>
-              <Link to="/cooperativas" className="home-painel__link">
-                Ver cooperativa
-              </Link>
-            </div>
-          </div>
+          ) : null}
         </aside>
       </div>
+
+      <Toast
+        aberto={aviso !== null}
+        titulo="Ocorrência aprovada"
+        descricao={aviso ?? undefined}
+        aoFechar={() => setAviso(null)}
+      />
     </div>
   );
 }
