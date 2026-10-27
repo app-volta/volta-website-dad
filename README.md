@@ -4,7 +4,7 @@ Plataforma que conecta indústrias (frigoríficos) a cooperativas de
 reciclagem: o operador registra um resíduo com foto, uma IA classifica o
 material (papelão, plástico, metal ou vidro) e o responsável PGRS acompanha
 o relatório, corrige a classificação se necessário, encaminha para a
-cooperativa parceira, conversa por chat e finaliza a ocorrência.
+cooperativa parceira e finaliza a ocorrência.
 
 ## Stack
 
@@ -85,9 +85,6 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 
-O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
-um assistente de IA, não um canal de mensagens com a cooperativa.
-
 Quem não tem permissão para um endpoint vê o aviso "Você não tem permissão para
 esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
 calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
@@ -166,7 +163,6 @@ Regras estritas:
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |
-| `/cooperativas/:id/chat` | Chat com uma cooperativa | Privado |
 | `/perfil` | Dados do usuário logado | Privado |
 | `*` | Página 404 com botão de retorno | Pública |
 
