@@ -8,8 +8,10 @@ import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useDadosReais } from "../../hooks/useModo";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { usePagination } from "../../hooks/usePagination";
 import { useAuth } from "../../context/AuthContext";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
@@ -55,7 +57,7 @@ export default function Ocorrencias(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busca, setBusca] = useState<string>("");
-  const [pagina, setPagina] = useState<number>(1);
+  const buscaAtrasada = useDebounce(busca);
   const [selecionadas, setSelecionadas] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -85,19 +87,15 @@ export default function Ocorrencias(): ReactNode {
   }, [dados]);
 
   const filtradas = useMemo<readonly Ocorrencia[]>(() => {
-    const termo = busca.trim().toLowerCase();
+    const termo = buscaAtrasada.trim().toLowerCase();
     return (dados ?? []).filter((o) => {
       if (filtro !== "todas" && categoriaDe(o.status) !== filtro) return false;
       return termo === "" || textoBuscavel(o).includes(termo);
     });
-  }, [dados, filtro, busca]);
+  }, [dados, filtro, buscaAtrasada]);
 
-  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
-  const paginaAtual = Math.min(pagina, totalPaginas);
-  const visiveis = filtradas.slice(
-    (paginaAtual - 1) * POR_PAGINA,
-    paginaAtual * POR_PAGINA,
-  );
+  const { paginaAtual, totalPaginas, visiveis, irParaPagina, voltarAoInicio } =
+    usePagination(filtradas, POR_PAGINA);
 
   const idsVisiveis = visiveis.map((o) => o.id);
   const todasVisiveis =
@@ -196,7 +194,7 @@ export default function Ocorrencias(): ReactNode {
             value={busca}
             onChange={(evento) => {
               setBusca(evento.target.value);
-              setPagina(1);
+              voltarAoInicio();
             }}
           />
         </label>
@@ -212,7 +210,7 @@ export default function Ocorrencias(): ReactNode {
             }
             onClick={() => {
               setFiltro(op.valor);
-              setPagina(1);
+              voltarAoInicio();
             }}
           >
             {op.rotulo}
@@ -425,7 +423,7 @@ export default function Ocorrencias(): ReactNode {
                 <button
                   type="button"
                   className="ocorrencias__proxima"
-                  onClick={() => setPagina(paginaAtual - 1)}
+                  onClick={() => irParaPagina(paginaAtual - 1)}
                 >
                   Anterior
                 </button>
@@ -439,7 +437,7 @@ export default function Ocorrencias(): ReactNode {
                   <button
                     type="button"
                     className="ocorrencias__proxima"
-                    onClick={() => setPagina(paginaAtual + 1)}
+                    onClick={() => irParaPagina(paginaAtual + 1)}
                   >
                     Próxima
                   </button>
