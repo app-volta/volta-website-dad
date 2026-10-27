@@ -1,0 +1,2 @@
+# Os hooks rodam em sh; CRLF no fim das linhas quebra a execução no Linux/macOS.
+.husky/* text eol=lf

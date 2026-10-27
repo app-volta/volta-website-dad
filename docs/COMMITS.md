@@ -88,9 +88,36 @@ Cada PR:
 2. Descrição resume o que muda, o que testar e o que ficou de fora.
 3. Merge em `develop` com `--no-ff` (preserva a linha da branch).
 
-## Ferramentas recomendadas
+## Hooks de commit (husky + commitlint)
 
-- [commitlint](https://commitlint.js.org/) + [husky](https://typicode.github.io/husky/)
-  para bloquear commits fora do padrão. Sugestão: adicionar em uma
-  iteração futura.
-- No VS Code, extensão "Conventional Commits" acelera a escrita.
+O padrão deste documento é verificado automaticamente em cada commit por
+[husky](https://typicode.github.io/husky/) e
+[commitlint](https://commitlint.js.org/). Os hooks são instalados sozinhos
+no `npm install` (script `prepare`); não há nada para configurar na mão.
+
+| Hook | O que roda | Quando barra o commit |
+|------|------------|-----------------------|
+| `pre-commit` | `oxlint --quiet` | Erro de lint (por exemplo, hook do React chamado dentro de `if`). Avisos não barram. |
+| `commit-msg` | `commitlint` com `commitlint.config.js` | Tipo fora de `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `style`, `perf`, ou resumo vazio, com maiúscula inicial ou com mais de 100 caracteres no cabeçalho. |
+
+Exemplo de commit recusado:
+
+```
+$ git commit -m "ajustes"
+✖ subject may not be empty [subject-empty]
+✖ type may not be empty [type-empty]
+husky - commit-msg script failed (code 1)
+```
+
+Para conferir uma mensagem sem commitar:
+
+```bash
+echo "feat(auth): adiciona o login" | ./node_modules/.bin/commitlint
+```
+
+Os hooks chamam `node_modules/.bin` direto, sem `npx`, porque o `npx.cmd`
+do Windows quebra em pastas com `&` no caminho (como `Instituto J&F`).
+
+## Outras ferramentas
+
+- No VS Code, a extensão "Conventional Commits" acelera a escrita.
