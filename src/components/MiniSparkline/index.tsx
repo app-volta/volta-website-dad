@@ -9,6 +9,7 @@ interface MiniSparklineProps {
   readonly rotulo?: string;
 }
 
+/** Mini gráfico de linha em SVG (`role=img`) para mostrar tendência; `comArea` preenche abaixo da linha. */
 export function MiniSparkline({
   pontos,
   largura = 120,

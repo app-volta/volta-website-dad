@@ -28,6 +28,7 @@ interface NotificacoesProps {
   readonly aoNavegar: () => void;
 }
 
+/** Painel com a lista de notificações (`role=dialog`, nome "Notificações"); recebe o foco ao abrir. */
 export function Notificacoes({
   notificacoes,
   aoNavegar,

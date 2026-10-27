@@ -13,7 +13,6 @@ const Registrar = lazy(() => import("./pages/Registrar"));
 const Ocorrencias = lazy(() => import("./pages/Ocorrencias"));
 const OcorrenciaDetalhe = lazy(() => import("./pages/OcorrenciaDetalhe"));
 const Cooperativas = lazy(() => import("./pages/Cooperativas"));
-const ChatCooperativa = lazy(() => import("./pages/ChatCooperativa"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Equipe = lazy(() => import("./pages/Equipe"));
@@ -107,19 +106,6 @@ export default function App(): ReactNode {
               subtitulo="Parcerias, homologação e licenças ambientais"
             >
               <Cooperativas />
-            </RotaPrivada>
-          }
-        />
-        <Route
-          path="/cooperativas/:id/chat"
-          element={
-            <RotaPrivada
-              titulo="Chat com cooperativa"
-              subtitulo="Parceiras próximas da sua unidade"
-              comCta={false}
-              comBusca={false}
-            >
-              <ChatCooperativa />
             </RotaPrivada>
           }
         />

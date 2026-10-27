@@ -21,6 +21,11 @@ interface TopbarProps {
   readonly idBusca?: string;
 }
 
+/**
+ * Barra superior (`<header role=banner>`) com título e subtítulo da página, busca rápida (`comBusca`),
+ * sino de notificações com a contagem de não lidas e o botão de nova ocorrência (`comCta`).
+ * Esc ou um clique fora fecha as notificações.
+ */
 export function Topbar({
   titulo,
   subtitulo,

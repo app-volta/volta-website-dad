@@ -8,6 +8,7 @@ interface MascoteProps {
   readonly rotulo?: string;
 }
 
+/** Mascote da VOLTA como imagem, com `tamanho` ou `altura` e texto alternativo opcional em `rotulo`. */
 export function Mascote({
   tamanho = 56,
   altura: alturaProp,

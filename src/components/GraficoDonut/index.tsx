@@ -14,6 +14,10 @@ interface GraficoDonutProps {
   readonly centroRotulo: string;
 }
 
+/**
+ * Gráfico de rosca em SVG com `role=img`; o `aria-label` lista cada fatia e o valor dela.
+ * O centro mostra `centroTitulo` e `centroRotulo`.
+ */
 export function GraficoDonut({
   fatias,
   tamanho = 160,

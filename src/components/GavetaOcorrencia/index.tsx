@@ -18,6 +18,7 @@ import "./styles.css";
 interface GavetaOcorrenciaProps {
   readonly ocorrencia: Ocorrencia | null;
   readonly aprovando: boolean;
+  readonly podeAprovar: boolean;
   readonly aoFechar: () => void;
   readonly aoAprovar: (id: string) => void;
   readonly aoAbrirCompleta: (id: string) => void;
@@ -26,9 +27,16 @@ interface GavetaOcorrenciaProps {
 const SELETOR_FOCAVEL =
   'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Gaveta lateral com o resumo da ocorrência (`role=dialog`, `aria-modal`).
+ * O foco vai para o botão de fechar e volta a quem abriu; Tab fica preso dentro e Esc fecha.
+ * `podeAprovar` diz se o perfil pode aprovar (a ação só aparece com a ocorrência aguardando aprovação)
+ * e `aprovando` marca que a aprovação está em andamento.
+ */
 export function GavetaOcorrencia({
   ocorrencia,
   aprovando,
+  podeAprovar: perfilPodeAprovar,
   aoFechar,
   aoAprovar,
   aoAbrirCompleta,
@@ -75,7 +83,8 @@ export function GavetaOcorrencia({
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
   const tipo = material ? `${material} A` : ocorrencia.titulo;
-  const podeAprovar = aguardaAprovacao(ocorrencia.status);
+  const aguardandoAprovacao = aguardaAprovacao(ocorrencia.status);
+  const podeAprovar = perfilPodeAprovar && aguardandoAprovacao;
   const categoria = categoriaDe(ocorrencia.status);
 
   return (
@@ -201,6 +210,10 @@ export function GavetaOcorrencia({
                 <Icone nome="check" tamanho={14} />
                 {aprovando ? "Aprovando…" : "Aprovar"}
               </button>
+            ) : aguardandoAprovacao ? (
+              <p className="gaveta__aviso-aprovacao">
+                A aprovação está disponível para gestor ou administrador.
+              </p>
             ) : null}
           </div>
         </div>

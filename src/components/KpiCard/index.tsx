@@ -14,6 +14,10 @@ interface KpiCardProps {
   readonly sparkline?: readonly number[];
 }
 
+/**
+ * Cartão de indicador: ícone, rótulo, valor, variação opcional (`delta` com `direcao`)
+ * e mini gráfico opcional (`sparkline`), que fica escondido dos leitores de tela.
+ */
 export function KpiCard({
   icone,
   rotulo,

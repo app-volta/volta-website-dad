@@ -345,7 +345,7 @@ export async function criarOcorrencia(
   const semPermissao = mensagemSePerfilNaoRegistra();
   if (semPermissao) throw new Error(semPermissao);
 
-  const foto = await arquivoDaFoto(entrada.fotoBase64);
+  const foto = arquivoDaFoto(entrada.fotoBase64);
   const [cat, analise] = await Promise.all([
     carregarCatalogo(),
     analisarFoto(foto, sinal),

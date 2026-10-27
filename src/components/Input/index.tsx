@@ -21,6 +21,11 @@ interface InputProps
   readonly acaoDireita?: AcaoDireita;
 }
 
+/**
+ * Campo de texto com rótulo ligado por `htmlFor`, ajuda e erro ligados por `aria-describedby`
+ * e `aria-invalid` quando há erro (a mensagem usa `role=alert`). Aceita ícone e uma ação nas laterais.
+ * `onChange` recebe o texto digitado, não o evento.
+ */
 export function Input({
   rotulo,
   erro,

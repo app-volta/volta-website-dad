@@ -12,6 +12,10 @@ interface GraficoLinhaProps {
   readonly rotulo?: string;
 }
 
+/**
+ * Gráfico de linha em SVG com `role=img` e nome acessível vindo de `rotulo`.
+ * Cada ponto tem rótulo e valor, e pode trazer uma `meta`.
+ */
 export function GraficoLinha({
   pontos,
   altura = 220,

@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 
+import { useAuth } from "../context/AuthContext";
 import {
   assinarNotificacoes,
   lerNotificacoesLidas,
@@ -18,13 +19,22 @@ import type { Notificacao } from "../types/notificacao";
 
 /** Notificações da unidade, com o estado de leitura vivendo fora do componente. */
 export function useNotificacoes(): readonly Notificacao[] {
+  const { usuario } = useAuth();
   useEffect(() => {
     garantirCarregado();
   }, []);
   const lidas = useSyncExternalStore(assinarNotificacoes, lerNotificacoesLidas);
   const pendentes = useSyncExternalStore(assinarMudancas, quantidadeAguardando);
   const ocorrencias = useSyncExternalStore(assinarMudancas, lerOcorrencias);
-  return montarNotificacoes(lidas, pendentes, ocorrencias, metaRecuperacaoAtual());
+  const podeRevisar =
+    usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
+  return montarNotificacoes(
+    lidas,
+    pendentes,
+    ocorrencias,
+    metaRecuperacaoAtual(),
+    podeRevisar,
+  );
 }
 
 interface AcoesNotificacoes {

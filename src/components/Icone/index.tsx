@@ -27,8 +27,8 @@ export type NomeIcone =
   | "reciclagem"
   | "pin"
   | "olho"
+  | "olho-riscado"
   | "cadeado"
-  | "google"
   | "estrela"
   | "chip"
   | "relatorio"
@@ -157,14 +157,18 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  "olho-riscado": (
+    <>
+      <path d="M2 12 C4 6 7.5 4 12 4 C16.5 4 20 6 22 12 C20 18 16.5 20 12 20 C7.5 20 4 18 2 12 Z" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M3 3 L21 21" />
+    </>
+  ),
   cadeado: (
     <>
       <rect x="4" y="11" width="16" height="10" rx="2" />
       <path d="M8 11 V7 A4 4 0 0 1 16 7 V11" />
     </>
-  ),
-  google: (
-    <path d="M12 11 V13.5 H17 C16.7 15 15.4 17 12 17 A5 5 0 1 1 12 7 C13.5 7 14.6 7.5 15.4 8.2 L17.2 6.4 C15.9 5.2 14.1 4.5 12 4.5 A7.5 7.5 0 1 0 12 19.5 C16.5 19.5 19.5 16.5 19.5 12 C19.5 11.6 19.5 11.3 19.4 11 Z" />
   ),
   estrela: (
     <path d="M12 3 L14.5 9 L21 9.7 L16 14 L17.5 20.5 L12 17 L6.5 20.5 L8 14 L3 9.7 L9.5 9 Z" />
@@ -259,6 +263,10 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   ),
 };
 
+/**
+ * Ícone SVG escolhido por nome.
+ * Sem `rotulo` ele é decorativo (`aria-hidden`); com `rotulo` vira `role=img` com esse nome acessível.
+ */
 export function Icone({
   nome,
   tamanho = 20,

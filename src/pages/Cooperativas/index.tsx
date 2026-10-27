@@ -150,6 +150,7 @@ export default function Cooperativas(): ReactNode {
               selecionada={selecionada}
               aoSelecionar={setSelecionadaId}
               aoAbrirDocumentos={() => setVerDocumentos(true)}
+              dadosReais={dadosReais}
             />
           </div>
         </>

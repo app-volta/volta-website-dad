@@ -8,6 +8,10 @@ interface MaterialBadgeProps {
   readonly compacto?: boolean;
 }
 
+/**
+ * Selo do material (papelão, plástico, metal ou vidro) com emoji decorativo e o nome.
+ * `compacto` mostra a versão reduzida.
+ */
 export function MaterialBadge({
   material,
   compacto = false,

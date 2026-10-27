@@ -8,7 +8,10 @@ import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useDadosReais } from "../../hooks/useModo";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
+import { usePagination } from "../../hooks/usePagination";
 import { useAuth } from "../../context/AuthContext";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Material } from "../../types/material";
@@ -54,7 +57,7 @@ export default function Ocorrencias(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busca, setBusca] = useState<string>("");
-  const [pagina, setPagina] = useState<number>(1);
+  const buscaAtrasada = useDebounce(busca);
   const [selecionadas, setSelecionadas] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -64,6 +67,9 @@ export default function Ocorrencias(): ReactNode {
   const [gavetaId, setGavetaId] = useState<string | null>(null);
   const navegar = useNavigate();
   const { usuario } = useAuth();
+  const dadosReais = useDadosReais();
+  const podeRevisar =
+    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const acoes = useAcoesOcorrencia();
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
@@ -81,19 +87,15 @@ export default function Ocorrencias(): ReactNode {
   }, [dados]);
 
   const filtradas = useMemo<readonly Ocorrencia[]>(() => {
-    const termo = busca.trim().toLowerCase();
+    const termo = buscaAtrasada.trim().toLowerCase();
     return (dados ?? []).filter((o) => {
       if (filtro !== "todas" && categoriaDe(o.status) !== filtro) return false;
       return termo === "" || textoBuscavel(o).includes(termo);
     });
-  }, [dados, filtro, busca]);
+  }, [dados, filtro, buscaAtrasada]);
 
-  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / POR_PAGINA));
-  const paginaAtual = Math.min(pagina, totalPaginas);
-  const visiveis = filtradas.slice(
-    (paginaAtual - 1) * POR_PAGINA,
-    paginaAtual * POR_PAGINA,
-  );
+  const { paginaAtual, totalPaginas, visiveis, irParaPagina, voltarAoInicio } =
+    usePagination(filtradas, POR_PAGINA);
 
   const idsVisiveis = visiveis.map((o) => o.id);
   const todasVisiveis =
@@ -192,7 +194,7 @@ export default function Ocorrencias(): ReactNode {
             value={busca}
             onChange={(evento) => {
               setBusca(evento.target.value);
-              setPagina(1);
+              voltarAoInicio();
             }}
           />
         </label>
@@ -208,7 +210,7 @@ export default function Ocorrencias(): ReactNode {
             }
             onClick={() => {
               setFiltro(op.valor);
-              setPagina(1);
+              voltarAoInicio();
             }}
           >
             {op.rotulo}
@@ -230,6 +232,11 @@ export default function Ocorrencias(): ReactNode {
       </div>
 
       {aviso ? <Alerta variante="sucesso">{aviso}</Alerta> : null}
+      {dadosReais && !podeRevisar ? (
+        <Alerta variante="info" titulo="Aprovação restrita a gestor ou administrador">
+          Seu perfil pode acompanhar as ocorrências. Para aprovar, entre com um perfil de gestão.
+        </Alerta>
+      ) : null}
       {erroAcao ? (
         <Alerta variante="erro" titulo="Não foi possível aprovar">
           {erroAcao}
@@ -262,23 +269,25 @@ export default function Ocorrencias(): ReactNode {
             <table className="ocorrencias__tabela">
               <thead>
                 <tr>
-                  <th scope="col" className="ocorrencias__col-check">
-                    <label className="ocorrencias__check">
-                      <input
-                        type="checkbox"
-                        checked={todasVisiveis}
-                        ref={(el) => {
-                          if (el) el.indeterminate = algumaVisivel && !todasVisiveis;
-                        }}
-                        onChange={alternarPagina}
-                        disabled={visiveis.length === 0}
-                        aria-label="Selecionar todas as ocorrências desta página"
-                      />
-                      <span className="ocorrencias__check-caixa" aria-hidden="true">
-                        <Icone nome="check" tamanho={11} />
-                      </span>
-                    </label>
-                  </th>
+                  {podeRevisar ? (
+                    <th scope="col" className="ocorrencias__col-check">
+                      <label className="ocorrencias__check">
+                        <input
+                          type="checkbox"
+                          checked={todasVisiveis}
+                          ref={(el) => {
+                            if (el) el.indeterminate = algumaVisivel && !todasVisiveis;
+                          }}
+                          onChange={alternarPagina}
+                          disabled={visiveis.length === 0}
+                          aria-label="Selecionar todas as ocorrências desta página"
+                        />
+                        <span className="ocorrencias__check-caixa" aria-hidden="true">
+                          <Icone nome="check" tamanho={11} />
+                        </span>
+                      </label>
+                    </th>
+                  ) : null}
                   <th scope="col">Ocorrência</th>
                   <th scope="col">Setor</th>
                   <th scope="col">Peso</th>
@@ -294,7 +303,7 @@ export default function Ocorrencias(): ReactNode {
               <tbody>
                 {visiveis.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="ocorrencias__vazio">
+                    <td colSpan={podeRevisar ? 9 : 8} className="ocorrencias__vazio">
                       Nenhuma ocorrência encontrada.
                     </td>
                   </tr>
@@ -310,22 +319,24 @@ export default function Ocorrencias(): ReactNode {
                             : "ocorrencias__linha"
                         }
                       >
-                        <td className="ocorrencias__col-check">
-                          <label className="ocorrencias__check">
-                            <input
-                              type="checkbox"
-                              checked={selecionadas.has(o.id)}
-                              onChange={() => alternar(o.id)}
-                              aria-label={`Selecionar ocorrência ${o.codigo}`}
-                            />
-                            <span
-                              className="ocorrencias__check-caixa"
-                              aria-hidden="true"
-                            >
-                              <Icone nome="check" tamanho={11} />
-                            </span>
-                          </label>
-                        </td>
+                        {podeRevisar ? (
+                          <td className="ocorrencias__col-check">
+                            <label className="ocorrencias__check">
+                              <input
+                                type="checkbox"
+                                checked={selecionadas.has(o.id)}
+                                onChange={() => alternar(o.id)}
+                                aria-label={`Selecionar ocorrência ${o.codigo}`}
+                              />
+                              <span
+                                className="ocorrencias__check-caixa"
+                                aria-hidden="true"
+                              >
+                                <Icone nome="check" tamanho={11} />
+                              </span>
+                            </label>
+                          </td>
+                        ) : null}
                         <td>
                           <button
                             type="button"
@@ -412,7 +423,7 @@ export default function Ocorrencias(): ReactNode {
                 <button
                   type="button"
                   className="ocorrencias__proxima"
-                  onClick={() => setPagina(paginaAtual - 1)}
+                  onClick={() => irParaPagina(paginaAtual - 1)}
                 >
                   Anterior
                 </button>
@@ -426,7 +437,7 @@ export default function Ocorrencias(): ReactNode {
                   <button
                     type="button"
                     className="ocorrencias__proxima"
-                    onClick={() => setPagina(paginaAtual + 1)}
+                    onClick={() => irParaPagina(paginaAtual + 1)}
                   >
                     Próxima
                   </button>
@@ -437,7 +448,7 @@ export default function Ocorrencias(): ReactNode {
         </div>
       )}
 
-      <div
+      {podeRevisar ? <div
         className="ocorrencias__lote"
         role="region"
         aria-label="Ações em lote"
@@ -463,11 +474,12 @@ export default function Ocorrencias(): ReactNode {
           <Icone nome="check" tamanho={14} />
           {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
         </button>
-      </div>
+      </div> : null}
 
       <GavetaOcorrencia
         ocorrencia={ocorrenciaGaveta}
         aprovando={aprovando}
+        podeAprovar={podeRevisar}
         aoFechar={() => setGavetaId(null)}
         aoAprovar={(id) => aprovar([id])}
         aoAbrirCompleta={(id) => navegar(`/ocorrencias/${id}`)}

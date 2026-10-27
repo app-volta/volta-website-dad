@@ -1,10 +1,12 @@
 # VOLTA — reciclagem industrial inteligente
 
+**Aplicação publicada:** https://volta-website-dad.vercel.app
+
 Plataforma que conecta indústrias (frigoríficos) a cooperativas de
 reciclagem: o operador registra um resíduo com foto, uma IA classifica o
 material (papelão, plástico, metal ou vidro) e o responsável PGRS acompanha
 o relatório, corrige a classificação se necessário, encaminha para a
-cooperativa parceira, conversa por chat e finaliza a ocorrência.
+cooperativa parceira e finaliza a ocorrência.
 
 ## Stack
 
@@ -47,7 +49,7 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_API_BASE_URL` | Base das chamadas à API. Use `/api`: o proxy repassa à volta-api. |
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
 | `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
-| `VITE_USAR_MOCKS` | `false` liga a volta-api. Qualquer outro valor (ou ausente) mantém os mocks locais. |
+| `VITE_USAR_MOCKS` | `false` liga as APIs; `true` usa os mocks locais. A Vercel usa `false` via `.env.production`; o Docker usa `true` por padrão (sobrescreva com `--build-arg VITE_USAR_MOCKS=false`). |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
 | `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
@@ -55,9 +57,10 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 
 ### Integração com a volta-api
 
-Por padrão o app roda com mocks (`src/services/*.mock.ts` e o mock embutido de
-`auth.ts`), então `npm run dev` funciona sem backend. Para usar a API real,
-crie um `.env.local` (não versionado):
+O `.env.example` mantém os mocks para desenvolvimento local. Na Vercel, builds
+usam as APIs por padrão; confirme que uma variável do painel não sobrescreve
+`VITE_USAR_MOCKS` com `true`. O Docker usa mocks por padrão. Para desenvolvimento
+com a API real, crie um `.env.local` (não versionado):
 
 ```
 VITE_API_BASE_URL=/api
@@ -83,9 +86,6 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
-
-O chat com cooperativa (`/cooperativas/:id/chat`) continua em mock: o chatbot é
-um assistente de IA, não um canal de mensagens com a cooperativa.
 
 Quem não tem permissão para um endpoint vê o aviso "Você não tem permissão para
 esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
@@ -165,7 +165,6 @@ Regras estritas:
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |
-| `/cooperativas/:id/chat` | Chat com uma cooperativa | Privado |
 | `/perfil` | Dados do usuário logado | Privado |
 | `*` | Página 404 com botão de retorno | Pública |
 
@@ -188,6 +187,12 @@ Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 - Contraste conferido nas variáveis da paleta
 
 ## Deploy na Vercel
+
+A branch `main` é publicada em https://volta-website-dad.vercel.app. O build
+de produção lê o `.env.production`, que liga as APIs (`VITE_USAR_MOCKS=false`);
+por isso o login e as telas dependem do ambiente de QA estar ligado. Para um
+deploy só com os mocks (qualquer e-mail e senha com 6 caracteres ou mais
+entram), defina `VITE_USAR_MOCKS=true` nas variáveis do projeto na Vercel.
 
 O `vercel.json` já contém o rewrite de SPA (`/(.*)` → `/index.html`) para
 que rotas como `/ocorrencias/1234` funcionem em recarga direta. Ao
