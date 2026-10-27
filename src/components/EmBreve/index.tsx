@@ -10,6 +10,10 @@ interface EmBreveProps {
   readonly descricao: string;
 }
 
+/**
+ * Aviso de tela ainda não disponível, com ícone, título e descrição.
+ * A seção é ligada ao título por `aria-labelledby`.
+ */
 export function EmBreve({
   icone,
   titulo,

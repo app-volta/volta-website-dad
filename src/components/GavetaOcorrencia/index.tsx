@@ -27,6 +27,12 @@ interface GavetaOcorrenciaProps {
 const SELETOR_FOCAVEL =
   'button:not(:disabled), a[href], input:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
+/**
+ * Gaveta lateral com o resumo da ocorrência (`role=dialog`, `aria-modal`).
+ * O foco vai para o botão de fechar e volta a quem abriu; Tab fica preso dentro e Esc fecha.
+ * `podeAprovar` diz se o perfil pode aprovar (a ação só aparece com a ocorrência aguardando aprovação)
+ * e `aprovando` marca que a aprovação está em andamento.
+ */
 export function GavetaOcorrencia({
   ocorrencia,
   aprovando,

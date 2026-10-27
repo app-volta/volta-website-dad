@@ -9,6 +9,10 @@ interface TextAreaProps
   readonly onChange: (valor: string) => void;
 }
 
+/**
+ * Campo de texto de várias linhas com rótulo, ajuda e erro ligados como no `Input`
+ * (`aria-describedby`, `aria-invalid` e erro em `role=alert`).
+ */
 export function TextArea({
   rotulo,
   erro,

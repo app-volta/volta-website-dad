@@ -263,6 +263,10 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
   ),
 };
 
+/**
+ * Ícone SVG escolhido por nome.
+ * Sem `rotulo` ele é decorativo (`aria-hidden`); com `rotulo` vira `role=img` com esse nome acessível.
+ */
 export function Icone({
   nome,
   tamanho = 20,

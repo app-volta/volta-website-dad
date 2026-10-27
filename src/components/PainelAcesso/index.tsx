@@ -11,6 +11,7 @@ interface PainelAcessoProps {
   readonly destaques: readonly string[];
 }
 
+/** Painel decorativo das telas de login e cadastro (`aria-hidden`), com título, texto e destaques. */
 export function PainelAcesso({
   titulo,
   texto,

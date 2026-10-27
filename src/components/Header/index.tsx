@@ -16,6 +16,7 @@ const ITENS_NAV: readonly {
   { rotulo: "Perfil", caminho: "/perfil" },
 ];
 
+/** Cabeçalho com a marca VOLTA e a navegação principal (`<nav>` com `NavLink`). */
 export function Header(): ReactNode {
   const { usuario, sair } = useAuth();
   const navegar = useNavigate();
