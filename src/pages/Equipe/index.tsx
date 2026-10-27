@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useAcoesEquipe, useEquipe } from "../../hooks/useEquipe";
 import { useDadosReais } from "../../hooks/useModo";
 import type { MembroEquipe, NovoConvite, PapelEquipe } from "../../types/equipe";
@@ -69,8 +70,9 @@ export default function Equipe(): ReactNode {
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
+  const buscaAtrasada = useDebounce(busca);
   const equipe = dados ?? [];
-  const termo = busca.trim().toLowerCase();
+  const termo = buscaAtrasada.trim().toLowerCase();
   const visiveis = equipe.filter(
     (membro) => termo === "" || textoBuscavel(membro).includes(termo),
   );
@@ -213,7 +215,7 @@ export default function Equipe(): ReactNode {
 
           {visiveis.length === 0 ? (
             <p className="lista-vazia">
-              Nenhuma pessoa encontrada para “{busca.trim()}”.
+              Nenhuma pessoa encontrada para “{buscaAtrasada.trim()}”.
             </p>
           ) : (
             <TabelaEquipe
