@@ -21,3 +21,18 @@ export function distanciaEmKm(origem: Coordenadas, destino: Coordenadas): number
   const km = 2 * RAIO_DA_TERRA_KM * Math.asin(Math.sqrt(a));
   return Math.round(km * 10) / 10;
 }
+
+interface ComDistancia {
+  readonly nome: string;
+  readonly distanciaKm: number | null;
+}
+
+/** Da mais próxima para a mais distante; sem distância, no fim e em ordem alfabética. */
+export function maisProximasPrimeiro<T extends ComDistancia>(lista: readonly T[]): readonly T[] {
+  return [...lista].sort((a, b) => {
+    if (a.distanciaKm === null && b.distanciaKm === null) return a.nome.localeCompare(b.nome, "pt-BR");
+    if (a.distanciaKm === null) return 1;
+    if (b.distanciaKm === null) return -1;
+    return a.distanciaKm - b.distanciaKm || a.nome.localeCompare(b.nome, "pt-BR");
+  });
+}
