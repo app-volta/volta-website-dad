@@ -116,7 +116,7 @@ export default function Login(): ReactNode {
               erro={errosCampo.senha}
               iconeEsquerdo="cadeado"
               acaoDireita={{
-                icone: "olho",
+                icone: mostrarSenha ? "olho" : "olho-riscado",
                 rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
                 aoClicar: () => setMostrarSenha((v) => !v),
               }}
@@ -145,19 +145,6 @@ export default function Login(): ReactNode {
               <Icone nome="seta-direita" tamanho={16} />
             </Button>
           </form>
-
-          <div className="login-tela__separador" aria-hidden="true">
-            <span>ou</span>
-          </div>
-
-          <button
-            type="button"
-            className="login-tela__google"
-            aria-label="Continuar com Google (indisponível na versão mock)"
-            disabled
-          >
-            Continuar com Google
-          </button>
 
           <p className="login-tela__cadastro">
             Novo por aqui? <Link to="/cadastro">Criar conta</Link>

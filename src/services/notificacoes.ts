@@ -81,6 +81,7 @@ function notificacoesDaApi(
   pendentes: number,
   ocorrencias: readonly Ocorrencia[],
   metaKg: number,
+  podeRevisar: boolean,
 ): readonly Notificacao[] {
   const eventos = ocorrencias
     .flatMap((o) =>
@@ -117,7 +118,7 @@ function notificacoesDaApi(
           texto: `${pendentes} ${pendentes === 1 ? "ocorrência" : "ocorrências"}`,
           destaque: true,
         },
-        { texto: " aguardando sua aprovação" },
+        { texto: podeRevisar ? " aguardando sua aprovação" : " aguardando aprovação do gestor" },
       ],
       quando: tempoRelativo(maisRecente),
       destino: "/ocorrencias",
@@ -148,9 +149,10 @@ export function montarNotificacoes(
   pendentes: number,
   ocorrencias: readonly Ocorrencia[],
   metaKg: number,
+  podeRevisar: boolean,
 ): readonly Notificacao[] {
   if (!USAR_MOCKS) {
-    return notificacoesDaApi(idsLidos, pendentes, ocorrencias, metaKg);
+    return notificacoesDaApi(idsLidos, pendentes, ocorrencias, metaKg, podeRevisar);
   }
   return MODELOS.filter(
     // Sem nada para aprovar, o aviso da fila perde o sentido.
