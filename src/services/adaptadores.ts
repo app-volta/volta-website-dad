@@ -1,4 +1,4 @@
-import fotoExemplo from "../assets/foto-exemplo.svg";
+import semFoto from "../assets/sem-foto.svg";
 import type {
   AnaliseResiduoApi,
   AreaApi,
@@ -19,6 +19,7 @@ import type {
 import type {
   ClassificacaoIA,
   NivelContaminacao,
+  OpcaoTipoResiduo,
 } from "../types/classificacao";
 import type {
   Cooperativa,
@@ -123,6 +124,13 @@ const CONTAMINACAO_DA_API: Readonly<Record<RiscoApi, NivelContaminacao>> = {
   HIGH: "alta",
 };
 
+/** Nível de contaminação da tela no risco que a volta-api guarda. */
+export const RISCO_DA_CONTAMINACAO: Readonly<Record<NivelContaminacao, RiscoApi>> = {
+  baixa: "LOW",
+  media: "MEDIUM",
+  alta: "HIGH",
+};
+
 /** Código curto e estável derivado do UUID, no formato OCC-12345. */
 export function codigoDaOcorrencia(id: string): string {
   const numero = Number.parseInt(id.replace(/-/g, "").slice(0, 8), 16);
@@ -218,6 +226,64 @@ export function classificacaoDaAnalise(analise: AnaliseResiduoApi): Classificaca
 export interface CatalogoApi {
   readonly areas: ReadonlyMap<string, AreaApi>;
   readonly tipos: ReadonlyMap<string, TipoResiduoApi>;
+}
+
+/** Um tipo por categoria do catálogo da empresa, para a pessoa corrigir o que a IA detectou. */
+export function opcoesDeTipo(catalogo: CatalogoApi): readonly OpcaoTipoResiduo[] {
+  const porCategoria = new Map<CategoriaResiduoApi, TipoResiduoApi>();
+  for (const tipo of catalogo.tipos.values()) {
+    if (!porCategoria.has(tipo.category)) porCategoria.set(tipo.category, tipo);
+  }
+  return [...porCategoria.values()]
+    .map((tipo) => ({
+      valor: tipo.id,
+      rotulo: ROTULO_CATEGORIA[tipo.category] ?? "Resíduo",
+      material: MATERIAL_POR_CATEGORIA[tipo.category] ?? null,
+    }))
+    .sort((a, b) => a.rotulo.localeCompare(b.rotulo, "pt-BR"));
+}
+
+/**
+ * Tipo do catálogo para a análise: o que a pessoa escolheu; senão, o que o
+ * texto da IA indica; senão, não reciclável.
+ */
+export function tipoDaAnalise(
+  classificacao: Pick<ClassificacaoIA, "tipoResiduoId" | "tipoDetectado">,
+  catalogo: CatalogoApi,
+): TipoResiduoApi | undefined {
+  const escolhido = classificacao.tipoResiduoId
+    ? catalogo.tipos.get(classificacao.tipoResiduoId)
+    : undefined;
+  if (escolhido) return escolhido;
+  const categoria = categoriaDoTexto(classificacao.tipoDetectado ?? "");
+  const tipos = [...catalogo.tipos.values()];
+  return (
+    tipos.find((tipo) => tipo.category === categoria) ??
+    tipos.find((tipo) => tipo.category === "NAO_RECICLAVEL")
+  );
+}
+
+/**
+ * O que a própria ocorrência guarda da análise (contaminação e quantidade),
+ * para quando nem o relatório da IA nem a análise feita neste navegador existem.
+ * Sem recomendação: a volta-api só devolve o laudo da IA se alguém o gravar.
+ */
+function classificacaoDoIncidente(
+  dto: IncidenteApi,
+  material: Material | null,
+  analisadaEm: string,
+): ClassificacaoIA | null {
+  if (dto.contaminationLevel === null && dto.estimatedQuantity === null) return null;
+  return {
+    material,
+    confianca: null,
+    contaminacao: dto.contaminationLevel
+      ? CONTAMINACAO_DA_API[dto.contaminationLevel]
+      : undefined,
+    recomendacao: "",
+    pesoEstimadoKg: dto.estimatedQuantity,
+    analisadaEm,
+  };
 }
 
 export function classificacaoDoRelatorio(
@@ -546,7 +612,7 @@ export function ocorrenciaDaApi(
     extras.classificacao ??
     (extras.relatorio
       ? classificacaoDoRelatorio(extras.relatorio, material)
-      : null);
+      : classificacaoDoIncidente(dto, material, criadaEm));
 
   const historico: EventoOcorrencia[] = [
     {
@@ -580,7 +646,7 @@ export function ocorrenciaDaApi(
     descricao: dto.employeeDescription,
     pesoKg: dto.estimatedQuantity ?? 0,
     prioridade: PRIORIDADE_DA_API[dto.priority] ?? "media",
-    fotoUrl: dto.photoUrl ?? fotoExemplo,
+    fotoUrl: dto.photoUrl ?? semFoto,
     localizacao: {
       setor: area?.sectorName ?? "Setor não informado",
       unidade: area?.locationDescription ?? "",

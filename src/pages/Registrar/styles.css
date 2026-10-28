@@ -717,3 +717,50 @@
     flex-direction: column;
   }
 }
+
+/* Correção do que a IA encontrou: tipo, contaminação e quantidade. */
+.registrar__ia-campo {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  margin-top: 4px;
+  padding: 0 10px;
+  border: 0.8px solid currentColor;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--reg-texto);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.registrar__ia-campo:focus-visible {
+  border-color: #22c06f;
+  outline: none;
+  box-shadow: var(--foco);
+}
+
+.registrar__ia-quilos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.registrar__link {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--reg-verde);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.registrar__link:disabled {
+  color: var(--reg-mudo);
+  cursor: not-allowed;
+}

@@ -1,3 +1,4 @@
+import type { ClassificacaoIA, OpcaoTipoResiduo } from "../types/classificacao";
 import type {
   NovaClassificacao,
   NovaOcorrencia,
@@ -25,6 +26,11 @@ export interface ServicoOcorrencias {
     id: string,
     sinal?: AbortSignal,
   ) => Promise<Ocorrencia>;
+  readonly analisarOcorrencia: (
+    fotoBase64: string,
+    sinal?: AbortSignal,
+  ) => Promise<ClassificacaoIA>;
+  readonly listarOpcoesDeTipo: () => Promise<readonly OpcaoTipoResiduo[]>;
   readonly criarOcorrencia: (
     entrada: NovaOcorrencia,
     sinal?: AbortSignal,
@@ -77,6 +83,8 @@ export const {
   listarSetores,
   listarOcorrencias,
   obterOcorrencia,
+  analisarOcorrencia,
+  listarOpcoesDeTipo,
   criarOcorrencia,
   aprovarOcorrencias,
   aprovarOcorrencia,

@@ -17,6 +17,8 @@ export interface ClassificacaoIA {
   readonly relatorio?: string;
   /** Tipo de resíduo como a IA descreveu ("Papelão contaminado"). */
   readonly tipoDetectado?: string;
+  /** Tipo do catálogo da volta-api que vale para esta análise (a IA ou a pessoa escolheu). */
+  readonly tipoResiduoId?: string;
   /** Peso estimado em kg; null quando a foto não tem escala ou referência. */
   readonly pesoEstimadoKg?: number | null;
   /** Quantidade de volumes (caixas, fardos), quando a fonte informa. */
@@ -24,6 +26,14 @@ export interface ClassificacaoIA {
   /** A IA pede revisão do responsável antes de agir. */
   readonly exigeValidacao?: boolean;
   readonly analisadaEm: string;
+}
+
+/** Tipo de resíduo que a pessoa pode escolher ao conferir a análise da foto. */
+export interface OpcaoTipoResiduo {
+  /** Id do tipo na volta-api; no mock, o próprio material. */
+  readonly valor: string;
+  readonly rotulo: string;
+  readonly material: Material | null;
 }
 
 /** Classificação com todos os campos preenchidos, como o mock local entrega. */
