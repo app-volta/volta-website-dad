@@ -110,6 +110,28 @@ const PRIORIDADE_DA_API: Readonly<Record<PrioridadeApi, PrioridadeOcorrencia>> =
     CRITICAL: "alta",
   };
 
+/** Palavras que o chatbot grava no lugar do enum da API (BAIXA, MEDIA, ALTA). */
+const PRIORIDADE_EM_PORTUGUES: Readonly<Record<string, PrioridadeOcorrencia>> = {
+  BAIXA: "baixa",
+  MEDIA: "media",
+  ALTA: "alta",
+  CRITICA: "alta",
+};
+
+/**
+ * Prioridade como a volta-api (LOW, MEDIUM, HIGH, CRITICAL) ou o chatbot (baixa,
+ * média, alta) gravam. Ocorrência criada pelo chatbot não pode virar "média" só
+ * porque a palavra veio em português.
+ */
+function prioridadeDaApi(valor: string | null | undefined): PrioridadeOcorrencia {
+  const chave = normalizar(valor ?? "").toUpperCase();
+  return (
+    PRIORIDADE_DA_API[chave as PrioridadeApi] ??
+    PRIORIDADE_EM_PORTUGUES[chave] ??
+    "media"
+  );
+}
+
 export const PRIORIDADE_PARA_API: Readonly<
   Record<PrioridadeOcorrencia, PrioridadeApi>
 > = {
@@ -123,6 +145,29 @@ const CONTAMINACAO_DA_API: Readonly<Record<RiscoApi, NivelContaminacao>> = {
   MEDIUM: "media",
   HIGH: "alta",
 };
+
+/**
+ * Contaminação como a volta-api (LOW, MEDIUM, HIGH) ou o chatbot (BAIXO, MEDIO,
+ * ALTO) gravam. Qualquer outro valor ("N/A", vazio) fica sem nível.
+ */
+function contaminacaoDaApi(valor: string | null | undefined): NivelContaminacao | undefined {
+  switch (normalizar(valor ?? "").toUpperCase()) {
+    case "LOW":
+    case "BAIXO":
+    case "BAIXA":
+      return "baixa";
+    case "MEDIUM":
+    case "MEDIO":
+    case "MEDIA":
+      return "media";
+    case "HIGH":
+    case "ALTO":
+    case "ALTA":
+      return "alta";
+    default:
+      return undefined;
+  }
+}
 
 /** Nível de contaminação da tela no risco que a volta-api guarda. */
 export const RISCO_DA_CONTAMINACAO: Readonly<Record<NivelContaminacao, RiscoApi>> = {
@@ -277,9 +322,7 @@ function classificacaoDoIncidente(
   return {
     material,
     confianca: null,
-    contaminacao: dto.contaminationLevel
-      ? CONTAMINACAO_DA_API[dto.contaminationLevel]
-      : undefined,
+    contaminacao: contaminacaoDaApi(dto.contaminationLevel),
     recomendacao: "",
     pesoEstimadoKg: dto.estimatedQuantity,
     analisadaEm,
@@ -293,9 +336,7 @@ export function classificacaoDoRelatorio(
   return {
     material: materialDoTexto(relatorio.detectedWasteType) ?? materialDaOcorrencia,
     confianca: null,
-    contaminacao: relatorio.aiContaminationLevel
-      ? CONTAMINACAO_DA_API[relatorio.aiContaminationLevel]
-      : undefined,
+    contaminacao: contaminacaoDaApi(relatorio.aiContaminationLevel),
     recomendacao: relatorio.recommendations ?? relatorio.reportText ?? "",
     relatorio: relatorio.reportText ?? undefined,
     analisadaEm: instanteUtc(relatorio.generatedAt),
@@ -645,7 +686,7 @@ export function ocorrenciaDaApi(
     titulo,
     descricao: dto.employeeDescription,
     pesoKg: dto.estimatedQuantity ?? 0,
-    prioridade: PRIORIDADE_DA_API[dto.priority] ?? "media",
+    prioridade: prioridadeDaApi(dto.priority),
     fotoUrl: dto.photoUrl ?? semFoto,
     localizacao: {
       setor: area?.sectorName ?? "Setor não informado",
@@ -661,7 +702,8 @@ export function ocorrenciaDaApi(
     criadaPorNome: autor,
     qualidade: "A",
     perigoso:
-      tipo?.wasteClass === "CLASSE_I" || dto.contaminationLevel === "HIGH",
+      tipo?.wasteClass === "CLASSE_I" ||
+      contaminacaoDaApi(dto.contaminationLevel) === "alta",
     setorDestino: null,
     motivoRecusa: null,
     ultimaAlteracao: null,
