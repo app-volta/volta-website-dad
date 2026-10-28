@@ -6,7 +6,7 @@ import type {
   RelatorioIaApi,
   TipoResiduoApi,
 } from "../types/api";
-import type { ClassificacaoIA } from "../types/classificacao";
+import type { ClassificacaoIA, OpcaoTipoResiduo } from "../types/classificacao";
 import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
 import type {
@@ -22,18 +22,20 @@ import { carregar, salvar } from "../utils/armazenamento";
 import { arquivoDaFoto } from "../utils/arquivo";
 import {
   PRIORIDADE_PARA_API,
+  RISCO_DA_CONTAMINACAO,
   analiseInconclusiva,
   categoriaDaApi,
-  categoriaDoTexto,
   classificacaoDaAnalise,
   eventoDaColeta,
   ocorrenciaDaApi,
-  riscoDaAnalise,
+  opcoesDeTipo,
+  tipoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
 import { analisarFoto } from "./chatbot";
 import { historicoDaColeta, listarColetas } from "./coletas";
 import { nomesDasCooperativas } from "./cooperativasBrutas";
+import { ENVIO_DE_FOTOS_CONFIGURADO, enviarFotoDaOcorrencia } from "./imagens";
 import {
   ErroHttp,
   aoEncerrarSessao,
@@ -48,11 +50,16 @@ import {
  * A API ainda não tem recusar, encaminhar, observação nem reclassificação, e o
  * status dela é só PENDING ou CLOSED. Essas quatro ações ficam registradas
  * neste navegador (localStorage, por usuário) e são aplicadas por cima do que a
- * API devolve. Quando o backend ganhar os endpoints, só este arquivo muda.
+ * API devolve. O mesmo vale para a análise da IA (recomendação e relatório): a
+ * volta-api só a devolve se alguém gravar o laudo, então ela fica guardada neste
+ * navegador, por usuário. Quando o backend ganhar os endpoints, só este arquivo muda.
  */
 
 const CHAVE_LOCAIS = "volta:ocorrencias-locais";
 const VERSAO_LOCAIS = 1;
+const CHAVE_ANALISES = "volta:analises-ia";
+const VERSAO_ANALISES = 1;
+const MAXIMO_DE_ANALISES = 200;
 
 /** O que foi decidido só neste navegador sobre uma ocorrência. */
 interface AlteracaoLocal {
@@ -69,12 +76,14 @@ interface AlteracaoLocal {
 }
 
 type AlteracoesLocais = Readonly<Record<string, AlteracaoLocal>>;
+type AnalisesGuardadas = Readonly<Record<string, ClassificacaoIA>>;
 
 // Estado do módulo: o que veio da API (`bases`), o que foi decidido localmente
 // (`locais`) e o resultado da mistura dos dois (`cache`), que as telas leem.
 let bases: readonly Ocorrencia[] = [];
 let cache: readonly Ocorrencia[] = [];
 let locais: AlteracoesLocais | null = null;
+let analises: AnalisesGuardadas | null = null;
 let catalogo: Promise<CatalogoApi> | null = null;
 let carregouLista = false;
 let carregandoLista = false;
@@ -92,6 +101,27 @@ function lerLocais(): AlteracoesLocais {
     locais = carregar<AlteracoesLocais>(chaveLocais(), VERSAO_LOCAIS) ?? {};
   }
   return locais;
+}
+
+function chaveAnalises(): string {
+  return `${CHAVE_ANALISES}:${obterUsuarioAtual()?.id ?? "anonimo"}`;
+}
+
+function lerAnalises(): AnalisesGuardadas {
+  if (analises === null) {
+    analises = carregar<AnalisesGuardadas>(chaveAnalises(), VERSAO_ANALISES) ?? {};
+  }
+  return analises;
+}
+
+/** Guarda a análise que a pessoa viu, para ela não sumir ao recarregar a página. */
+function guardarAnalise(id: string, analise: ClassificacaoIA): void {
+  const todas = { ...lerAnalises(), [id]: analise };
+  const recentes = Object.entries(todas)
+    .sort(([, a], [, b]) => b.analisadaEm.localeCompare(a.analisadaEm))
+    .slice(0, MAXIMO_DE_ANALISES);
+  analises = Object.fromEntries(recentes);
+  salvar(chaveAnalises(), VERSAO_ANALISES, analises);
 }
 
 function usar<T>(local: T | undefined, base: T): T {
@@ -209,7 +239,7 @@ function nomeDoAutor(userId: string): string | undefined {
 function daApi(dto: IncidenteApi, cat: CatalogoApi): Ocorrencia {
   return ocorrenciaDaApi(dto, cat, {
     relatorio: relatorios.get(dto.id) ?? null,
-    classificacao: classificacoes.get(dto.id) ?? null,
+    classificacao: classificacoes.get(dto.id) ?? lerAnalises()[dto.id] ?? null,
     coleta: eventosDeColeta.get(dto.id),
     autorNome: nomeDoAutor(dto.userId),
   });
@@ -338,17 +368,25 @@ function mensagemSePerfilNaoRegistra(): string | null {
   return `Só colaboradores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador.`;
 }
 
-export async function criarOcorrencia(
-  entrada: NovaOcorrencia,
+/** Tipos de resíduo que a pessoa pode escolher ao conferir a análise (um por categoria). */
+export async function listarOpcoesDeTipo(): Promise<readonly OpcaoTipoResiduo[]> {
+  return opcoesDeTipo(await carregarCatalogo());
+}
+
+/**
+ * Análise da foto pela IA, antes de registrar. Nada é gravado: a pessoa confere
+ * (e corrige, se precisar) o que a IA viu e só então a ocorrência é criada.
+ */
+export async function analisarOcorrencia(
+  fotoBase64: string,
   sinal?: AbortSignal,
-): Promise<Ocorrencia> {
+): Promise<ClassificacaoIA> {
   const semPermissao = mensagemSePerfilNaoRegistra();
   if (semPermissao) throw new Error(semPermissao);
 
-  const foto = arquivoDaFoto(entrada.fotoBase64);
   const [cat, analise] = await Promise.all([
     carregarCatalogo(),
-    analisarFoto(foto, sinal),
+    analisarFoto(arquivoDaFoto(fotoBase64), sinal),
   ]);
 
   if (analiseInconclusiva(analise)) {
@@ -357,7 +395,37 @@ export async function criarOcorrencia(
     );
   }
   const classificacao = classificacaoDaAnalise(analise);
+  const tipo = tipoDaAnalise(classificacao, cat);
+  if (!tipo) {
+    throw new Error(
+      `O tipo de resíduo "${analise.detected_waste_type}" ainda não está cadastrado na VOLTA.`,
+    );
+  }
+  return { ...classificacao, tipoResiduoId: tipo.id };
+}
 
+/**
+ * Envia a foto ao serviço de imagens e devolve o endereço dela. Se o envio falhar
+ * (ou não estiver configurado), a ocorrência segue sem foto em vez de se perder.
+ */
+async function guardarFoto(foto: File, sinal?: AbortSignal): Promise<string | null> {
+  if (!ENVIO_DE_FOTOS_CONFIGURADO) return null;
+  try {
+    return await enviarFotoDaOcorrencia(foto, sinal);
+  } catch (excecao) {
+    if (sinal?.aborted) throw excecao;
+    return null;
+  }
+}
+
+export async function criarOcorrencia(
+  entrada: NovaOcorrencia,
+  sinal?: AbortSignal,
+): Promise<Ocorrencia> {
+  const semPermissao = mensagemSePerfilNaoRegistra();
+  if (semPermissao) throw new Error(semPermissao);
+
+  const cat = await carregarCatalogo();
   const area = [...cat.areas.values()].find(
     (item) => item.sectorName === entrada.localizacao.setor,
   );
@@ -365,27 +433,24 @@ export async function criarOcorrencia(
     throw new Error("Escolha um setor cadastrado para a sua empresa.");
   }
 
-  const categoria = categoriaDoTexto(analise.detected_waste_type);
-  const tipos = [...cat.tipos.values()];
-  const tipo =
-    tipos.find((item) => item.category === categoria) ??
-    tipos.find((item) => item.category === "NAO_RECICLAVEL");
+  const { classificacao } = entrada;
+  const tipo = tipoDaAnalise(classificacao, cat);
   if (!tipo) {
-    throw new Error(
-      `O tipo de resíduo "${analise.detected_waste_type}" ainda não está cadastrado na VOLTA.`,
-    );
+    throw new Error("O tipo de resíduo escolhido não está cadastrado na VOLTA.");
   }
 
+  const endereco = await guardarFoto(arquivoDaFoto(entrada.fotoBase64), sinal);
+
+  const peso = classificacao.pesoEstimadoKg ?? null;
   const corpo: NovoIncidenteApi = {
     areaId: area.id,
     wasteTypeId: tipo.id,
-    photoUrl: null,
+    photoUrl: endereco,
     employeeDescription: entrada.descricao,
-    contaminationLevel: riscoDaAnalise(analise),
-    estimatedQuantity:
-      analise.estimated_quantity_kg === null
-        ? null
-        : Math.round(analise.estimated_quantity_kg * 100) / 100,
+    contaminationLevel: classificacao.contaminacao
+      ? RISCO_DA_CONTAMINACAO[classificacao.contaminacao]
+      : null,
+    estimatedQuantity: peso === null ? null : Math.round(peso * 100) / 100,
     priority: PRIORIDADE_PARA_API[entrada.prioridade],
   };
 
@@ -403,9 +468,11 @@ export async function criarOcorrencia(
     throw excecao;
   });
   classificacoes.set(criado.id, classificacao);
+  guardarAnalise(criado.id, classificacao);
+  // Sem endereço, a foto só existe nesta sessão (em memória) e a tela avisa.
   substituirBase({
     ...daApi(criado, cat),
-    fotoUrl: entrada.fotoBase64,
+    fotoUrl: criado.photoUrl ?? entrada.fotoBase64,
     criadaPorNome: entrada.autorNome,
   });
   publicar();
@@ -566,6 +633,7 @@ function reiniciar(): void {
   bases = [];
   cache = [];
   locais = null;
+  analises = null;
   catalogo = null;
   carregouLista = false;
   relatorios.clear();

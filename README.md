@@ -53,6 +53,9 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
 | `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Conta do Cloudinary onde ficam as fotos das ocorrências. Não é segredo. |
+| `VITE_CLOUDINARY_PRESET_OCORRENCIA` | Configuração de envio (sem assinatura) das fotos: `AI-Analysis`, que guarda em `Ocorrencia/Assets/Images`. Não é segredo. |
+| `VITE_CLOUDINARY_API_URL` | Opcional: troca a base do envio (por padrão `https://api.cloudinary.com/v1_1`), útil em testes. |
 | `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
@@ -76,7 +79,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 |------|-----------|
 | Login | `POST /auth/login`, `GET /users/me` |
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
-| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict` |
+| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
 | Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
 | Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
@@ -86,6 +89,16 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
+
+**Registro de ocorrência.** A IA analisa a foto, mas nada é gravado até a pessoa
+tocar em "Confirmar e registrar". Antes disso, "Editar dados" deixa corrigir o
+tipo, a contaminação e a quantidade, e o que foi corrigido é o que vai para a API.
+Ao registrar, a foto é enviada ao Cloudinary; se o envio falhar, a ocorrência é
+registrada sem foto e a tela avisa. Contaminação, quantidade e foto ficam na
+própria ocorrência. A recomendação e o relatório da IA, porém, a volta-api só
+devolve se alguém gravar o laudo (`ai_report`), e hoje nada no front consegue
+fazer isso: por enquanto eles ficam guardados neste navegador, por usuário, e
+outra pessoa ou outro aparelho não os vê.
 
 Quem não tem permissão para um endpoint vê o aviso "Você não tem permissão para
 esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
