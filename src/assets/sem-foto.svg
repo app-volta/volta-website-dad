@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Ocorrência sem foto">
+  <rect width="640" height="480" fill="#eef2ef"/>
+  <g fill="none" stroke="#9aa8a0" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M244 192h26l14-24h72l14 24h26a22 22 0 0 1 22 22v90a22 22 0 0 1-22 22H244a22 22 0 0 1-22-22v-90a22 22 0 0 1 22-22Z"/>
+    <circle cx="320" cy="260" r="34"/>
+  </g>
+  <text x="320" y="376" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#5d6961">Sem foto</text>
+</svg>

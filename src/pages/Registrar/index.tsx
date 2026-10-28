@@ -5,11 +5,19 @@ import { useNavigate } from "react-router-dom";
 import { Alerta } from "../../components/Alerta";
 import { Button } from "../../components/Button";
 import { Icone } from "../../components/Icone";
+import { ModalCamera } from "../../components/ModalCamera";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useDadosReais } from "../../hooks/useModo";
+import { useOpcoesDeTipo } from "../../hooks/useOpcoesDeTipo";
 import { useSetores } from "../../hooks/useSetores";
+import type {
+  NivelContaminacao,
+  OpcaoTipoResiduo,
+} from "../../types/classificacao";
 import { METADADOS_MATERIAL } from "../../types/material";
+import { modoDaCamera } from "../../utils/camera";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
 import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
@@ -36,6 +44,18 @@ const PRIORIDADES: readonly {
 ];
 
 const SEM_SETORES: readonly string[] = [];
+const SEM_OPCOES: readonly OpcaoTipoResiduo[] = [];
+
+const NIVEIS_DE_CONTAMINACAO: readonly {
+  readonly valor: NivelContaminacao;
+  readonly rotulo: string;
+}[] = [
+  { valor: "baixa", rotulo: "Baixa" },
+  { valor: "media", rotulo: "Média" },
+  { valor: "alta", rotulo: "Alta" },
+];
+
+const LIMITE_DE_QUILOS = 100_000;
 
 function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
   const leitor = new FileReader();
@@ -50,6 +70,9 @@ export default function Registrar(): ReactNode {
   const acoes = useAcoesOcorrencia();
   const { dados: setoresCarregados, erro: erroSetores } = useSetores();
   const setores = setoresCarregados ?? SEM_SETORES;
+  const { dados: opcoesCarregadas } = useOpcoesDeTipo();
+  const opcoesDeTipo = opcoesCarregadas ?? SEM_OPCOES;
+  const dadosReais = useDadosReais();
   const navegar = useNavigate();
   const [estado, despachar] = useReducer(
     redutor,
@@ -66,6 +89,8 @@ export default function Registrar(): ReactNode {
     }
   }, [setores, estado.setor]);
   const [arrastando, setArrastando] = useState<boolean>(false);
+  const [cameraAberta, setCameraAberta] = useState<boolean>(false);
+  const [modoCamera] = useState(modoDaCamera);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
   const inputCamera = useRef<HTMLInputElement | null>(null);
 
@@ -84,8 +109,13 @@ export default function Registrar(): ReactNode {
     lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
   }
 
+  function usarCamera(): void {
+    if (modoCamera === "navegador") setCameraAberta(true);
+    else inputCamera.current?.click();
+  }
+
   function trocarFoto(): void {
-    despachar({ tipo: "editar_novamente" });
+    despachar({ tipo: "voltar_aos_detalhes" });
     inputArquivo.current?.click();
   }
 
@@ -100,29 +130,71 @@ export default function Registrar(): ReactNode {
       despachar({ tipo: "definir_erros", erros: validacao.erros });
       return;
     }
-    despachar({ tipo: "iniciar_envio" });
+    despachar({ tipo: "iniciar_analise" });
+    try {
+      const classificacao = await acoes.analisar(estado.fotoBase64 ?? "");
+      despachar({ tipo: "analise_pronta", classificacao });
+    } catch (excecao) {
+      despachar({
+        tipo: "analise_erro",
+        mensagem:
+          excecao instanceof Error ? excecao.message : "Falha ao analisar.",
+      });
+    }
+  }
+
+  /** Só aqui a ocorrência é criada: já com a foto enviada e com o que a pessoa corrigiu. */
+  async function registrar(): Promise<void> {
+    if (!estado.classificacao) return;
+    despachar({ tipo: "iniciar_registro" });
     try {
       const criada = await acoes.criar({
-        descricao: descricaoInformada
-          ? estado.descricao
-          : `Resíduo registrado em ${estado.setor}`,
+        descricao:
+          estado.descricao.trim().length > 0
+            ? estado.descricao
+            : `Resíduo registrado em ${estado.setor}`,
         prioridade: estado.prioridade,
         autorNome: usuario?.nome ?? "Equipe",
         localizacao: { setor: estado.setor, unidade: usuario?.unidade ?? "-" },
         fotoBase64: estado.fotoBase64 ?? "",
+        classificacao: estado.classificacao,
       });
-      if (!criada.classificacao) throw new Error("Análise vazia.");
       despachar({
-        tipo: "envio_sucesso",
-        classificacao: criada.classificacao,
+        tipo: "registro_ok",
         codigo: criada.codigo,
+        // No mock a foto nunca sai do navegador; na API, "data:" quer dizer que o envio falhou.
+        fotoGuardada: !dadosReais || !criada.fotoUrl.startsWith("data:"),
       });
     } catch (excecao) {
       despachar({
-        tipo: "envio_erro",
+        tipo: "registro_erro",
         mensagem:
-          excecao instanceof Error ? excecao.message : "Falha ao analisar.",
+          excecao instanceof Error ? excecao.message : "Falha ao registrar.",
       });
+    }
+  }
+
+  function escolherTipo(valor: string): void {
+    const opcao = opcoesDeTipo.find((item) => item.valor === valor);
+    if (!opcao) return;
+    despachar({
+      tipo: "ajustar_analise",
+      ajuste: {
+        tipoResiduoId: opcao.valor,
+        material: opcao.material,
+        tipoDetectado: opcao.rotulo,
+      },
+    });
+  }
+
+  function digitarQuantidade(texto: string): void {
+    if (texto === "") {
+      despachar({ tipo: "ajustar_analise", ajuste: { pesoEstimadoKg: null } });
+      return;
+    }
+    const quilos = Number(texto);
+    if (Number.isFinite(quilos) && quilos >= 0 && quilos <= LIMITE_DE_QUILOS) {
+      despachar({ tipo: "ajustar_analise", ajuste: { pesoEstimadoKg: quilos } });
     }
   }
 
@@ -136,6 +208,13 @@ export default function Registrar(): ReactNode {
         <p>
           A ocorrência <strong>{estado.codigoGerado}</strong> foi registrada.
         </p>
+        {estado.fotoGuardada ? null : (
+          <Alerta variante="info" titulo="A foto não foi guardada">
+            O serviço de imagens não respondeu, então a ocorrência ficou sem foto
+            para as outras pessoas. Neste navegador ela aparece até você
+            recarregar a página.
+          </Alerta>
+        )}
         <div className="registrar__sucesso-acoes">
           <Button
             variante="secundario"
@@ -169,6 +248,15 @@ export default function Registrar(): ReactNode {
     : "";
   const tipoRotulo = estado.classificacao?.tipoDetectado ?? materialRotulo;
   const unidades = estado.classificacao?.unidades ?? null;
+  const valorDoTipo =
+    estado.classificacao?.tipoResiduoId ??
+    opcoesDeTipo.find(
+      (item) =>
+        item.material !== null && item.material === estado.classificacao?.material,
+    )?.valor ??
+    "";
+  const nivelDeContaminacao = estado.classificacao?.contaminacao ?? "";
+  const quilos = estado.classificacao?.pesoEstimadoKg ?? null;
 
   return (
     <div className="registrar">
@@ -190,6 +278,15 @@ export default function Registrar(): ReactNode {
         tabIndex={-1}
         aria-hidden="true"
         onChange={selecionarFoto}
+      />
+
+      <ModalCamera
+        aberto={cameraAberta}
+        onFechar={() => setCameraAberta(false)}
+        onCapturar={(foto) => {
+          despachar({ tipo: "definir_foto", foto });
+          setCameraAberta(false);
+        }}
       />
 
       <div
@@ -221,7 +318,14 @@ export default function Registrar(): ReactNode {
         </Alerta>
       ) : null}
       {estado.erroEnvio ? (
-        <Alerta variante="erro" titulo="Não foi possível registrar">
+        <Alerta
+          variante="erro"
+          titulo={
+            estado.etapa === "detalhes"
+              ? "Não foi possível analisar a foto"
+              : "Não foi possível registrar"
+          }
+        >
           {estado.erroEnvio}
         </Alerta>
       ) : null}
@@ -305,13 +409,15 @@ export default function Registrar(): ReactNode {
                 >
                   <Icone nome="upload" tamanho={16} /> Enviar foto
                 </button>
-                <button
-                  type="button"
-                  className="registrar__botao registrar__botao--suave"
-                  onClick={() => inputCamera.current?.click()}
-                >
-                  <Icone nome="camera" tamanho={16} /> Usar câmera
-                </button>
+                {modoCamera === null ? null : (
+                  <button
+                    type="button"
+                    className="registrar__botao registrar__botao--suave"
+                    onClick={usarCamera}
+                  >
+                    <Icone nome="camera" tamanho={16} /> Usar câmera
+                  </button>
+                )}
               </div>
               {estado.erroCampo.foto ? (
                 <p role="alert" className="registrar__erro-campo">
@@ -450,6 +556,15 @@ export default function Registrar(): ReactNode {
                   Adicione uma foto pra liberar a análise
                 </p>
               )}
+              {estado.classificacao ? (
+                <button
+                  type="button"
+                  className="registrar__botao registrar__botao--contorno registrar__botao--largo"
+                  onClick={() => despachar({ tipo: "voltar_a_analise" })}
+                >
+                  Voltar à análise
+                </button>
+              ) : null}
             </div>
           </section>
         ) : (
@@ -477,7 +592,25 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="papelao">
                 <p className="registrar__ia-rotulo">Tipo</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
+                  estado.editando ? (
+                    <select
+                      aria-label="Tipo de resíduo"
+                      className="registrar__ia-campo"
+                      value={valorDoTipo}
+                      onChange={(e) => escolherTipo(e.target.value)}
+                    >
+                      {valorDoTipo === "" ? (
+                        <option value="">{tipoRotulo || "Escolha o tipo"}</option>
+                      ) : null}
+                      {opcoesDeTipo.map((opcao) => (
+                        <option key={opcao.valor} value={opcao.valor}>
+                          {opcao.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
+                  )
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -485,9 +618,36 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="vidro">
                 <p className="registrar__ia-rotulo">Contaminação</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">
-                    {contaminacao(estado.classificacao)}
-                  </p>
+                  estado.editando ? (
+                    <select
+                      aria-label="Nível de contaminação"
+                      className="registrar__ia-campo"
+                      value={nivelDeContaminacao}
+                      onChange={(e) =>
+                        despachar({
+                          tipo: "ajustar_analise",
+                          ajuste: {
+                            contaminacao: (e.target.value || undefined) as
+                              | NivelContaminacao
+                              | undefined,
+                          },
+                        })
+                      }
+                    >
+                      {nivelDeContaminacao === "" ? (
+                        <option value="">Não informada</option>
+                      ) : null}
+                      {NIVEIS_DE_CONTAMINACAO.map((nivel) => (
+                        <option key={nivel.valor} value={nivel.valor}>
+                          {nivel.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="registrar__ia-valor">
+                      {contaminacao(estado.classificacao)}
+                    </p>
+                  )
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -495,9 +655,24 @@ export default function Registrar(): ReactNode {
               <div className="registrar__ia-card" data-cor="plastico">
                 <p className="registrar__ia-rotulo">Quantidade</p>
                 {concluida ? (
-                  <p className="registrar__ia-valor">
-                    {formatarPeso(estado.classificacao?.pesoEstimadoKg ?? 0)}
-                  </p>
+                  estado.editando ? (
+                    <span className="registrar__ia-quilos">
+                      <input
+                        type="number"
+                        min={0}
+                        max={LIMITE_DE_QUILOS}
+                        step="0.1"
+                        inputMode="decimal"
+                        aria-label="Quantidade em quilos"
+                        className="registrar__ia-campo"
+                        defaultValue={quilos ?? ""}
+                        onChange={(e) => digitarQuantidade(e.target.value)}
+                      />
+                      <span aria-hidden="true">kg</span>
+                    </span>
+                  ) : (
+                    <p className="registrar__ia-valor">{formatarPeso(quilos ?? 0)}</p>
+                  )
                 ) : (
                   <span className="registrar__ia-esqueleto" />
                 )}
@@ -563,22 +738,39 @@ export default function Registrar(): ReactNode {
                   </div>
                 </div>
 
+                {estado.editando ? (
+                  <p className="registrar__dica">
+                    Corrija o que a IA errou e toque em Concluir edição.
+                  </p>
+                ) : null}
+
                 <div className="registrar__acoes">
                   <button
                     type="button"
                     className="registrar__botao registrar__botao--primario registrar__botao--largo"
-                    onClick={() => despachar({ tipo: "confirmar" })}
+                    onClick={registrar}
+                    disabled={estado.registrando}
                   >
-                    Confirmar e registrar
+                    {estado.registrando ? "Registrando…" : "Confirmar e registrar"}
                   </button>
                   <button
                     type="button"
                     className="registrar__botao registrar__botao--contorno"
-                    onClick={() => despachar({ tipo: "editar_novamente" })}
+                    aria-pressed={estado.editando}
+                    onClick={() => despachar({ tipo: "alternar_edicao" })}
+                    disabled={estado.registrando}
                   >
-                    Editar dados
+                    {estado.editando ? "Concluir edição" : "Editar dados"}
                   </button>
                 </div>
+                <button
+                  type="button"
+                  className="registrar__link"
+                  onClick={() => despachar({ tipo: "voltar_aos_detalhes" })}
+                  disabled={estado.registrando}
+                >
+                  Mudar descrição, setor ou prioridade
+                </button>
               </>
             ) : null}
           </section>

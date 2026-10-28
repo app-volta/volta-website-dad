@@ -1,6 +1,7 @@
 import fotoExemplo from "../assets/foto-exemplo.svg";
+import type { ClassificacaoIA, OpcaoTipoResiduo } from "../types/classificacao";
 import type { Material } from "../types/material";
-import { METADADOS_MATERIAL } from "../types/material";
+import { MATERIAIS, METADADOS_MATERIAL } from "../types/material";
 import type {
   AtualizarOcorrencia,
   EventoOcorrencia,
@@ -110,7 +111,7 @@ function eventosIniciais(
   codigo: string,
   autor: string,
   tituloOuMaterial: string,
-  confianca: number,
+  confianca: number | null,
   em: string,
 ): EventoOcorrencia[] {
   return [
@@ -125,7 +126,10 @@ function eventosIniciais(
       id: `${codigo}-e2`,
       tipo: "ia",
       autor: "IA VOLTA",
-      texto: `classificou como ${tituloOuMaterial} · confiança ${Math.round(confianca * 100)}%`,
+      texto:
+        confianca === null
+          ? `classificou como ${tituloOuMaterial}`
+          : `classificou como ${tituloOuMaterial} · confiança ${Math.round(confianca * 100)}%`,
       em,
       rotuloTempo: "+2 min",
     },
@@ -288,23 +292,42 @@ export async function obterOcorrencia(
   return encontrada;
 }
 
+/** Análise da foto antes de registrar; no mock, a classificação local de sempre. */
+export function analisarOcorrencia(
+  fotoBase64: string,
+  sinal?: AbortSignal,
+): Promise<ClassificacaoIA> {
+  return classificarFoto(fotoBase64, sinal);
+}
+
+export function listarOpcoesDeTipo(): Promise<readonly OpcaoTipoResiduo[]> {
+  return Promise.resolve(
+    MATERIAIS.map((material) => ({
+      valor: material,
+      rotulo: METADADOS_MATERIAL[material].rotulo,
+      material,
+    })),
+  );
+}
+
 export async function criarOcorrencia(
   entrada: NovaOcorrencia,
-  sinal?: AbortSignal,
+  _sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
-  const classificacao = await classificarFoto(entrada.fotoBase64, sinal);
+  const { classificacao } = entrada;
+  const material: Material = classificacao.material ?? "papelao";
   const agora = new Date().toISOString();
   const codigo = proximoCodigo();
   const nova: Ocorrencia = {
     id: `occ-${codigo.slice(4)}`,
     codigo,
-    titulo: METADADOS_MATERIAL[classificacao.material].rotulo,
+    titulo: METADADOS_MATERIAL[material].rotulo,
     descricao: entrada.descricao,
-    pesoKg: 20 + (entrada.fotoBase64.length % 40),
+    pesoKg: classificacao.pesoEstimadoKg ?? 0,
     prioridade: entrada.prioridade,
     fotoUrl: entrada.fotoBase64,
     localizacao: entrada.localizacao,
-    material: classificacao.material,
+    material,
     status: "classificada",
     classificacao,
     cooperativaId: null,
@@ -320,7 +343,7 @@ export async function criarOcorrencia(
     historico: eventosIniciais(
       codigo,
       entrada.autorNome,
-      METADADOS_MATERIAL[classificacao.material].rotulo,
+      METADADOS_MATERIAL[material].rotulo,
       classificacao.confianca,
       agora,
     ),

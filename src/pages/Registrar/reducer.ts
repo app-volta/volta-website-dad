@@ -4,6 +4,14 @@ export type Etapa = "detalhes" | "analise" | "sucesso";
 
 export type Prioridade = "baixa" | "media" | "alta";
 
+/** O que a pessoa pode corrigir no que a IA encontrou antes de registrar. */
+export type AjusteDaAnalise = Partial<
+  Pick<
+    ClassificacaoIA,
+    "tipoResiduoId" | "tipoDetectado" | "material" | "contaminacao" | "pesoEstimadoKg"
+  >
+>;
+
 export interface EstadoRegistrar {
   readonly etapa: Etapa;
   readonly fotoBase64: string | null;
@@ -13,8 +21,15 @@ export interface EstadoRegistrar {
   readonly avisarResponsavel: boolean;
   readonly erroCampo: Readonly<Record<string, string>>;
   readonly erroEnvio: string | null;
+  /** O que a IA viu na foto, com as correções da pessoa; nada foi gravado ainda. */
   readonly classificacao: ClassificacaoIA | null;
+  /** Tipo, contaminação e quantidade estão abertos para correção. */
+  readonly editando: boolean;
+  /** A ocorrência está sendo enviada à API. */
+  readonly registrando: boolean;
   readonly codigoGerado: string | null;
+  /** A foto chegou ao serviço de imagens (ou não precisava chegar, como no mock). */
+  readonly fotoGuardada: boolean;
 }
 
 export type AcaoRegistrar =
@@ -27,15 +42,20 @@ export type AcaoRegistrar =
       readonly tipo: "definir_erros";
       readonly erros: Readonly<Record<string, string>>;
     }
-  | { readonly tipo: "iniciar_envio" }
+  | { readonly tipo: "iniciar_analise" }
+  | { readonly tipo: "analise_pronta"; readonly classificacao: ClassificacaoIA }
+  | { readonly tipo: "analise_erro"; readonly mensagem: string }
+  | { readonly tipo: "alternar_edicao" }
+  | { readonly tipo: "ajustar_analise"; readonly ajuste: AjusteDaAnalise }
+  | { readonly tipo: "voltar_aos_detalhes" }
+  | { readonly tipo: "voltar_a_analise" }
+  | { readonly tipo: "iniciar_registro" }
+  | { readonly tipo: "registro_erro"; readonly mensagem: string }
   | {
-      readonly tipo: "envio_sucesso";
-      readonly classificacao: ClassificacaoIA;
+      readonly tipo: "registro_ok";
       readonly codigo: string;
+      readonly fotoGuardada: boolean;
     }
-  | { readonly tipo: "envio_erro"; readonly mensagem: string }
-  | { readonly tipo: "editar_novamente" }
-  | { readonly tipo: "confirmar" }
   | { readonly tipo: "reiniciar"; readonly setor: string };
 
 export function estadoInicial(setorPadrao: string): EstadoRegistrar {
@@ -49,7 +69,10 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     erroCampo: {},
     erroEnvio: null,
     classificacao: null,
+    editando: false,
+    registrando: false,
     codigoGerado: null,
+    fotoGuardada: true,
   };
 }
 
@@ -59,7 +82,14 @@ export function redutor(
 ): EstadoRegistrar {
   switch (acao.tipo) {
     case "definir_foto":
-      return { ...estado, fotoBase64: acao.foto, erroCampo: {} };
+      // Outra foto, outra análise: a anterior não vale mais.
+      return {
+        ...estado,
+        fotoBase64: acao.foto,
+        classificacao: null,
+        editando: false,
+        erroCampo: {},
+      };
     case "definir_descricao":
       return { ...estado, descricao: acao.descricao, erroCampo: {} };
     case "definir_setor":
@@ -70,22 +100,47 @@ export function redutor(
       return { ...estado, avisarResponsavel: !estado.avisarResponsavel };
     case "definir_erros":
       return { ...estado, erroCampo: acao.erros };
-    case "iniciar_envio":
-      return { ...estado, etapa: "analise", erroEnvio: null };
-    case "envio_sucesso":
+    case "iniciar_analise":
       return {
         ...estado,
         etapa: "analise",
-        classificacao: acao.classificacao,
-        codigoGerado: acao.codigo,
+        classificacao: null,
+        editando: false,
         erroEnvio: null,
       };
-    case "envio_erro":
-      return { ...estado, etapa: "detalhes", erroEnvio: acao.mensagem };
-    case "editar_novamente":
-      return { ...estado, etapa: "detalhes" };
-    case "confirmar":
-      return { ...estado, etapa: "sucesso" };
+    case "analise_pronta":
+      return { ...estado, classificacao: acao.classificacao, erroEnvio: null };
+    case "analise_erro":
+      return {
+        ...estado,
+        etapa: "detalhes",
+        classificacao: null,
+        erroEnvio: acao.mensagem,
+      };
+    case "alternar_edicao":
+      return { ...estado, editando: !estado.editando };
+    case "ajustar_analise":
+      return estado.classificacao
+        ? { ...estado, classificacao: { ...estado.classificacao, ...acao.ajuste } }
+        : estado;
+    case "voltar_aos_detalhes":
+      return { ...estado, etapa: "detalhes", editando: false, erroEnvio: null };
+    case "voltar_a_analise":
+      return estado.classificacao
+        ? { ...estado, etapa: "analise", erroEnvio: null }
+        : estado;
+    case "iniciar_registro":
+      return { ...estado, registrando: true, erroEnvio: null };
+    case "registro_erro":
+      return { ...estado, registrando: false, erroEnvio: acao.mensagem };
+    case "registro_ok":
+      return {
+        ...estado,
+        etapa: "sucesso",
+        registrando: false,
+        codigoGerado: acao.codigo,
+        fotoGuardada: acao.fotoGuardada,
+      };
     case "reiniciar":
       return estadoInicial(acao.setor);
   }

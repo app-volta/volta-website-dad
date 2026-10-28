@@ -70,6 +70,8 @@ export interface NovaOcorrencia {
   readonly autorNome: string;
   readonly localizacao: Localizacao;
   readonly fotoBase64: string;
+  /** Análise da foto já conferida (e, se preciso, corrigida) pela pessoa. */
+  readonly classificacao: ClassificacaoIA;
 }
 
 export interface AtualizarOcorrencia {

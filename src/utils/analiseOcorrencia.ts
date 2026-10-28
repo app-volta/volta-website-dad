@@ -62,6 +62,18 @@ export function relatorioAutomatico(ocorrencia: Ocorrencia): string {
   }
 }
 
+/**
+ * Recomendação que a IA deu para a ocorrência. A volta-api só devolve o laudo
+ * da IA se alguém o gravar; sem ele (e sem a análise guardada neste navegador)
+ * não há texto, e dizer que a IA "ainda analisa" seria falso.
+ */
+export function recomendacaoDaIa(ocorrencia: Ocorrencia): string {
+  return (
+    ocorrencia.classificacao?.recomendacao.trim() ||
+    "A recomendação da IA não ficou guardada para esta ocorrência."
+  );
+}
+
 export function recomendacaoVolta(
   ocorrencia: Ocorrencia,
   semelhantes: number,
@@ -69,8 +81,5 @@ export function recomendacaoVolta(
   if (semelhantes >= 2) {
     return `Esse é o ${semelhantes}º ${ocorrencia.titulo.toLowerCase()} do ${ocorrencia.localizacao.setor} na semana. Vale uma ação preventiva no setor.`;
   }
-  return (
-    ocorrencia.classificacao?.recomendacao ??
-    "A IA ainda está analisando esta ocorrência."
-  );
+  return recomendacaoDaIa(ocorrencia);
 }
