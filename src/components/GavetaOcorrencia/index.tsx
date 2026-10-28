@@ -4,7 +4,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
-import { contaminacao } from "../../utils/analiseOcorrencia";
+import { contaminacao, recomendacaoDaIa } from "../../utils/analiseOcorrencia";
 import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
@@ -138,10 +138,12 @@ export function GavetaOcorrencia({
               src={ocorrencia.fotoUrl}
               alt={`Foto da ocorrência ${ocorrencia.titulo}`}
             />
-            <span className="gaveta__selo">
-              <Icone nome="brilho" tamanho={12} />
-              Confiança da IA {formatarConfianca(confianca)}
-            </span>
+            {confianca === null ? null : (
+              <span className="gaveta__selo">
+                <Icone nome="brilho" tamanho={12} />
+                Confiança da IA {formatarConfianca(confianca)}
+              </span>
+            )}
           </div>
 
           <div className="gaveta__selos">
@@ -186,8 +188,7 @@ export function GavetaOcorrencia({
                 <Icone nome="brilho" tamanho={14} /> VOLTA recomenda
               </p>
               <p className="gaveta__recomenda-texto">
-                {ocorrencia.classificacao?.recomendacao ??
-                  "A IA ainda está analisando esta ocorrência."}
+                {recomendacaoDaIa(ocorrencia)}
               </p>
             </div>
           </div>
