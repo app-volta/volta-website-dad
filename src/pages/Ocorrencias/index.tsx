@@ -288,14 +288,14 @@ export default function Ocorrencias(): ReactNode {
                       </label>
                     </th>
                   ) : null}
-                  <th scope="col">Ocorrência</th>
-                  <th scope="col">Setor</th>
-                  <th scope="col">Peso</th>
-                  <th scope="col">Confiança IA</th>
-                  <th scope="col">Prioridade</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Registrada</th>
-                  <th scope="col">
+                  <th scope="col" className="ocorrencias__col-ocorrencia">Ocorrência</th>
+                  <th scope="col" className="ocorrencias__col-setor">Setor</th>
+                  <th scope="col" className="ocorrencias__col-peso">Peso</th>
+                  <th scope="col" className="ocorrencias__col-confianca">Confiança IA</th>
+                  <th scope="col" className="ocorrencias__col-prioridade">Prioridade</th>
+                  <th scope="col" className="ocorrencias__col-status">Status</th>
+                  <th scope="col" className="ocorrencias__col-registrada">Registrada</th>
+                  <th scope="col" className="ocorrencias__col-abrir">
                     <span className="sr-only">Abrir</span>
                   </th>
                 </tr>

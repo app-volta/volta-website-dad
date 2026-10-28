@@ -156,31 +156,33 @@
   font-size: 14px;
 }
 
-.ocorrencias__tabela th:nth-child(1) {
+/* Larguras por coluna, não por posição: sem a coluna de seleção (perfis que
+   só acompanham) a tabela tem uma coluna a menos e as larguras não deslizam. */
+.ocorrencias__tabela .ocorrencias__col-check {
   width: 4.6%;
 }
-.ocorrencias__tabela th:nth-child(2) {
+.ocorrencias__tabela .ocorrencias__col-ocorrencia {
   width: 21.6%;
 }
-.ocorrencias__tabela th:nth-child(3) {
+.ocorrencias__tabela .ocorrencias__col-setor {
   width: 11%;
 }
-.ocorrencias__tabela th:nth-child(4) {
+.ocorrencias__tabela .ocorrencias__col-peso {
   width: 7.4%;
 }
-.ocorrencias__tabela th:nth-child(5) {
+.ocorrencias__tabela .ocorrencias__col-confianca {
   width: 11.8%;
 }
-.ocorrencias__tabela th:nth-child(6) {
+.ocorrencias__tabela .ocorrencias__col-prioridade {
   width: 9.8%;
 }
-.ocorrencias__tabela th:nth-child(7) {
+.ocorrencias__tabela .ocorrencias__col-status {
   width: 18.8%;
 }
-.ocorrencias__tabela th:nth-child(8) {
+.ocorrencias__tabela .ocorrencias__col-registrada {
   width: 10.8%;
 }
-.ocorrencias__tabela th:nth-child(9) {
+.ocorrencias__tabela .ocorrencias__col-abrir {
   width: 4.2%;
 }
 
