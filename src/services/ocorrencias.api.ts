@@ -39,6 +39,7 @@ import { ENVIO_DE_FOTOS_CONFIGURADO, enviarFotoDaOcorrencia } from "./imagens";
 import {
   ErroHttp,
   aoEncerrarSessao,
+  esperarAte,
   obterUsuarioAtual,
   requisitar,
 } from "./http";
@@ -224,8 +225,10 @@ export async function listarAreas(): Promise<readonly AreaApi[]> {
 }
 
 /** Setores da empresa da pessoa logada (GET /areas/mine). */
-export async function listarSetores(): Promise<readonly string[]> {
-  const cat = await carregarCatalogo();
+export async function listarSetores(
+  sinal?: AbortSignal,
+): Promise<readonly string[]> {
+  const cat = await esperarAte(carregarCatalogo(), sinal);
   return [...cat.areas.values()]
     .map((area) => area.sectorName)
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -369,8 +372,10 @@ function mensagemSePerfilNaoRegistra(): string | null {
 }
 
 /** Tipos de resíduo que a pessoa pode escolher ao conferir a análise (um por categoria). */
-export async function listarOpcoesDeTipo(): Promise<readonly OpcaoTipoResiduo[]> {
-  return opcoesDeTipo(await carregarCatalogo());
+export async function listarOpcoesDeTipo(
+  sinal?: AbortSignal,
+): Promise<readonly OpcaoTipoResiduo[]> {
+  return opcoesDeTipo(await esperarAte(carregarCatalogo(), sinal));
 }
 
 /**

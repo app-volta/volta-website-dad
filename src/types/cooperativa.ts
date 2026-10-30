@@ -86,6 +86,16 @@ export interface IndicacaoDeCooperativas {
   readonly cooperativas: readonly CooperativaIndicada[];
 }
 
+/** Campos do formulário de cadastro, como a pessoa digita (coordenadas ainda em texto). */
+export interface FormularioCooperativa {
+  readonly nome: string;
+  readonly cnpj: string;
+  readonly materiais: readonly MaterialAceito[];
+  readonly arquivo: File | null;
+  readonly latitude: string;
+  readonly longitude: string;
+}
+
 export interface NovaCooperativa {
   readonly nome: string;
   readonly cnpj: string;

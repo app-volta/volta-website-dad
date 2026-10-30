@@ -9,8 +9,19 @@ import {
   MATERIAIS_CADASTRO,
   ROTULOS_MATERIAL_ACEITO,
 } from "../../types/cooperativa";
-import type { MaterialAceito, NovaCooperativa } from "../../types/cooperativa";
-import { validarLicenca } from "../../utils/cooperativas";
+import type {
+  FormularioCooperativa,
+  MaterialAceito,
+  NovaCooperativa,
+} from "../../types/cooperativa";
+import {
+  lerCoordenada,
+  validarLatitude,
+  validarLicenca,
+  validarLongitude,
+  validarMateriais,
+  validarNomeCooperativa,
+} from "../../utils/cooperativas";
 import { mascararCnpj } from "../../utils/formatacao";
 import { validarCnpj } from "../../utils/validadores";
 import "./modal.css";
@@ -29,11 +40,14 @@ function formatarTamanho(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
 }
 
-/** Aceita vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
-function lerCoordenada(texto: string): number {
-  const limpo = texto.trim().replace(",", ".");
-  return limpo === "" ? Number.NaN : Number(limpo);
-}
+const FORMULARIO_VAZIO: FormularioCooperativa = {
+  nome: "",
+  cnpj: "",
+  materiais: [],
+  arquivo: null,
+  latitude: "",
+  longitude: "",
+};
 
 export function ModalAdicionar({
   cadastroNaApi = false,
@@ -51,42 +65,40 @@ export function ModalAdicionar({
   const nomeRef = useRef<HTMLInputElement | null>(null);
   const cnpjRef = useRef<HTMLInputElement | null>(null);
 
-  const [nome, setNome] = useState<string>("");
-  const [cnpj, setCnpj] = useState<string>("");
-  const [materiais, setMateriais] = useState<readonly MaterialAceito[]>([]);
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [latitude, setLatitude] = useState<string>("");
-  const [longitude, setLongitude] = useState<string>("");
+  // Os campos mudam e são enviados juntos, então ficam num só objeto.
+  const [formulario, setFormulario] =
+    useState<FormularioCooperativa>(FORMULARIO_VAZIO);
   const [arrastando, setArrastando] = useState<boolean>(false);
   const [tentou, setTentou] = useState<boolean>(false);
 
-  const erroNome =
-    nome.trim().length < 3 ? "Informe o nome da cooperativa." : null;
+  const { nome, cnpj, materiais, arquivo, latitude, longitude } = formulario;
+
+  const erroNome = validarNomeCooperativa(nome);
   const erroCnpj = validarCnpj(cnpj);
-  const erroMateriais =
-    materiais.length === 0 ? "Escolha ao menos um material." : null;
+  const erroMateriais = validarMateriais(materiais);
   const erroLicenca = validarLicenca(arquivo);
-  const erroLatitude = !cadastroNaApi
-    ? null
-    : !(lerCoordenada(latitude) >= -90 && lerCoordenada(latitude) <= 90)
-      ? "Informe a latitude, entre -90 e 90."
-      : null;
-  const erroLongitude = !cadastroNaApi
-    ? null
-    : !(lerCoordenada(longitude) >= -180 && lerCoordenada(longitude) <= 180)
-      ? "Informe a longitude, entre -180 e 180."
-      : null;
+  const erroLatitude = cadastroNaApi ? validarLatitude(latitude) : null;
+  const erroLongitude = cadastroNaApi ? validarLongitude(longitude) : null;
+
+  /** Troca só o campo editado; o spread copia o resto sem mutar o estado. */
+  function atualizar<Campo extends keyof FormularioCooperativa>(
+    campo: Campo,
+    valor: FormularioCooperativa[Campo],
+  ): void {
+    setFormulario((atual) => ({ ...atual, [campo]: valor }));
+  }
 
   function alternarMaterial(material: MaterialAceito): void {
-    setMateriais((atuais) =>
-      atuais.includes(material)
-        ? atuais.filter((item) => item !== material)
-        : [...atuais, material],
-    );
+    setFormulario((atual) => ({
+      ...atual,
+      materiais: atual.materiais.includes(material)
+        ? atual.materiais.filter((item) => item !== material)
+        : [...atual.materiais, material],
+    }));
   }
 
   function escolherArquivo(evento: ChangeEvent<HTMLInputElement>): void {
-    setArquivo(evento.target.files?.[0] ?? null);
+    atualizar("arquivo", evento.target.files?.[0] ?? null);
     evento.target.value = "";
   }
 
@@ -94,7 +106,7 @@ export function ModalAdicionar({
     evento.preventDefault();
     setArrastando(false);
     const solto = evento.dataTransfer.files[0];
-    if (solto) setArquivo(solto);
+    if (solto) atualizar("arquivo", solto);
   }
 
   function enviar(evento: FormEvent<HTMLFormElement>): void {
@@ -177,7 +189,7 @@ export function ModalAdicionar({
             autoComplete="off"
             aria-invalid={tentou && erroNome ? true : undefined}
             aria-describedby={tentou && erroNome ? `${idNome}-erro` : undefined}
-            onChange={(evento) => setNome(evento.target.value)}
+            onChange={(evento) => atualizar("nome", evento.target.value)}
           />
         </Campo>
 
@@ -197,7 +209,9 @@ export function ModalAdicionar({
             autoComplete="off"
             aria-invalid={tentou && erroCnpj ? true : undefined}
             aria-describedby={tentou && erroCnpj ? `${idCnpj}-erro` : undefined}
-            onChange={(evento) => setCnpj(mascararCnpj(evento.target.value))}
+            onChange={(evento) =>
+              atualizar("cnpj", mascararCnpj(evento.target.value))
+            }
           />
         </Campo>
 
@@ -237,7 +251,7 @@ export function ModalAdicionar({
                 autoComplete="off"
                 aria-invalid={tentou && erroLatitude ? true : undefined}
                 aria-describedby={tentou && erroLatitude ? `${idLatitude}-erro` : undefined}
-                onChange={(evento) => setLatitude(evento.target.value)}
+                onChange={(evento) => atualizar("latitude", evento.target.value)}
               />
             </Campo>
             <Campo
@@ -255,7 +269,7 @@ export function ModalAdicionar({
                 autoComplete="off"
                 aria-invalid={tentou && erroLongitude ? true : undefined}
                 aria-describedby={tentou && erroLongitude ? `${idLongitude}-erro` : undefined}
-                onChange={(evento) => setLongitude(evento.target.value)}
+                onChange={(evento) => atualizar("longitude", evento.target.value)}
               />
             </Campo>
           </div>
@@ -298,7 +312,7 @@ export function ModalAdicionar({
             <button
               type="button"
               className="coops-form__remover"
-              onClick={() => setArquivo(null)}
+              onClick={() => atualizar("arquivo", null)}
             >
               Remover arquivo
             </button>

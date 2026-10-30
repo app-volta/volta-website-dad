@@ -12,35 +12,38 @@ import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
 export function useCooperativas(
   chaveRecarga = 0,
 ): EstadoRequisicao<readonly Cooperativa[]> {
-  const [dados, setDados] = useState<readonly Cooperativa[] | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoRequisicao<readonly Cooperativa[]>>({
+    dados: null,
+    carregando: true,
+    erro: null,
+  });
 
   useEffect(() => {
     const controle = new AbortController();
-    setCarregando(true);
-    setErro(null);
+    setEstado((atual) => ({ ...atual, carregando: true, erro: null }));
 
     listarCooperativas(controle.signal)
       .then((lista) => {
-        if (!controle.signal.aborted) setDados(lista);
+        if (!controle.signal.aborted) {
+          setEstado({ dados: lista, carregando: false, erro: null });
+        }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Falha ao carregar cooperativas.",
-        );
-      })
-      .finally(() => {
-        if (!controle.signal.aborted) setCarregando(false);
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            excecao instanceof Error
+              ? excecao.message
+              : "Falha ao carregar cooperativas.",
+        }));
       });
 
     return () => controle.abort();
   }, [chaveRecarga]);
 
-  return { dados, carregando, erro };
+  return estado;
 }
 
 interface ResultadoCooperativa {

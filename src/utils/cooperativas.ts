@@ -1,4 +1,4 @@
-import type { Cooperativa } from "../types/cooperativa";
+import type { Cooperativa, MaterialAceito } from "../types/cooperativa";
 
 export type EstadoLicenca =
   | "valida"
@@ -144,6 +144,40 @@ export function validarLicenca(arquivo: File | null): string | null {
     return "O PDF passa de 10 MB.";
   }
   return null;
+}
+
+const NOME_MINIMO_COOPERATIVA = 3;
+
+export function validarNomeCooperativa(nome: string): string | null {
+  return nome.trim().length < NOME_MINIMO_COOPERATIVA
+    ? "Informe o nome da cooperativa."
+    : null;
+}
+
+export function validarMateriais(
+  materiais: readonly MaterialAceito[],
+): string | null {
+  return materiais.length === 0 ? "Escolha ao menos um material." : null;
+}
+
+/** Aceita vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
+export function lerCoordenada(texto: string): number {
+  const limpo = texto.trim().replace(",", ".");
+  return limpo === "" ? Number.NaN : Number(limpo);
+}
+
+export function validarLatitude(texto: string): string | null {
+  const valor = lerCoordenada(texto);
+  return valor >= -90 && valor <= 90
+    ? null
+    : "Informe a latitude, entre -90 e 90.";
+}
+
+export function validarLongitude(texto: string): string | null {
+  const valor = lerCoordenada(texto);
+  return valor >= -180 && valor <= 180
+    ? null
+    : "Informe a longitude, entre -180 e 180.";
 }
 
 export function cooperativasNoRaio(

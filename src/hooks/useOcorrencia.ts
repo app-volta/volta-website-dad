@@ -8,42 +8,47 @@ export function useOcorrencia(
   id: string | undefined,
   chaveRecarga = 0,
 ): EstadoRequisicao<Ocorrencia> {
-  const [dados, setDados] = useState<Ocorrencia | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(Boolean(id));
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoRequisicao<Ocorrencia>>({
+    dados: null,
+    carregando: Boolean(id),
+    erro: null,
+  });
 
   useEffect(() => {
     if (!id) {
-      setDados(null);
-      setCarregando(false);
-      setErro("Identificador da ocorrência ausente.");
+      setEstado({
+        dados: null,
+        carregando: false,
+        erro: "Identificador da ocorrência ausente.",
+      });
       return;
     }
 
     const controle = new AbortController();
-    setCarregando(true);
-    setErro(null);
+    setEstado((atual) => ({ ...atual, carregando: true, erro: null }));
 
     obterOcorrencia(id, controle.signal)
       .then((item) => {
-        if (!controle.signal.aborted) setDados(item);
+        if (!controle.signal.aborted) {
+          setEstado({ dados: item, carregando: false, erro: null });
+        }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Falha ao carregar a ocorrência.",
-        );
-      })
-      .finally(() => {
-        if (!controle.signal.aborted) setCarregando(false);
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            excecao instanceof Error
+              ? excecao.message
+              : "Falha ao carregar a ocorrência.",
+        }));
       });
 
     return () => controle.abort();
   }, [id, chaveRecarga]);
 
-  return { dados, carregando, erro };
+  return estado;
 }
 
 /** Quantas ocorrências parecidas a unidade teve na semana; 0 enquanto a ocorrência não chegou. */
