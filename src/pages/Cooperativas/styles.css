@@ -154,7 +154,7 @@
 
 .coops__rolagem:focus-visible {
   outline: 0;
-  box-shadow: inset var(--foco);
+  box-shadow: var(--foco-interno);
 }
 
 .coops__tabela {

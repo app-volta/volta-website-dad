@@ -78,7 +78,7 @@
 }
 
 .notif__item:focus-visible {
-  box-shadow: inset var(--foco);
+  box-shadow: var(--foco-interno);
 }
 
 .notif__icone {

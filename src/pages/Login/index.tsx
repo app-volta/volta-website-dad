@@ -60,6 +60,9 @@ export default function Login(): ReactNode {
 
   return (
     <div className="login-tela">
+      <a href="#conteudo" className="skip-link">
+        Pular para o conteúdo principal
+      </a>
       <PainelAcesso
         titulo={["Cuidar do descarte", "ficou simples."]}
         texto="Aprove ocorrências, acompanhe metas e gerencie as cooperativas parceiras da sua unidade num lugar só."
@@ -70,87 +73,85 @@ export default function Login(): ReactNode {
         ]}
       />
 
-      <main
-        id="conteudo"
-        className="login-tela__form-lado login-tela__form-lado--entrar"
-        tabIndex={-1}
-      >
+      <div className="login-tela__form-lado login-tela__form-lado--entrar">
         <div className="login-tela__form-card">
-          <div className="login-tela__form-logo">
+          <header className="login-tela__form-logo">
             <LogoVolta altura={42} />
-          </div>
-          <h1 className="login-tela__titulo">Bem-vindo de volta</h1>
-          <p className="login-tela__descricao">
-            Entre com o e-mail da sua unidade.
-          </p>
+          </header>
+          <main id="conteudo" className="login-tela__form-principal" tabIndex={-1}>
+            <h1 className="login-tela__titulo">Bem-vindo de volta</h1>
+            <p className="login-tela__descricao">
+              Entre com o e-mail da sua unidade.
+            </p>
 
-          {erro ? (
-            <Alerta variante="erro" titulo="Não foi possível entrar">
-              {erro}
-            </Alerta>
-          ) : null}
+            {erro ? (
+              <Alerta variante="erro" titulo="Não foi possível entrar">
+                {erro}
+              </Alerta>
+            ) : null}
 
-          <form onSubmit={tratarSubmit} noValidate>
-            <Input
-              rotulo="E-mail"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="nome@empresa.com.br"
-              value={formulario.email}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, email: valor }))
-              }
-              erro={errosCampo.email}
-              iconeEsquerdo="mensagem"
-            />
-            <Input
-              rotulo="Senha"
-              type={mostrarSenha ? "text" : "password"}
-              autoComplete="current-password"
-              required
-              value={formulario.senha}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, senha: valor }))
-              }
-              erro={errosCampo.senha}
-              iconeEsquerdo="cadeado"
-              acaoDireita={{
-                icone: mostrarSenha ? "olho" : "olho-riscado",
-                rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
-                aoClicar: () => setMostrarSenha((v) => !v),
-              }}
-            />
+            <form onSubmit={tratarSubmit} noValidate>
+              <Input
+                rotulo="E-mail"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="nome@empresa.com.br"
+                value={formulario.email}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, email: valor }))
+                }
+                erro={errosCampo.email}
+                iconeEsquerdo="mensagem"
+              />
+              <Input
+                rotulo="Senha"
+                type={mostrarSenha ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={formulario.senha}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, senha: valor }))
+                }
+                erro={errosCampo.senha}
+                iconeEsquerdo="cadeado"
+                acaoDireita={{
+                  icone: mostrarSenha ? "olho" : "olho-riscado",
+                  rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
+                  aoClicar: () => setMostrarSenha((v) => !v),
+                }}
+              />
 
-            <div className="login-tela__linha">
-              <label className="login-tela__manter">
-                <input
-                  type="checkbox"
-                  className="login-tela__manter-input"
-                  checked={manterConectado}
-                  onChange={(evento) => setManterConectado(evento.target.checked)}
-                />
-                <span className="login-tela__manter-caixa" aria-hidden="true">
-                  <Icone nome="check" tamanho={12} />
-                </span>
-                <span>Manter conectado</span>
-              </label>
-              <Link to="/cadastro" className="login-tela__esqueci">
-                Esqueci minha senha
-              </Link>
-            </div>
+              <div className="login-tela__linha">
+                <label className="login-tela__manter">
+                  <input
+                    type="checkbox"
+                    className="login-tela__manter-input"
+                    checked={manterConectado}
+                    onChange={(evento) => setManterConectado(evento.target.checked)}
+                  />
+                  <span className="login-tela__manter-caixa" aria-hidden="true">
+                    <Icone nome="check" tamanho={12} />
+                  </span>
+                  <span>Manter conectado</span>
+                </label>
+                <Link to="/cadastro" className="login-tela__esqueci">
+                  Esqueci minha senha
+                </Link>
+              </div>
 
-            <Button type="submit" larguraTotal carregando={carregando}>
-              Entrar no painel
-              <Icone nome="seta-direita" tamanho={16} />
-            </Button>
-          </form>
+              <Button type="submit" larguraTotal carregando={carregando}>
+                Entrar no painel
+                <Icone nome="seta-direita" tamanho={16} />
+              </Button>
+            </form>
 
-          <p className="login-tela__cadastro">
-            Novo por aqui? <Link to="/cadastro">Criar conta</Link>
-          </p>
+            <p className="login-tela__cadastro">
+              Novo por aqui? <Link to="/cadastro">Criar conta</Link>
+            </p>
+          </main>
         </div>
-      </main>
+      </div>
       <Rodape className="login-tela__rodape" />
     </div>
   );

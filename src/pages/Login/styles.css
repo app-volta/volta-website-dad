@@ -209,3 +209,9 @@
     grid-column: 1;
   }
 }
+
+/* O <main> fica dentro do cartão, abaixo do <header> com a logo; o layout em coluna é o mesmo de antes. */
+.login-tela__form-principal {
+  display: flex;
+  flex-direction: column;
+}
