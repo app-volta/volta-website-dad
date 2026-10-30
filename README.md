@@ -241,3 +241,20 @@ O trabalho é dividido nas branches de ticket do SCRUM, todas nascidas de
 | `feat/SCRUM-1872` | Conventional Commits |
 | `feat/SCRUM-1873` | Context API + hooks customizados |
 | `feat/SCRUM-1874` | Zero `any` no TypeScript |
+
+## Histórico de desenvolvimento
+
+- **Aplicação publicada:** https://volta-website-dad.vercel.app
+- **Primeiro commit do projeto:** feito em 15/09/2026 na branch
+  [`feat/SCRUM-1934`](https://github.com/app-volta/volta-website-dad/tree/feat/SCRUM-1934)
+  (card "Criar base do projeto com vite"). Ela entrou na `develop` pela
+  [PR #17](https://github.com/app-volta/volta-website-dad/pull/17) em
+  25/09/2026. O repositório já existia desde 27/06/2026, só com o commit
+  automático "Initial commit" do GitHub.
+- **Histórico completo de commits:**
+  [`develop`](https://github.com/app-volta/volta-website-dad/commits/develop).
+  A `main` só recebe a junção (squash) da `develop`, por Pull Request com
+  aprovação, e por isso tem poucos commits; o dia a dia está na `develop`.
+- **Período:** do primeiro commit (15/09/2026) até o fim de outubro de 2026.
+  Cada tarefa nasce de um card do Jira (projeto SCRUM), vira uma branch
+  `feat|fix|chore/SCRUM-N` e entra na `develop` por Pull Request.
