@@ -148,6 +148,7 @@ Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
 src/
 ├─ components/<Nome>/index.tsx     # cada componente na sua pasta
 ├─ pages/<Nome>/index.tsx          # cada página na sua pasta
+├─ pages/<Nome>/<Parte>/index.tsx  # parte que só aquela página usa (modal, tabela), também na sua pasta
 ├─ services/<recurso>.ts           # ÚNICA camada que chama APIs externas
 ├─ types/<dominio>.ts              # interfaces por domínio, zero `any`
 ├─ context/<Nome>/index.tsx        # Contextos + Providers
@@ -158,6 +159,10 @@ src/
 
 Regras estritas:
 
+- **Todo componente fica em pasta própria, com `index.tsx`.** O que várias
+  telas usam vai para `src/components/`; o que só uma página usa fica dentro
+  da pasta dela, também em pasta própria (por exemplo
+  `src/pages/Cooperativas/ModalAdicionar/index.tsx`).
 - **Zero `any` em `src/`.** Todas as entidades e props têm interfaces em
   `src/types/`.
 - **Nenhum `fetch` fora de `src/services/`.** Páginas e componentes chamam
