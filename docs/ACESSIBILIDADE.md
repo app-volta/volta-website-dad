@@ -20,7 +20,9 @@ auditoria quanto como referência para revisores de PR.
   `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar),
   `<main id="conteudo">` e `<footer>` (componente `Rodape`, fora do `<main>`
   para valer como landmark de informações do site). Login, cadastro e 404
-  também têm `<main>` e `<footer>`. Diálogos e gavetas usam
+  também têm `<header>` com a logo (fora do `<main>`, então vale como
+  banner), `<main>` e `<footer>`; na 404 o link de volta fica num
+  `<nav aria-label="Voltar">`. Diálogos e gavetas usam
   `<div role="dialog">` e não declaram `<header>`, `<footer>` nem `<aside>`,
   para não virarem um segundo banner, um segundo rodapé nem um complementar
   dentro de outro ponto de referência.
@@ -61,7 +63,8 @@ calculado no pior ponto do gradiente.
 ### 2.4.1 Pular blocos
 - Skip-link no topo da Sidebar (`Pular para o conteúdo principal`, visível
   apenas ao receber foco). Aponta para `#conteudo`, que é o `<main>` do shell
-  privado e também da página 404.
+  privado. Login, cadastro e 404 têm o próprio skip-link, com a mesma classe,
+  como primeiro item da página.
 
 ### 2.4.3 Ordem de foco
 - Modal preserva a ordem natural do DOM e não usa `tabindex` positivo.
@@ -69,9 +72,18 @@ calculado no pior ponto do gradiente.
   do Tab; setas ←/→ movem entre abas.
 
 ### 2.4.7 Foco visível
-- `:focus-visible` global no `src/index.css` aplica um `box-shadow` verde.
-  Nenhum `outline: none` foi introduzido sem substituição por foco visível
-  equivalente.
+- `:focus-visible` global no `src/index.css` desenha um `outline` sólido de
+  3 px em `--foco-cor` (`#15874C`, 4,6:1 sobre branco; o mínimo da 1.4.11 é
+  3:1), com 2 px de folga para continuar visível sobre botões verdes. Usa
+  `outline` e não `box-shadow` para não ficar escondido embaixo da sombra
+  própria de botões como o "Entrar", e porque o `outline` é mantido no modo de
+  alto contraste do Windows. Na Sidebar verde o anel é branco.
+- Os campos de texto desenham o mesmo anel como `box-shadow` no contêiner
+  (`--foco`, com a folga branca) e, nas linhas de tabela, como
+  `--foco-interno`. Nenhum `outline: none` foi introduzido sem substituição
+  por foco visível equivalente.
+- Conferido: na tela de cada rota privada, todo elemento focável mostra o
+  anel quando recebe foco pelo teclado.
 
 ### 2.5.5 Tamanho do alvo (AAA — mas seguido aqui)
 - Botões têm `min-height: 44px` (declarado em
