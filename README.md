@@ -56,7 +56,6 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_CLOUDINARY_CLOUD_NAME` | Conta do Cloudinary onde ficam as fotos das ocorrências. Não é segredo. |
 | `VITE_CLOUDINARY_PRESET_OCORRENCIA` | Configuração de envio (sem assinatura) das fotos: `AI-Analysis`, que guarda em `Ocorrencia/Assets/Images`. Não é segredo. |
 | `VITE_CLOUDINARY_API_URL` | Opcional: troca a base do envio (por padrão `https://api.cloudinary.com/v1_1`), útil em testes. |
-| `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
 
@@ -218,6 +217,14 @@ importar o repo na Vercel, os padrões do Vite (`npm run build` / pasta
 `dist`) já funcionam. Para usar a API real, configure em Environment
 Variables `VITE_API_BASE_URL=/api` e `VITE_USAR_MOCKS=false`; o `rewrite` de
 `/api` no `vercel.json` aponta para a API de QA.
+
+O `vercel.json` também manda os cabeçalhos de segurança: `Content-Security-Policy`
+(o navegador só carrega script, imagem e conexão da própria aplicação e do
+Cloudinary), `X-Frame-Options: DENY` (o site não abre dentro de outro),
+`Permissions-Policy` (só a câmera é liberada), `nosniff` e `Referrer-Policy`. Se
+o app passar a usar um serviço externo (outra CDN de imagens, outra API), o
+domínio dele precisa entrar no `connect-src` ou no `img-src` da CSP; sem isso o
+navegador bloqueia a chamada e o console mostra qual domínio faltou.
 
 ## Padrão de commits
 
