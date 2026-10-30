@@ -8,7 +8,7 @@ auditoria quanto como referência para revisores de PR.
 
 ### 1.1.1 Conteúdo não textual
 - `<img>` sempre com `alt` descritivo. Exemplos:
-  [`OcorrenciaCard/index.tsx`](../src/components/OcorrenciaCard/index.tsx),
+  [`LogoVolta/index.tsx`](../src/components/LogoVolta/index.tsx),
   [`OcorrenciaDetalhe/index.tsx`](../src/pages/OcorrenciaDetalhe/index.tsx).
 - Emoji e ícones puramente decorativos escondidos com `aria-hidden="true"`
   (badges de material, logo da Sidebar, ícone da 404, mascote do cartão de
@@ -68,8 +68,6 @@ calculado no pior ponto do gradiente.
 
 ### 2.4.3 Ordem de foco
 - Modal preserva a ordem natural do DOM e não usa `tabindex` positivo.
-- FiltroTabs adota o padrão WAI-ARIA APG: apenas a aba ativa fica no fluxo
-  do Tab; setas ←/→ movem entre abas.
 
 ### 2.4.7 Foco visível
 - `:focus-visible` global no `src/index.css` desenha um `outline` sólido de
@@ -96,21 +94,18 @@ calculado no pior ponto do gradiente.
 - Todo `<input>` tem `<label htmlFor>` associado.
 - Mensagens de erro no DOM com `role="alert"` (via componente
   [`Alerta`](../src/components/Alerta/index.tsx) e via `<p role="alert">`
-  em [`Input`](../src/components/Input/index.tsx) e
-  [`TextArea`](../src/components/TextArea/index.tsx)).
+  em [`Input`](../src/components/Input/index.tsx)).
 - Ajuda contextual usa `aria-describedby` para vincular ao campo.
 
 ### 3.2.4 Identificação consistente
 - Componentes reutilizados em todas as páginas (Button, Input, Alerta,
-  FiltroTabs, Modal). Mesma variante gera mesmo comportamento.
+  Modal). Mesma variante gera mesmo comportamento.
 
 ## Robusto
 
 ### 4.1.2 Nome, função, valor
 - Modal: `role="dialog"`, `aria-modal`, `aria-labelledby` apontando para o
   título.
-- FiltroTabs: `role="tablist"` + `role="tab"` + `aria-selected` + `tabIndex`
-  controlado.
 - Sidebar: `<nav aria-label="Menu">` com `<ul>` de links; o item atual usa
   `aria-current="page"` (via `NavLink`). Recolhida em 72px, o rótulo some só
   visualmente e continua sendo lido; a contagem de ocorrências vira um ponto
