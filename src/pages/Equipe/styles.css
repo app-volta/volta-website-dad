@@ -99,7 +99,7 @@
 
 .eq__rolagem:focus-visible {
   outline: 0;
-  box-shadow: inset var(--foco);
+  box-shadow: var(--foco-interno);
 }
 
 .eq__tabela {

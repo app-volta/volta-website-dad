@@ -66,6 +66,9 @@ export default function Cadastro(): ReactNode {
 
   return (
     <div className="login-tela">
+      <a href="#conteudo" className="skip-link">
+        Pular para o conteúdo principal
+      </a>
       <PainelAcesso
         titulo={["Comece agora."]}
         texto="Cadastre-se e ganhe visibilidade completa do PGRS da sua unidade em minutos."
@@ -76,110 +79,112 @@ export default function Cadastro(): ReactNode {
         ]}
       />
 
-      <main id="conteudo" className="login-tela__form-lado" tabIndex={-1}>
+      <div className="login-tela__form-lado">
         <div className="login-tela__form-card">
-          <div className="login-tela__form-logo">
+          <header className="login-tela__form-logo">
             <LogoVolta altura={42} />
-          </div>
-          <h1 className="login-tela__titulo">Criar conta VOLTA</h1>
-          <p className="login-tela__descricao">
-            Configuramos seu acesso à plataforma em segundos.
-          </p>
+          </header>
+          <main id="conteudo" className="login-tela__form-principal" tabIndex={-1}>
+            <h1 className="login-tela__titulo">Criar conta VOLTA</h1>
+            <p className="login-tela__descricao">
+              Configuramos seu acesso à plataforma em segundos.
+            </p>
 
-          {erro ? (
-            <Alerta variante="erro" titulo="Cadastro não concluído">
-              {erro}
-            </Alerta>
-          ) : null}
+            {erro ? (
+              <Alerta variante="erro" titulo="Cadastro não concluído">
+                {erro}
+              </Alerta>
+            ) : null}
 
-          <form onSubmit={tratarSubmit} noValidate>
-            <Input
-              rotulo="Nome completo"
-              required
-              autoComplete="name"
-              value={formulario.nome}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, nome: valor }))
-              }
-              erro={errosCampo.nome}
-            />
-            <Input
-              rotulo="E-mail corporativo"
-              type="email"
-              required
-              autoComplete="email"
-              value={formulario.email}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, email: valor }))
-              }
-              erro={errosCampo.email}
-              iconeEsquerdo="mensagem"
-            />
-            <Input
-              rotulo="Senha"
-              type="password"
-              required
-              autoComplete="new-password"
-              value={formulario.senha}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, senha: valor }))
-              }
-              erro={errosCampo.senha}
-              iconeEsquerdo="cadeado"
-              ajuda="Mínimo de 6 caracteres."
-            />
-            <Input
-              rotulo="Unidade"
-              required
-              value={formulario.unidade}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, unidade: valor }))
-              }
-              iconeEsquerdo="pin"
-              erro={errosCampo.unidade}
-              ajuda="Ex.: Frigorífico Lins/SP."
-            />
-            <fieldset className="cadastro__papel">
-              <legend className="campo__rotulo">Perfil de acesso</legend>
-              <label className="cadastro__radio">
-                <input
-                  type="radio"
-                  name="papel"
-                  value="operador"
-                  checked={formulario.papel === "operador"}
-                  onChange={() =>
-                    setFormulario((atual) => ({ ...atual, papel: "operador" }))
-                  }
-                />
-                <span>Operador de chão de fábrica</span>
-              </label>
-              <label className="cadastro__radio">
-                <input
-                  type="radio"
-                  name="papel"
-                  value="responsavel_pgrs"
-                  checked={formulario.papel === "responsavel_pgrs"}
-                  onChange={() =>
-                    setFormulario((atual) => ({
-                      ...atual,
-                      papel: "responsavel_pgrs",
-                    }))
-                  }
-                />
-                <span>Responsável PGRS</span>
-              </label>
-            </fieldset>
+            <form onSubmit={tratarSubmit} noValidate>
+              <Input
+                rotulo="Nome completo"
+                required
+                autoComplete="name"
+                value={formulario.nome}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, nome: valor }))
+                }
+                erro={errosCampo.nome}
+              />
+              <Input
+                rotulo="E-mail corporativo"
+                type="email"
+                required
+                autoComplete="email"
+                value={formulario.email}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, email: valor }))
+                }
+                erro={errosCampo.email}
+                iconeEsquerdo="mensagem"
+              />
+              <Input
+                rotulo="Senha"
+                type="password"
+                required
+                autoComplete="new-password"
+                value={formulario.senha}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, senha: valor }))
+                }
+                erro={errosCampo.senha}
+                iconeEsquerdo="cadeado"
+                ajuda="Mínimo de 6 caracteres."
+              />
+              <Input
+                rotulo="Unidade"
+                required
+                value={formulario.unidade}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, unidade: valor }))
+                }
+                iconeEsquerdo="pin"
+                erro={errosCampo.unidade}
+                ajuda="Ex.: Frigorífico Lins/SP."
+              />
+              <fieldset className="cadastro__papel">
+                <legend className="campo__rotulo">Perfil de acesso</legend>
+                <label className="cadastro__radio">
+                  <input
+                    type="radio"
+                    name="papel"
+                    value="operador"
+                    checked={formulario.papel === "operador"}
+                    onChange={() =>
+                      setFormulario((atual) => ({ ...atual, papel: "operador" }))
+                    }
+                  />
+                  <span>Operador de chão de fábrica</span>
+                </label>
+                <label className="cadastro__radio">
+                  <input
+                    type="radio"
+                    name="papel"
+                    value="responsavel_pgrs"
+                    checked={formulario.papel === "responsavel_pgrs"}
+                    onChange={() =>
+                      setFormulario((atual) => ({
+                        ...atual,
+                        papel: "responsavel_pgrs",
+                      }))
+                    }
+                  />
+                  <span>Responsável PGRS</span>
+                </label>
+              </fieldset>
 
-            <Button type="submit" larguraTotal carregando={carregando}>
-              Criar conta
-            </Button>
-          </form>
+              <Button type="submit" larguraTotal carregando={carregando}>
+                Criar conta
+              </Button>
+            </form>
 
-          <p className="login-tela__cadastro">
-            Já tem uma conta? <Link to="/login">Entrar</Link>
-          </p>
+            <p className="login-tela__cadastro">
+              Já tem uma conta? <Link to="/login">Entrar</Link>
+            </p>
+          </main>
         </div>
-      </main>
+      </div>
       <Rodape className="login-tela__rodape" />
     </div>
   );

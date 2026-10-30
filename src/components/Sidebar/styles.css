@@ -1,5 +1,9 @@
 .sidebar {
   --sidebar-pad-x: 18px;
+  /* Sobre o verde escuro o anel verde some; aqui ele é branco. */
+  --foco-cor: #ffffff;
+  --foco: 0 0 0 2px #0a4a2d, 0 0 0 4px #ffffff;
+  --foco-interno: inset 0 0 0 3px #ffffff;
 
   width: var(--sidebar-largura);
   height: 100vh;
