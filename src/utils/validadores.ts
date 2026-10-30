@@ -29,6 +29,18 @@ export function validarObrigatorio(
   return null;
 }
 
+const NOME_MINIMO = 3;
+
+/** Nome de pessoa: obrigatório, até 80 caracteres e pelo menos 3 letras. */
+export function validarNome(valor: string): string | null {
+  const obrigatorio = validarObrigatorio(valor, "o nome", 80);
+  if (obrigatorio) return obrigatorio;
+  if (valor.trim().length < NOME_MINIMO) {
+    return `O nome precisa de pelo menos ${NOME_MINIMO} letras.`;
+  }
+  return null;
+}
+
 export function validarDescricao(valor: string): string | null {
   const limpo = valor.trim();
   if (!limpo) return "Descreva o resíduo encontrado.";

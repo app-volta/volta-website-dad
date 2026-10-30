@@ -2,10 +2,8 @@ import { useId, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { ModalAcao } from "../../components/ModalAcao";
-import { validarObrigatorio } from "../../utils/validadores";
+import { validarNome } from "../../utils/validadores";
 import "./modal.css";
-
-const NOME_MINIMO = 3;
 
 interface ModalPerfilProps {
   readonly nomeAtual: string;
@@ -13,15 +11,6 @@ interface ModalPerfilProps {
   /** Grava o perfil; rejeita com o motivo quando o servidor recusa. */
   readonly aoSalvar: (nome: string) => Promise<void>;
   readonly aoFechar: () => void;
-}
-
-function validarNome(valor: string): string | null {
-  const obrigatorio = validarObrigatorio(valor, "o nome", 80);
-  if (obrigatorio) return obrigatorio;
-  if (valor.trim().length < NOME_MINIMO) {
-    return `O nome precisa de pelo menos ${NOME_MINIMO} letras.`;
-  }
-  return null;
 }
 
 export function ModalPerfil({

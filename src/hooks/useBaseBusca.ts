@@ -11,21 +11,19 @@ export function useBaseBusca(): BaseBusca | null {
   const [base, setBase] = useState<BaseBusca | null>(null);
 
   useEffect(() => {
-    let ativo = true;
+    const controle = new AbortController();
     // Só quem administra a empresa lista cooperativas na API: sem permissão, a busca segue sem elas.
     Promise.all([
-      listarOcorrencias(),
-      listarCooperativas().catch(() => []),
+      listarOcorrencias(controle.signal),
+      listarCooperativas(controle.signal).catch(() => []),
     ])
       .then(([ocorrencias, cooperativas]) => {
-        if (ativo) setBase({ ocorrencias, cooperativas });
+        if (!controle.signal.aborted) setBase({ ocorrencias, cooperativas });
       })
       .catch(() => {
-        if (ativo) setBase(BASE_VAZIA);
+        if (!controle.signal.aborted) setBase(BASE_VAZIA);
       });
-    return () => {
-      ativo = false;
-    };
+    return () => controle.abort();
   }, []);
 
   return base;

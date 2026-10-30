@@ -56,6 +56,21 @@
   background: var(--verde-suave);
 }
 
+.perfil__tentar {
+  border: 1px solid var(--borda-forte);
+  background: var(--superficie);
+  color: var(--verde-escuro);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  min-height: 40px;
+}
+
+.perfil__tentar:hover {
+  border-color: var(--verde-primario);
+  background: var(--verde-suave);
+}
+
 /* Em 320 px o botão desce para a linha de baixo, sem estourar a largura. */
 @media (max-width: 560px) {
   .perfil__cartao {

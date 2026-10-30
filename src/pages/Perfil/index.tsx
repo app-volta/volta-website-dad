@@ -1,9 +1,11 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
+import { Spinner } from "../../components/Spinner";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { usePainel, useRegistradasPor } from "../../hooks/usePainel";
@@ -54,8 +56,11 @@ function iniciais(nome: string): string {
 export default function Perfil(): ReactNode {
   const { usuario, sair } = useAuth();
   const navegar = useNavigate();
-  const { dados } = useOcorrencias();
+  const [chaveRecarga, setChaveRecarga] = useState<number>(0);
+  const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const { painel, dadosReais } = usePainel(dados);
+  // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
+  const semDados = dados === null;
   const registradas = useRegistradasPor(dados, usuario?.id ?? "");
 
   if (!usuario) {
@@ -90,6 +95,26 @@ export default function Perfil(): ReactNode {
         <h3 id="perfil-info-titulo" className="perfil__secao-titulo">
           Informações
         </h3>
+        {erro ? (
+          <Alerta
+            variante="erro"
+            titulo="Não foi possível carregar suas ocorrências"
+            acao={
+              <button
+                type="button"
+                className="perfil__tentar"
+                onClick={() => setChaveRecarga((v) => v + 1)}
+              >
+                Tentar novamente
+              </button>
+            }
+          >
+            {erro}
+          </Alerta>
+        ) : null}
+        {semDados && carregando ? (
+          <Spinner compacto rotulo="Carregando suas ocorrências…" />
+        ) : null}
         <dl className="perfil__grid">
           <div className="perfil__stat">
             <dt>E-mail</dt>
@@ -111,15 +136,23 @@ export default function Perfil(): ReactNode {
           )}
           <div className="perfil__stat">
             <dt>Ocorrências registradas</dt>
-            <dd>{registradas}</dd>
+            <dd>{semDados ? "—" : registradas}</dd>
           </div>
           <div className="perfil__stat">
             <dt>Recuperado no mês</dt>
-            <dd>{painel.recuperadoMesKg.toLocaleString("pt-BR")} kg</dd>
+            <dd>
+              {semDados
+                ? "—"
+                : `${painel.recuperadoMesKg.toLocaleString("pt-BR")} kg`}
+            </dd>
           </div>
           <div className="perfil__stat">
             <dt>Taxa de aprovação</dt>
-            <dd>{painel.taxaAprovacao === null ? "—" : `${painel.taxaAprovacao}%`}</dd>
+            <dd>
+              {semDados || painel.taxaAprovacao === null
+                ? "—"
+                : `${painel.taxaAprovacao}%`}
+            </dd>
           </div>
           {dadosReais ? null : (
             <div className="perfil__stat">

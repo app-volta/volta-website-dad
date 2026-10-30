@@ -5,31 +5,35 @@ import type { EstadoRequisicao } from "../types/comum";
 
 /** Setores onde a pessoa pode registrar uma ocorrência. */
 export function useSetores(): EstadoRequisicao<readonly string[]> {
-  const [dados, setDados] = useState<readonly string[] | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoRequisicao<readonly string[]>>({
+    dados: null,
+    carregando: true,
+    erro: null,
+  });
 
   useEffect(() => {
-    let ativo = true;
-    listarSetores()
+    const controle = new AbortController();
+
+    listarSetores(controle.signal)
       .then((setores) => {
-        if (ativo) setDados(setores);
+        if (!controle.signal.aborted) {
+          setEstado({ dados: setores, carregando: false, erro: null });
+        }
       })
       .catch((excecao: unknown) => {
-        if (!ativo) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Não foi possível carregar os setores.",
-        );
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false);
+        if (controle.signal.aborted) return;
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            excecao instanceof Error
+              ? excecao.message
+              : "Não foi possível carregar os setores.",
+        }));
       });
-    return () => {
-      ativo = false;
-    };
+
+    return () => controle.abort();
   }, []);
 
-  return { dados, carregando, erro };
+  return estado;
 }

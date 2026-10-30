@@ -209,6 +209,30 @@ export async function requisitar<Resposta>(
 }
 
 /**
+ * Espera uma promessa que outras telas também usam (como o catálogo de áreas e
+ * tipos, buscado uma vez por sessão), mas solta quem esperava assim que o
+ * `sinal` for cancelado. A busca em si segue, porque é compartilhada.
+ */
+export function esperarAte<Resposta>(
+  promessa: Promise<Resposta>,
+  sinal?: AbortSignal,
+): Promise<Resposta> {
+  if (!sinal) return promessa;
+  return new Promise<Resposta>((resolver, rejeitar) => {
+    const cancelar = (): void =>
+      rejeitar(new DOMException("Requisição cancelada", "AbortError"));
+    if (sinal.aborted) {
+      cancelar();
+      return;
+    }
+    sinal.addEventListener("abort", cancelar, { once: true });
+    promessa
+      .then(resolver, rejeitar)
+      .finally(() => sinal.removeEventListener("abort", cancelar));
+  });
+}
+
+/**
  * Espera um tempo controlado. Usado nos mocks para simular latência de rede
  * de forma cancelável.
  */

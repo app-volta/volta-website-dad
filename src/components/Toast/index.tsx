@@ -22,9 +22,11 @@ export function Toast({
 }: ToastProps): ReactNode {
   const fechar = useRef(aoFechar);
 
+  // A ref guarda a versão mais recente de `aoFechar`: o temporizador de baixo
+  // chama sempre ela, sem reiniciar a contagem quando a função muda.
   useEffect(() => {
     fechar.current = aoFechar;
-  });
+  }, [aoFechar]);
 
   useEffect(() => {
     if (!aberto) return;
