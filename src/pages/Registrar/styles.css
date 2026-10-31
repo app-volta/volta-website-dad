@@ -255,7 +255,8 @@
 }
 
 .registrar__textarea:focus,
-.registrar__select:focus-within {
+.registrar__select:focus-within,
+.registrar__peso:focus-within {
   border-color: #22c06f;
   outline: none;
   box-shadow: var(--foco);
@@ -301,6 +302,47 @@
 
 .registrar__select select:focus {
   outline: none;
+}
+
+.registrar__peso {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  border: 0.8px solid var(--reg-borda);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--reg-mudo);
+}
+
+.registrar__peso input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--reg-texto);
+  font: inherit;
+  font-size: 15.5px;
+}
+
+.registrar__peso input::placeholder {
+  color: var(--reg-mudo);
+}
+
+.registrar__peso input:focus {
+  outline: none;
+}
+
+.registrar__peso--erro {
+  border-color: var(--erro-fg);
+}
+
+.registrar__ajuda {
+  margin: 0;
+  color: var(--reg-mudo);
+  font-size: 12.5px;
+  line-height: 1.4;
 }
 
 .registrar__prio-grid {
@@ -517,6 +559,17 @@
   font-size: 1.1875rem;
   font-weight: 800;
   line-height: 29px;
+}
+
+.registrar__ia-origem {
+  margin: 2px 0 0;
+  color: var(--reg-mudo);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.registrar__sucesso-peso {
+  color: var(--reg-mudo);
 }
 
 .registrar__ia-esqueleto {

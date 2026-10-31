@@ -5,7 +5,7 @@ import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { contaminacao, recomendacaoDaIa } from "../../utils/analiseOcorrencia";
-import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
+import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -166,8 +166,8 @@ export function GavetaOcorrencia({
               <strong>{contaminacao(ocorrencia.classificacao)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--quantidade">
-              <p>Quantidade</p>
-              <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
+              <p>Peso aproximado</p>
+              <strong>{descreverPeso(ocorrencia.pesoKg)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--autor">
               <p>Registrada por</p>

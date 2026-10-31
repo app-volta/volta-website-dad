@@ -32,7 +32,7 @@ import {
   formatarConfianca,
   formatarKm,
   formatarNotaDaCooperativa,
-  formatarPeso,
+  descreverPeso,
   formatarRegistro,
 } from "../../utils/formatacao";
 import {
@@ -355,8 +355,8 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   <strong>{contaminacao(ocorrencia.classificacao)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--quantidade">
-                  <p>Quantidade</p>
-                  <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
+                  <p>Peso aproximado</p>
+                  <strong>{descreverPeso(ocorrencia.pesoKg)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--prioridade">
                   <p>Prioridade</p>

@@ -54,6 +54,25 @@ export function validarFoto(valor: string | null): string | null {
   return null;
 }
 
+/** Maior peso aceito em uma ocorrência, em kg. */
+export const PESO_MAXIMO_KG = 100_000;
+
+/** Lê o peso digitado com vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
+export function lerPeso(texto: string): number {
+  const limpo = texto.trim().replace(",", ".");
+  return limpo === "" ? Number.NaN : Number(limpo);
+}
+
+/** O peso é opcional: vazio vale; preenchido precisa ser maior que 0 e ir até 100.000 kg. */
+export function validarPeso(texto: string): string | null {
+  if (texto.trim() === "") return null;
+  const kg = lerPeso(texto);
+  if (!Number.isFinite(kg) || kg <= 0 || kg > PESO_MAXIMO_KG) {
+    return "Informe um peso maior que 0 e até 100.000 kg, ou deixe em branco.";
+  }
+  return null;
+}
+
 const PESOS_CNPJ: readonly (readonly number[])[] = [
   [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
   [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],

@@ -38,6 +38,11 @@ export function formatarPeso(kg: number, compacto = false): string {
   return compacto ? `≈${valor}\u00A0kg` : `≈\u00A0${valor}\u00A0kg`;
 }
 
+/** Peso aproximado para os cartões de detalhe: "≈ 12 kg", ou "Não informado" quando ninguém informou. */
+export function descreverPeso(kg: number): string {
+  return kg > 0 ? formatarPeso(kg) : "Não informado";
+}
+
 /** Distância com vírgula decimal, como no layout: "2,4 km". */
 export function formatarKm(km: number): string {
   return `${km.toLocaleString("pt-BR", {

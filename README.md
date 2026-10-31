@@ -91,9 +91,14 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 
 **Registro de ocorrência.** A IA analisa a foto, mas nada é gravado até a pessoa
 tocar em "Confirmar e registrar". Antes disso, "Editar dados" deixa corrigir o
-tipo, a contaminação e a quantidade, e o que foi corrigido é o que vai para a API.
+tipo, a contaminação e o peso, e o que foi corrigido é o que vai para a API.
+O peso aproximado (em kg) tem um campo opcional já na primeira etapa: se a
+pessoa informar, esse valor vai para `estimatedQuantity`; se deixar em branco,
+vai a estimativa da IA, quando ela existir; sem as duas, vai `null`. O peso
+nunca é inventado a partir da foto, e a tela sempre o mostra como aproximado
+("≈ 12 kg") e diz de onde ele veio.
 Ao registrar, a foto é enviada ao Cloudinary; se o envio falhar, a ocorrência é
-registrada sem foto e a tela avisa. Contaminação, quantidade e foto ficam na
+registrada sem foto e a tela avisa. Contaminação, peso e foto ficam na
 própria ocorrência. A recomendação e o relatório da IA, porém, a volta-api só
 devolve se alguém gravar o laudo (`ai_report`), e hoje nada no front consegue
 fazer isso: por enquanto eles ficam guardados neste navegador, por usuário, e
