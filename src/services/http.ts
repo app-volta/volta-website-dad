@@ -41,6 +41,15 @@ export const BASE_RANKING: string = (
 export const USAR_MOCKS: boolean =
   (import.meta.env.VITE_USAR_MOCKS as string | undefined) !== "false";
 
+/**
+ * O gráfico do BI (Databricks) usa um endpoint da volta-api. Com a API real ele
+ * só aparece com VITE_BI_ATIVO=true, depois que o back publica o endpoint;
+ * com os mocks sempre aparece.
+ */
+export const BI_ATIVO: boolean =
+  USAR_MOCKS ||
+  (import.meta.env.VITE_BI_ATIVO as string | undefined) === "true";
+
 const TEMPO_LIMITE_MS = 20_000;
 
 export class ErroHttp extends Error {

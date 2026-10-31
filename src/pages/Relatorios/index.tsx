@@ -8,7 +8,7 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
-import { useDadosReais } from "../../hooks/useModo";
+import { useBiAtivo, useDadosReais } from "../../hooks/useModo";
 import { useAcoesRelatorio, useRelatorio } from "../../hooks/useRelatorio";
 import { PERIODOS_RELATORIO } from "../../types/relatorio";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../../types/relatorio";
@@ -69,9 +69,11 @@ function montarCartoes(relatorio: RelatorioPgrs): readonly CartaoResumo[] {
 export default function Relatorios(): ReactNode {
   const { usuario } = useAuth();
   const dadosReais = useDadosReais();
+  const biAtivo = useBiAtivo();
   // O BI só responde a ADMIN e MANAGER, como o resto dos indicadores da empresa.
   const podeVerBi =
-    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
+    biAtivo &&
+    (!dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER");
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
   const { dados, carregando, erro } = useRelatorio(periodo);
   const acoes = useAcoesRelatorio();
