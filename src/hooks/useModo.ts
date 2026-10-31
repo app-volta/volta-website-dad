@@ -1,4 +1,4 @@
-import { USAR_MOCKS } from "../services/http";
+import { BI_ATIVO, USAR_MOCKS } from "../services/http";
 
 /**
  * Os dados vêm da volta-api (e não do protótipo local)? Telas usam isto para
@@ -7,4 +7,9 @@ import { USAR_MOCKS } from "../services/http";
  */
 export function useDadosReais(): boolean {
   return !USAR_MOCKS;
+}
+
+/** O gráfico do BI deve aparecer? Só quando o endpoint do back existe (ou nos mocks). */
+export function useBiAtivo(): boolean {
+  return BI_ATIVO;
 }

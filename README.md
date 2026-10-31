@@ -50,6 +50,7 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
 | `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
 | `VITE_USAR_MOCKS` | `false` liga as APIs; `true` usa os mocks locais. A Vercel usa `false` via `.env.production`; o Docker usa `true` por padrão (sobrescreva com `--build-arg VITE_USAR_MOCKS=false`). |
+| `VITE_BI_ATIVO` | `true` mostra em Relatórios o gráfico "Ocorrências por setor" (BI no Databricks) com a API real. Fica `false` na Vercel até o back publicar `GET /bi/occurrences-by-sector`; com mocks o gráfico sempre aparece. |
 | `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
 | `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
 | `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
@@ -85,6 +86,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
 | Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
+| Relatórios (BI) | `GET /bi/occurrences-by-sector` (ADMIN ou MANAGER): o gráfico "Ocorrências por setor". **Proposta de contrato, o endpoint ainda não existe.** O back lê a tabela Gold no Databricks, filtra pela empresa do token e devolve `[{ "setor": "Produção", "ocorrencias": 12 }]`; a credencial do Databricks fica só no servidor |
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
