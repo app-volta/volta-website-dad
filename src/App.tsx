@@ -1,10 +1,11 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes, useParams } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Spinner } from "./components/Spinner";
+import { useAuth } from "./context/AuthContext";
 
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
@@ -48,11 +49,24 @@ function RotaPrivada({
   );
 }
 
-function RotaDetalheOcorrencia(): ReactNode {
-  const { id } = useParams();
+/** Endereço que não existe: dentro do painel para quem está logado, sozinho para quem não está. */
+function RotaNaoEncontrada(): ReactNode {
+  const { sessao } = useAuth();
+  if (!sessao) return <NotFound />;
   return (
     <RotaPrivada
-      titulo={`Ocorrência #${(id ?? "").replace(/\D/g, "")}`}
+      titulo="Página não encontrada"
+      subtitulo="O endereço não leva a nenhuma tela do painel"
+    >
+      <NotFound dentroDoPainel />
+    </RotaPrivada>
+  );
+}
+
+function RotaDetalheOcorrencia(): ReactNode {
+  return (
+    <RotaPrivada
+      titulo="Ocorrência"
       subtitulo="Revisão e ações do responsável"
     >
       <OcorrenciaDetalhe />
@@ -156,7 +170,7 @@ export default function App(): ReactNode {
           }
         />
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
     </Suspense>
   );

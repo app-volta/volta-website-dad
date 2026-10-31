@@ -1,45 +1,9 @@
-.nao-encontrado {
-  text-align: center;
-  padding: 3rem 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.nao-encontrado__ilustracao {
-  font-size: 5rem;
-  color: var(--verde-medio);
-  line-height: 1;
-}
-
-.nao-encontrado__titulo {
-  margin: 0;
-  color: var(--verde-escuro);
-}
-
-.nao-encontrado__texto {
-  color: var(--texto-suave);
-  max-width: 40ch;
-  margin: 0 0 1rem;
-}
-
-.nao-encontrado__texto code {
-  background: var(--verde-suave);
-  padding: 0.1rem 0.4rem;
-  border-radius: 6px;
-  color: var(--verde-escuro);
-}
-
 .nao-encontrado__topo {
   display: flex;
   justify-content: center;
   padding: 1.5rem 1rem 0;
 }
 
-/* É um <a> com a aparência do botão; o `a:hover` global trocaria o texto para verde escuro. */
-.nao-encontrado__link,
-.nao-encontrado__link:hover {
-  color: #fff;
-  text-decoration: none;
+.nao-encontrado {
+  padding: 0 1rem 3rem;
 }

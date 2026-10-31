@@ -1,13 +1,37 @@
 import type { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
 
-import "../../components/Button/styles.css";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { LogoVolta } from "../../components/LogoVolta";
 import { Rodape } from "../../components/Rodape";
 import "./styles.css";
 
-export default function NotFound(): ReactNode {
-  const localizacao = useLocation();
+interface NotFoundProps {
+  /** Dentro do painel (com a barra lateral e o topo) o estado aparece sozinho; fora dele, com logo e rodapé. */
+  readonly dentroDoPainel?: boolean;
+}
+
+export default function NotFound({
+  dentroDoPainel = false,
+}: NotFoundProps): ReactNode {
+  const estado = (
+    <EstadoPainel
+      pose="pergunta"
+      tag="Não encontrado"
+      titulo="Essa página não existe"
+      texto="O link pode estar errado ou a página mudou de lugar."
+      nivelTitulo={dentroDoPainel ? "h2" : "h1"}
+    >
+      <AcaoDoEstado para="/">Voltar ao início</AcaoDoEstado>
+      {dentroDoPainel ? (
+        <AcaoDoEstado para="/ocorrencias" variante="secundaria">
+          Ver ocorrências
+        </AcaoDoEstado>
+      ) : null}
+    </EstadoPainel>
+  );
+
+  if (dentroDoPainel) return estado;
+
   return (
     <>
       <a href="#conteudo" className="skip-link">
@@ -16,27 +40,8 @@ export default function NotFound(): ReactNode {
       <header className="nao-encontrado__topo">
         <LogoVolta altura={36} />
       </header>
-      <main
-        id="conteudo"
-        aria-labelledby="titulo-404"
-        className="nao-encontrado"
-        tabIndex={-1}
-      >
-        <div className="nao-encontrado__ilustracao" aria-hidden="true">
-          ♻
-        </div>
-        <h1 id="titulo-404" className="nao-encontrado__titulo">
-          Página não encontrada
-        </h1>
-        <p className="nao-encontrado__texto">
-          Não achamos nada em <code>{localizacao.pathname}</code>. O link pode
-          estar quebrado ou a página foi removida.
-        </p>
-        <nav aria-label="Voltar">
-          <Link to="/" className="botao botao--primario nao-encontrado__link">
-            Voltar para a Home
-          </Link>
-        </nav>
+      <main id="conteudo" className="nao-encontrado" tabIndex={-1}>
+        {estado}
       </main>
       <Rodape />
     </>

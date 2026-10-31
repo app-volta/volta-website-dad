@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
@@ -110,7 +111,10 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const podeRevisar =
     usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
-  const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
+  const { dados, carregando, erro, naoEncontrada } = useOcorrencia(
+    id,
+    chaveRecarga,
+  );
   const acoes = useAcoesOcorrencia();
   const semelhantes = useSemelhantesNaSemana(dados);
   const { indicacao, aviso: avisoIndicacao } = useCooperativasIndicadas(
@@ -135,6 +139,19 @@ export default function OcorrenciaDetalhe(): ReactNode {
   }, [modal, id]);
 
   if (carregando && !dados) return <Spinner rotulo="Carregando ocorrência…" />;
+
+  if (naoEncontrada) {
+    return (
+      <EstadoPainel
+        pose="pergunta"
+        tag="Não encontrado"
+        titulo="Não encontramos essa ocorrência"
+        texto="Ela pode ter sido removida, ou o link é de outra unidade."
+      >
+        <AcaoDoEstado para="/ocorrencias">Ver ocorrências</AcaoDoEstado>
+      </EstadoPainel>
+    );
+  }
 
   if (erro || !dados) {
     return (

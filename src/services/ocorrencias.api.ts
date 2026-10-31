@@ -331,7 +331,7 @@ export async function obterOcorrencia(
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
   if (!FORMATO_UUID.test(id)) {
-    throw new Error("Ocorrência não encontrada.");
+    throw new ErroHttp("Ocorrência não encontrada.", 404);
   }
   const [incidente, cat, relatorio, coleta] = await Promise.all([
     requisitar<IncidenteApi>(`/incidents/${id}`, { sinal }),
