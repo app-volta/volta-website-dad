@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
+import { ModalSessaoExpirada } from "./components/ModalSessaoExpirada";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Spinner } from "./components/Spinner";
 import { useAuth } from "./context/AuthContext";
@@ -172,6 +173,7 @@ export default function App(): ReactNode {
 
         <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
+      <ModalSessaoExpirada />
     </Suspense>
   );
 }

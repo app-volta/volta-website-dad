@@ -10,6 +10,7 @@ import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
 import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
+import { foiNaoAutorizado } from "../../utils/erros";
 import { combinar, validarEmail, validarSenha } from "../../utils/validadores";
 import "./styles.css";
 
@@ -37,6 +38,8 @@ export default function Login(): ReactNode {
   );
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
   const [manterConectado, setManterConectado] = useState<boolean>(true);
+  const [credenciaisIncorretas, setCredenciaisIncorretas] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (sessao) navegar(estadoDe ?? "/", { replace: true });
@@ -45,6 +48,7 @@ export default function Login(): ReactNode {
   async function tratarSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     limparErro();
+    setCredenciaisIncorretas(false);
     const validacao = combinar({
       email: validarEmail(formulario.email),
       senha: validarSenha(formulario.senha),
@@ -53,8 +57,16 @@ export default function Login(): ReactNode {
     if (!validacao.valido) return;
     try {
       await entrar({ email: formulario.email, senha: formulario.senha });
-    } catch {
-      /* erro tratado no contexto */
+    } catch (excecao) {
+      // E-mail ou senha errados (401): a senha digitada é apagada, o e-mail fica.
+      if (foiNaoAutorizado(excecao)) {
+        setCredenciaisIncorretas(true);
+        setFormulario((atual) => ({ ...atual, senha: "" }));
+        setErrosCampo({
+          senha: "A senha foi apagada por segurança. Digite de novo.",
+        });
+      }
+      // Os demais erros aparecem pelo contexto.
     }
   }
 
@@ -84,7 +96,11 @@ export default function Login(): ReactNode {
               Entre com o e-mail da sua unidade.
             </p>
 
-            {erro ? (
+            {credenciaisIncorretas ? (
+              <Alerta variante="erro" titulo="E-mail ou senha incorretos">
+                Confira os dados e tente de novo.
+              </Alerta>
+            ) : erro ? (
               <Alerta variante="erro" titulo="Não foi possível entrar">
                 {erro}
               </Alerta>
