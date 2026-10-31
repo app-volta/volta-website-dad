@@ -85,6 +85,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
 | Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
+| Relatórios (BI) | `GET /bi/occurrences-by-sector` (ADMIN ou MANAGER): o gráfico "Ocorrências por setor". **Proposta de contrato, o endpoint ainda não existe.** O back lê a tabela Gold no Databricks, filtra pela empresa do token e devolve `[{ "setor": "Produção", "ocorrencias": 12 }]`; a credencial do Databricks fica só no servidor |
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |

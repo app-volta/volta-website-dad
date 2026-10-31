@@ -445,3 +445,10 @@
     justify-content: center;
   }
 }
+
+/* Fonte e total do gráfico do BI */
+.rel__bi-fonte {
+  margin: 2px 0 0;
+  color: var(--rel-mudo);
+  font-size: 13px;
+}
