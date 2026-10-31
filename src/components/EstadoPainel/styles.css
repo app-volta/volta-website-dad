@@ -4,8 +4,15 @@
   align-items: center;
   gap: 12px;
   width: min(520px, 100%);
-  margin: clamp(24px, 14vh, 130px) auto 0;
   text-align: center;
+}
+
+.estado-painel--pagina {
+  margin: clamp(24px, 14vh, 130px) auto 0;
+}
+
+.estado-painel--cartao {
+  margin: clamp(32px, 11vh, 96px) auto;
 }
 
 .estado-painel__mascote {
