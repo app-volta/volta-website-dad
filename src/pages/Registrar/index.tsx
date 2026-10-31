@@ -20,16 +20,19 @@ import { METADADOS_MATERIAL } from "../../types/material";
 import { modoDaCamera } from "../../utils/camera";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
-import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
+import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
   validarFoto,
   validarObrigatorio,
+  validarPeso,
 } from "../../utils/validadores";
 import {
   estadoInicial,
+  pesoDaOcorrencia,
   redutor,
+  type OrigemDoPeso,
   type Prioridade,
 } from "./reducer";
 import "./styles.css";
@@ -55,7 +58,11 @@ const NIVEIS_DE_CONTAMINACAO: readonly {
   { valor: "alta", rotulo: "Alta" },
 ];
 
-const LIMITE_DE_QUILOS = 100_000;
+const DE_ONDE_VEM_O_PESO: Readonly<Record<OrigemDoPeso, string>> = {
+  informado: "Informado por você",
+  ia: "Estimado pela IA",
+  nenhum: "A IA não conseguiu estimar pela foto",
+};
 
 function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
   const leitor = new FileReader();
@@ -80,6 +87,8 @@ export default function Registrar(): ReactNode {
     estadoInicial,
   );
   const setorInicial = useRef<string>(estado.setor);
+  const peso = pesoDaOcorrencia(estado);
+  const erroPeso = validarPeso(estado.pesoInformado);
 
   // O setor sugerido no início pode não existir na empresa; troca pelo primeiro cadastrado.
   useEffect(() => {
@@ -125,6 +134,7 @@ export default function Registrar(): ReactNode {
       foto: validarFoto(estado.fotoBase64),
       descricao: descricaoInformada ? validarDescricao(estado.descricao) : null,
       setor: validarObrigatorio(estado.setor, "o setor", 80),
+      peso: validarPeso(estado.pesoInformado),
     });
     if (!validacao.valido) {
       despachar({ tipo: "definir_erros", erros: validacao.erros });
@@ -145,7 +155,7 @@ export default function Registrar(): ReactNode {
 
   /** Só aqui a ocorrência é criada: já com a foto enviada e com o que a pessoa corrigiu. */
   async function registrar(): Promise<void> {
-    if (!estado.classificacao) return;
+    if (!estado.classificacao || erroPeso) return;
     despachar({ tipo: "iniciar_registro" });
     try {
       const criada = await acoes.criar({
@@ -157,7 +167,8 @@ export default function Registrar(): ReactNode {
         autorNome: usuario?.nome ?? "Equipe",
         localizacao: { setor: estado.setor, unidade: usuario?.unidade ?? "-" },
         fotoBase64: estado.fotoBase64 ?? "",
-        classificacao: estado.classificacao,
+        // O peso informado vale mais que a estimativa da IA; sem nenhum dos dois, vai vazio.
+        classificacao: { ...estado.classificacao, pesoEstimadoKg: peso.kg },
       });
       despachar({
         tipo: "registro_ok",
@@ -187,17 +198,6 @@ export default function Registrar(): ReactNode {
     });
   }
 
-  function digitarQuantidade(texto: string): void {
-    if (texto === "") {
-      despachar({ tipo: "ajustar_analise", ajuste: { pesoEstimadoKg: null } });
-      return;
-    }
-    const quilos = Number(texto);
-    if (Number.isFinite(quilos) && quilos >= 0 && quilos <= LIMITE_DE_QUILOS) {
-      despachar({ tipo: "ajustar_analise", ajuste: { pesoEstimadoKg: quilos } });
-    }
-  }
-
   if (estado.etapa === "sucesso") {
     return (
       <div className="registrar__sucesso">
@@ -207,6 +207,11 @@ export default function Registrar(): ReactNode {
         <h2>Relatório gerado!</h2>
         <p>
           A ocorrência <strong>{estado.codigoGerado}</strong> foi registrada.
+        </p>
+        <p className="registrar__sucesso-peso">
+          {peso.kg === null
+            ? "Peso não informado."
+            : `Peso aproximado: ${descreverPeso(peso.kg)} · ${DE_ONDE_VEM_O_PESO[peso.origem]}`}
         </p>
         {estado.fotoGuardada ? null : (
           <Alerta variante="info" titulo="A foto não foi guardada">
@@ -256,7 +261,6 @@ export default function Registrar(): ReactNode {
     )?.valor ??
     "";
   const nivelDeContaminacao = estado.classificacao?.contaminacao ?? "";
-  const quilos = estado.classificacao?.pesoEstimadoKg ?? null;
 
   return (
     <div className="registrar">
@@ -491,6 +495,45 @@ export default function Registrar(): ReactNode {
               </div>
             </div>
 
+            <div className="registrar__campo">
+              <label htmlFor="reg-peso" className="registrar__rotulo">
+                Peso aproximado <span className="registrar__opcional">· opcional</span>
+              </label>
+              <div
+                className={
+                  estado.erroCampo.peso
+                    ? "registrar__peso registrar__peso--erro"
+                    : "registrar__peso"
+                }
+              >
+                <input
+                  id="reg-peso"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder="Ex.: 12,5"
+                  value={estado.pesoInformado}
+                  onChange={(e) =>
+                    despachar({ tipo: "definir_peso", peso: e.target.value })
+                  }
+                  aria-invalid={Boolean(estado.erroCampo.peso) || undefined}
+                  aria-describedby={
+                    estado.erroCampo.peso ? "reg-peso-ajuda reg-peso-erro" : "reg-peso-ajuda"
+                  }
+                />
+                <span aria-hidden="true">kg</span>
+              </div>
+              <p id="reg-peso-ajuda" className="registrar__ajuda">
+                Se não souber, deixe em branco. A IA só estima o peso quando a
+                foto permite; em saco fechado, por exemplo, ela não consegue.
+              </p>
+              {estado.erroCampo.peso ? (
+                <p id="reg-peso-erro" role="alert" className="registrar__erro-campo">
+                  {estado.erroCampo.peso}
+                </p>
+              ) : null}
+            </div>
+
             <fieldset className="registrar__campo registrar__prioridades">
               <legend className="registrar__rotulo">Prioridade</legend>
               <div className="registrar__prio-grid">
@@ -560,7 +603,11 @@ export default function Registrar(): ReactNode {
                 <button
                   type="button"
                   className="registrar__botao registrar__botao--contorno registrar__botao--largo"
-                  onClick={() => despachar({ tipo: "voltar_a_analise" })}
+                  onClick={() =>
+                    erroPeso
+                      ? despachar({ tipo: "definir_erros", erros: { peso: erroPeso } })
+                      : despachar({ tipo: "voltar_a_analise" })
+                  }
                 >
                   Voltar à análise
                 </button>
@@ -653,25 +700,46 @@ export default function Registrar(): ReactNode {
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="plastico">
-                <p className="registrar__ia-rotulo">Quantidade</p>
+                <p className="registrar__ia-rotulo">Peso aproximado</p>
                 {concluida ? (
                   estado.editando ? (
-                    <span className="registrar__ia-quilos">
-                      <input
-                        type="number"
-                        min={0}
-                        max={LIMITE_DE_QUILOS}
-                        step="0.1"
-                        inputMode="decimal"
-                        aria-label="Quantidade em quilos"
-                        className="registrar__ia-campo"
-                        defaultValue={quilos ?? ""}
-                        onChange={(e) => digitarQuantidade(e.target.value)}
-                      />
-                      <span aria-hidden="true">kg</span>
-                    </span>
+                    <>
+                      <span className="registrar__ia-quilos">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          autoComplete="off"
+                          aria-label="Peso aproximado em quilos"
+                          aria-invalid={erroPeso ? true : undefined}
+                          aria-describedby={erroPeso ? "reg-ia-peso-erro" : undefined}
+                          className="registrar__ia-campo"
+                          placeholder={
+                            estado.classificacao?.pesoEstimadoKg
+                              ? estado.classificacao.pesoEstimadoKg.toLocaleString("pt-BR")
+                              : "Ex.: 12,5"
+                          }
+                          value={estado.pesoInformado}
+                          onChange={(e) =>
+                            despachar({ tipo: "definir_peso", peso: e.target.value })
+                          }
+                        />
+                        <span aria-hidden="true">kg</span>
+                      </span>
+                      {erroPeso ? (
+                        <p id="reg-ia-peso-erro" role="alert" className="registrar__erro-campo">
+                          {erroPeso}
+                        </p>
+                      ) : null}
+                    </>
                   ) : (
-                    <p className="registrar__ia-valor">{formatarPeso(quilos ?? 0)}</p>
+                    <>
+                      <p className="registrar__ia-valor">
+                        {peso.kg === null ? "Não informado" : descreverPeso(peso.kg)}
+                      </p>
+                      <p className="registrar__ia-origem">
+                        {DE_ONDE_VEM_O_PESO[peso.origem]}
+                      </p>
+                    </>
                   )
                 ) : (
                   <span className="registrar__ia-esqueleto" />
@@ -749,7 +817,7 @@ export default function Registrar(): ReactNode {
                     type="button"
                     className="registrar__botao registrar__botao--primario registrar__botao--largo"
                     onClick={registrar}
-                    disabled={estado.registrando}
+                    disabled={estado.registrando || erroPeso !== null}
                   >
                     {estado.registrando ? "Registrando…" : "Confirmar e registrar"}
                   </button>

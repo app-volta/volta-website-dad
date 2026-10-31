@@ -1,14 +1,15 @@
 import type { ClassificacaoIA } from "../../types/classificacao";
+import { lerPeso, validarPeso } from "../../utils/validadores";
 
 export type Etapa = "detalhes" | "analise" | "sucesso";
 
 export type Prioridade = "baixa" | "media" | "alta";
 
-/** O que a pessoa pode corrigir no que a IA encontrou antes de registrar. */
+/** O que a pessoa pode corrigir no que a IA encontrou antes de registrar (o peso tem campo próprio). */
 export type AjusteDaAnalise = Partial<
   Pick<
     ClassificacaoIA,
-    "tipoResiduoId" | "tipoDetectado" | "material" | "contaminacao" | "pesoEstimadoKg"
+    "tipoResiduoId" | "tipoDetectado" | "material" | "contaminacao"
   >
 >;
 
@@ -18,6 +19,8 @@ export interface EstadoRegistrar {
   readonly descricao: string;
   readonly setor: string;
   readonly prioridade: Prioridade;
+  /** Peso aproximado em kg como a pessoa digitou; vazio quando ela não informou. */
+  readonly pesoInformado: string;
   readonly avisarResponsavel: boolean;
   readonly erroCampo: Readonly<Record<string, string>>;
   readonly erroEnvio: string | null;
@@ -37,6 +40,7 @@ export type AcaoRegistrar =
   | { readonly tipo: "definir_descricao"; readonly descricao: string }
   | { readonly tipo: "definir_setor"; readonly setor: string }
   | { readonly tipo: "definir_prioridade"; readonly prioridade: Prioridade }
+  | { readonly tipo: "definir_peso"; readonly peso: string }
   | { readonly tipo: "alternar_avisar" }
   | {
       readonly tipo: "definir_erros";
@@ -65,6 +69,7 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     descricao: "",
     setor: setorPadrao,
     prioridade: "media",
+    pesoInformado: "",
     avisarResponsavel: true,
     erroCampo: {},
     erroEnvio: null,
@@ -96,6 +101,8 @@ export function redutor(
       return { ...estado, setor: acao.setor, erroCampo: {} };
     case "definir_prioridade":
       return { ...estado, prioridade: acao.prioridade };
+    case "definir_peso":
+      return { ...estado, pesoInformado: acao.peso, erroCampo: {} };
     case "alternar_avisar":
       return { ...estado, avisarResponsavel: !estado.avisarResponsavel };
     case "definir_erros":
@@ -144,4 +151,30 @@ export function redutor(
     case "reiniciar":
       return estadoInicial(acao.setor);
   }
+}
+
+/** De onde vem o peso que vai para a ocorrência. */
+export type OrigemDoPeso = "informado" | "ia" | "nenhum";
+
+export interface PesoDaOcorrencia {
+  readonly kg: number | null;
+  readonly origem: OrigemDoPeso;
+}
+
+/**
+ * O peso que vai para a ocorrência: o que a pessoa informou; se ela deixou em
+ * branco, a estimativa da IA, quando existir; sem as duas, nenhum. O peso nunca
+ * é inventado a partir da foto.
+ */
+export function pesoDaOcorrencia(
+  estado: Pick<EstadoRegistrar, "pesoInformado" | "classificacao">,
+): PesoDaOcorrencia {
+  const digitado = estado.pesoInformado.trim() !== "";
+  if (digitado && validarPeso(estado.pesoInformado) === null) {
+    return { kg: lerPeso(estado.pesoInformado), origem: "informado" };
+  }
+  const daIa = estado.classificacao?.pesoEstimadoKg ?? null;
+  return daIa !== null && daIa > 0
+    ? { kg: daIa, origem: "ia" }
+    : { kg: null, origem: "nenhum" };
 }

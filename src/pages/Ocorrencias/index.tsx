@@ -290,7 +290,9 @@ export default function Ocorrencias(): ReactNode {
                   ) : null}
                   <th scope="col" className="ocorrencias__col-ocorrencia">Ocorrência</th>
                   <th scope="col" className="ocorrencias__col-setor">Setor</th>
-                  <th scope="col" className="ocorrencias__col-peso">Peso</th>
+                  <th scope="col" className="ocorrencias__col-peso">
+                    Peso<span className="sr-only"> aproximado</span>
+                  </th>
                   <th scope="col" className="ocorrencias__col-confianca">Confiança IA</th>
                   <th scope="col" className="ocorrencias__col-prioridade">Prioridade</th>
                   <th scope="col" className="ocorrencias__col-status">Status</th>
