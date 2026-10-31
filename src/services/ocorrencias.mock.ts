@@ -11,7 +11,7 @@ import type {
   PrioridadeOcorrencia,
   StatusOcorrencia,
 } from "../types/ocorrencia";
-import { aguardar } from "./http";
+import { ErroHttp, aguardar } from "./http";
 import { classificarFoto } from "./classificacao";
 
 /**
@@ -287,7 +287,7 @@ export async function obterOcorrencia(
   await aguardar(400, sinal);
   const encontrada = CATALOGO.find((item) => item.id === id);
   if (!encontrada) {
-    throw new Error(`Ocorrência ${id} não encontrada.`);
+    throw new ErroHttp("Ocorrência não encontrada.", 404);
   }
   return encontrada;
 }

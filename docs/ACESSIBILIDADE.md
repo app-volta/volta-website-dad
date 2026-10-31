@@ -11,18 +11,19 @@ auditoria quanto como referência para revisores de PR.
   [`LogoVolta/index.tsx`](../src/components/LogoVolta/index.tsx),
   [`OcorrenciaDetalhe/index.tsx`](../src/pages/OcorrenciaDetalhe/index.tsx).
 - Emoji e ícones puramente decorativos escondidos com `aria-hidden="true"`
-  (badges de material, logo da Sidebar, ícone da 404, mascote do cartão de
-  ajuda). Botões só com ícone, como o assistente e o sino da barra superior,
+  (badges de material, logo da Sidebar, mascote dos estados como a 404 e o
+  "sem resultado", mascote do cartão de ajuda). Botões só com ícone, como o assistente e o sino da barra superior,
   têm `aria-label`.
 
 ### 1.3.1 Informações e relações
 - Landmarks do shell V2: `<aside aria-label="Navegação principal">` com
   `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar),
   `<main id="conteudo">` e `<footer>` (componente `Rodape`, fora do `<main>`
-  para valer como landmark de informações do site). Login, cadastro e 404
-  também têm `<header>` com a logo (fora do `<main>`, então vale como
-  banner), `<main>` e `<footer>`; na 404 o link de volta fica num
-  `<nav aria-label="Voltar">`. Diálogos e gavetas usam
+  para valer como landmark de informações do site). Login e cadastro também
+  têm `<header>` com a logo (fora do `<main>`, então vale como banner),
+  `<main>` e `<footer>`. A 404 aparece dentro do painel para quem está
+  logado e, para quem não está, sozinha com `<header>`, `<main>` e
+  `<footer>`. Diálogos e gavetas usam
   `<div role="dialog">` e não declaram `<header>`, `<footer>` nem `<aside>`,
   para não virarem um segundo banner, um segundo rodapé nem um complementar
   dentro de outro ponto de referência.
@@ -63,8 +64,8 @@ calculado no pior ponto do gradiente.
 ### 2.4.1 Pular blocos
 - Skip-link no topo da Sidebar (`Pular para o conteúdo principal`, visível
   apenas ao receber foco). Aponta para `#conteudo`, que é o `<main>` do shell
-  privado. Login, cadastro e 404 têm o próprio skip-link, com a mesma classe,
-  como primeiro item da página.
+  privado. Login, cadastro e a 404 de quem não está logado têm o próprio
+  skip-link, com a mesma classe, como primeiro item da página.
 
 ### 2.4.3 Ordem de foco
 - Modal preserva a ordem natural do DOM e não usa `tabindex` positivo.

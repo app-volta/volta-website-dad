@@ -190,7 +190,7 @@ Regras estritas:
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |
 | `/perfil` | Dados do usuário logado | Privado |
-| `*` | Página 404 com botão de retorno | Pública |
+| `*` | Página 404: dentro do painel para quem está logado (com "Voltar ao início" e "Ver ocorrências") e sozinha, com logo e rodapé, para quem não está | Pública |
 
 Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 (nenhuma página checa autenticação diretamente).
