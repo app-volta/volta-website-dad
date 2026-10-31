@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { CartoesResumo } from "../../components/CartoesResumo";
 import type { CartaoResumo } from "../../components/CartoesResumo";
 import { Icone } from "../../components/Icone";
@@ -159,6 +160,15 @@ export default function Relatorios(): ReactNode {
 
       {!dados && carregando ? (
         <SkeletonList quantidade={4} rotulo="Carregando relatório" />
+      ) : dados && dados.ocorrencias === 0 ? (
+        <EstadoPainel
+          pose="pergunta"
+          tag="Sem resultado"
+          titulo="Ainda não há dados neste período"
+          texto="Os números aparecem aqui quando as ocorrências forem registradas e coletadas. Experimente outro período."
+        >
+          <AcaoDoEstado para="/ocorrencias">Ver ocorrências</AcaoDoEstado>
+        </EstadoPainel>
       ) : dados ? (
         <div className="rel__conteudo" aria-busy={carregando}>
           <CartoesResumo rotulo="Indicadores do período" cartoes={montarCartoes(dados)} />

@@ -32,6 +32,8 @@ interface EstadoPainelProps {
   readonly texto: string;
   readonly pose: PoseDoEstado;
   readonly tom?: TomDoEstado;
+  /** `pagina` fica no meio da tela, abaixo do topo; `cartao` ocupa o lugar do conteúdo de uma tabela ou cartão. */
+  readonly contexto?: "pagina" | "cartao";
   /** Nível do título: h2 dentro do painel (o h1 é o da barra superior) e h1 numa tela sozinha. */
   readonly nivelTitulo?: "h1" | "h2";
   /** As ações, com `AcaoDoEstado`. */
@@ -48,6 +50,7 @@ export function EstadoPainel({
   texto,
   pose,
   tom = "neutro",
+  contexto = "pagina",
   nivelTitulo = "h2",
   children,
 }: EstadoPainelProps): ReactNode {
@@ -55,7 +58,10 @@ export function EstadoPainel({
   const Titulo = nivelTitulo;
 
   return (
-    <section className="estado-painel" aria-labelledby={idTitulo}>
+    <section
+      className={`estado-painel estado-painel--${contexto}`}
+      aria-labelledby={idTitulo}
+    >
       <img
         className="estado-painel__mascote"
         src={POSES[pose]}

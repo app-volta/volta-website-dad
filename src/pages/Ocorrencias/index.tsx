@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { GavetaOcorrencia } from "../../components/GavetaOcorrencia";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
@@ -243,7 +244,7 @@ export default function Ocorrencias(): ReactNode {
         </Alerta>
       ) : null}
 
-      {erro ? (
+      {erro && dados ? (
         <Alerta
           variante="erro"
           titulo="Não foi possível carregar"
@@ -261,8 +262,10 @@ export default function Ocorrencias(): ReactNode {
         </Alerta>
       ) : null}
 
-      {carregando ? (
-        <SkeletonList quantidade={6} rotulo="Carregando ocorrências" />
+      {carregando && !dados ? (
+        <div className="ocorrencias__tabela-card">
+          <SkeletonList quantidade={6} rotulo="Carregando ocorrências" />
+        </div>
       ) : (
         <div className="ocorrencias__tabela-card">
           <div className="ocorrencias__rolagem">
@@ -306,7 +309,52 @@ export default function Ocorrencias(): ReactNode {
                 {visiveis.length === 0 ? (
                   <tr>
                     <td colSpan={podeRevisar ? 9 : 8} className="ocorrencias__vazio">
-                      Nenhuma ocorrência encontrada.
+                      {erro && !dados ? (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="preocupado"
+                          tom="erro"
+                          tag="Algo deu errado"
+                          titulo="Não conseguimos carregar as ocorrências"
+                          texto="Pode ser a conexão ou uma instabilidade nossa. Nenhum dado foi perdido."
+                        >
+                          <AcaoDoEstado aoClicar={() => setChaveRecarga((v) => v + 1)}>
+                            Tentar de novo
+                          </AcaoDoEstado>
+                          <AcaoDoEstado para="/" variante="secundaria">
+                            Voltar ao início
+                          </AcaoDoEstado>
+                        </EstadoPainel>
+                      ) : (dados?.length ?? 0) === 0 ? (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="dormindo"
+                          tom="ok"
+                          tag="Tudo em dia"
+                          titulo="Nenhuma ocorrência por aqui"
+                          texto="Quando alguém da unidade registrar um resíduo, ele aparece nesta lista."
+                        >
+                          <AcaoDoEstado para="/registrar">Registrar ocorrência</AcaoDoEstado>
+                        </EstadoPainel>
+                      ) : (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="pergunta"
+                          tag="Sem resultado"
+                          titulo="Nada com essa busca e esses filtros"
+                          texto="Tente outra palavra ou limpe a busca e os filtros."
+                        >
+                          <AcaoDoEstado
+                            aoClicar={() => {
+                              setBusca("");
+                              setFiltro("todas");
+                              voltarAoInicio();
+                            }}
+                          >
+                            Limpar busca e filtros
+                          </AcaoDoEstado>
+                        </EstadoPainel>
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -450,7 +498,7 @@ export default function Ocorrencias(): ReactNode {
         </div>
       )}
 
-      {podeRevisar ? <div
+      {podeRevisar && (dados?.length ?? 0) > 0 ? <div
         className="ocorrencias__lote"
         role="region"
         aria-label="Ações em lote"

@@ -127,6 +127,7 @@
 .ocorrencias__rolagem {
   position: relative;
   overflow-x: auto;
+  container-type: inline-size;
 }
 
 .ocorrencias__tabela {
@@ -341,6 +342,25 @@
   padding: 48px 16px;
   color: var(--oc-mudo);
   text-align: center;
+}
+
+/* O estado ocupa a célula inteira e já tem a margem dele. */
+.ocorrencias__vazio:has(.estado-painel) {
+  padding: 0;
+}
+
+/* A tabela rola na horizontal em tela estreita; o estado fica preso à parte visível (100cqw). */
+.ocorrencias__vazio .estado-painel {
+  position: sticky;
+  left: 0;
+  width: 100cqw;
+  margin-inline: 0;
+  padding-inline: 16px;
+  box-sizing: border-box;
+}
+
+.ocorrencias__vazio .estado-painel__texto {
+  max-width: 520px;
 }
 
 .ocorrencias__rodape {
