@@ -10,17 +10,20 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { useMetaRecuperacao, usePreferenciasDaMeta } from "../../hooks/useMeta";
 import { useDadosReais } from "../../hooks/useModo";
 import { useAcoesRelatorio, useRelatorio } from "../../hooks/useRelatorio";
 import type { MetasSalvas } from "../../types/configuracao";
 import { PERIODOS_RELATORIO } from "../../types/relatorio";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../../types/relatorio";
 import { baixarCsv } from "../../utils/exportarCsv";
+import { diasDeOperacaoDoMes, metaDoDiaKg } from "../../utils/metas";
 import {
   montarCsvRelatorio,
   ROTULOS_PERIODO,
   TEXTO_PERIODO,
 } from "../../utils/relatorio";
+import type { MetasDoRelatorio } from "../../utils/relatorio";
 import { CartaoPgrs } from "./CartaoPgrs";
 import { GraficoMateriais } from "./GraficoMateriais";
 import { OcorrenciasPorSetor } from "./OcorrenciasPorSetor";
@@ -84,6 +87,8 @@ export default function Relatorios(): ReactNode {
   const dadosReais = useDadosReais();
   const localizacao = useLocation();
   const navegar = useNavigate();
+  const metaDoMesKg = useMetaRecuperacao();
+  const preferenciasDaMeta = usePreferenciasDaMeta();
   const podeDefinirMetas =
     !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
@@ -105,10 +110,30 @@ export default function Relatorios(): ReactNode {
     }
   }, [localizacao.pathname, localizacao.state, navegar]);
 
+  /** As metas só entram no relatório do mês e se o aviso estiver ligado. */
+  function metasDoCsv(relatorio: RelatorioPgrs): MetasDoRelatorio | undefined {
+    if (
+      relatorio.periodo !== "mes" ||
+      metaDoMesKg <= 0 ||
+      !preferenciasDaMeta.avisosDaMeta.incluirNoPgrs
+    ) {
+      return undefined;
+    }
+    return {
+      metaMensalKg: metaDoMesKg,
+      metaDoDiaKg: metaDoDiaKg(
+        metaDoMesKg,
+        diasDeOperacaoDoMes(preferenciasDaMeta.diasDeOperacao, new Date()),
+        preferenciasDaMeta.metaDoDia,
+      ),
+      porMaterial: preferenciasDaMeta.metaPorMaterial,
+    };
+  }
+
   function exportarCsv(relatorio: RelatorioPgrs): void {
     baixarCsv(
       `relatorio-${relatorio.periodo}.csv`,
-      montarCsvRelatorio(relatorio),
+      montarCsvRelatorio(relatorio, undefined, metasDoCsv(relatorio)),
     );
   }
 
@@ -119,10 +144,11 @@ export default function Relatorios(): ReactNode {
       const { geradoEm } = await acoes.gerarPgrs(relatorio.periodo);
       const arquivo: ArquivoGerado = {
         nome: `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`,
-        conteudo: montarCsvRelatorio(relatorio, {
-          unidade: usuario?.unidade ?? "Unidade",
-          geradoEm,
-        }),
+        conteudo: montarCsvRelatorio(
+          relatorio,
+          { unidade: usuario?.unidade ?? "Unidade", geradoEm },
+          metasDoCsv(relatorio),
+        ),
       };
       baixarCsv(arquivo.nome, arquivo.conteudo);
       setUltimo(arquivo);
