@@ -103,11 +103,16 @@ const COR_DO_MATERIAL: Readonly<Record<Material, string>> = {
 function atividadesRecentes(
   lista: readonly Ocorrencia[],
   agora: number,
+  autor?: string,
 ): readonly AtividadeEquipe[] {
   return lista
     .flatMap((o) =>
       o.historico
-        .filter((evento) => evento.tipo in VERBO_DO_EVENTO)
+        .filter(
+          (evento) =>
+            evento.tipo in VERBO_DO_EVENTO &&
+            (autor === undefined || evento.autor === autor),
+        )
         .map((evento) => ({ o, evento })),
     )
     .sort((a, b) => b.evento.em.localeCompare(a.evento.em))
@@ -119,6 +124,15 @@ function atividadesRecentes(
       tempo: tempoRelativo(evento.em, agora),
       cor: o.material ? COR_DO_MATERIAL[o.material] : "var(--vidro-bg)",
     }));
+}
+
+/** O que a pessoa fez nas ocorrências, pelo histórico: da ação mais recente para a mais antiga. */
+export function atividadesDaPessoa(
+  lista: readonly Ocorrencia[],
+  nome: string,
+  agora: number = Date.now(),
+): readonly AtividadeEquipe[] {
+  return atividadesRecentes(lista, agora, nome);
 }
 
 /** Duração em texto corrido: "20 min", "8 h", "1 dia", "3 dias". */

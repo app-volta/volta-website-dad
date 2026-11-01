@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
@@ -11,6 +10,7 @@ import {
   useConfiguracoes,
   useRecuperadoNoMesKg,
 } from "../../hooks/useConfiguracoes";
+import { rotuloDoPapel } from "../../utils/pessoa";
 import { CartaoMeta } from "./CartaoMeta";
 import {
   CartaoInsights,
@@ -27,18 +27,12 @@ interface Aviso {
 }
 
 export default function Configuracoes(): ReactNode {
-  const navegar = useNavigate();
-  const { usuario, sair, atualizarUsuario } = useAuth();
+  const { usuario, pedirSaida, atualizarUsuario } = useAuth();
   const { dados, carregando, erro, atualizar, limparErro } = useConfiguracoes();
   const recuperadoNoMesKg = useRecuperadoNoMesKg();
 
   const [editandoPerfil, setEditandoPerfil] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-
-  function sairDoPainel(): void {
-    sair();
-    navegar("/login", { replace: true });
-  }
 
   async function salvarMeta(metaKg: number): Promise<boolean> {
     const salvou = await atualizar({ metaRecuperacaoKg: metaKg });
@@ -57,8 +51,7 @@ export default function Configuracoes(): ReactNode {
     setAviso({ titulo: "Perfil atualizado", descricao: `Agora você aparece como ${nome}.` });
   }
 
-  const papel =
-    usuario?.papel === "responsavel_pgrs" ? "Gestor · Responsável PGRS" : "Operador";
+  const papel = usuario ? rotuloDoPapel(usuario.papel) : "Operador";
 
   return (
     <section className="cfg" aria-label="Configurações">
@@ -103,7 +96,7 @@ export default function Configuracoes(): ReactNode {
               ativo={dados.insights}
               aoAlterar={(ativo) => void atualizar({ insights: ativo })}
             />
-            <button type="button" className="cfg__sair" onClick={sairDoPainel}>
+            <button type="button" className="cfg__sair" onClick={pedirSaida}>
               <Icone nome="sair" tamanho={14} />
               Sair do painel
             </button>

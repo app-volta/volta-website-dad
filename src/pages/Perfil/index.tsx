@@ -1,100 +1,81 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
-import type { NomeIcone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
+import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
-import { usePainel, useRegistradasPor } from "../../hooks/usePainel";
+import {
+  useMinhasAtividades,
+  usePainel,
+  useRegistradasPor,
+} from "../../hooks/usePainel";
+import { iniciais, rotuloDoPapel } from "../../utils/pessoa";
+import { ModalPerfil } from "../Configuracoes/ModalPerfil";
 import "./styles.css";
 
-const ROTULO_PAPEL = {
-  responsavel_pgrs: "Responsável técnico — PGRS",
-  operador: "Operador de chão de fábrica",
-} as const;
-
-interface Preferencia {
-  readonly icone: NomeIcone;
-  readonly cor: "papelao" | "plastico" | "metal" | "vidro";
-  readonly titulo: string;
-  readonly subtitulo: string;
-}
-
-const PREFERENCIAS: readonly Preferencia[] = [
-  {
-    icone: "sino",
-    cor: "papelao",
-    titulo: "Notificações",
-    subtitulo: "Avisos de novas ocorrências e coletas",
-  },
-  {
-    icone: "grafico",
-    cor: "plastico",
-    titulo: "Unidade e setor",
-    subtitulo: "Gerencie os locais que você acompanha",
-  },
-  {
-    icone: "chip",
-    cor: "metal",
-    titulo: "Ajuda e suporte",
-    subtitulo: "Central de ajuda e contato",
-  },
-];
-
-function iniciais(nome: string): string {
-  return nome
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((parte) => parte[0]?.toUpperCase() ?? "")
-    .join("");
+interface Numero {
+  readonly rotulo: string;
+  readonly valor: string;
 }
 
 export default function Perfil(): ReactNode {
-  const { usuario, sair } = useAuth();
-  const navegar = useNavigate();
+  const { usuario, pedirSaida, atualizarUsuario } = useAuth();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
+  const [editando, setEditando] = useState<boolean>(false);
+  const [aviso, setAviso] = useState<string | null>(null);
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
-  const { painel, dadosReais } = usePainel(dados);
-  // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
-  const semDados = dados === null;
+  const { painel } = usePainel(dados);
   const registradas = useRegistradasPor(dados, usuario?.id ?? "");
+  const atividades = useMinhasAtividades(dados, usuario?.nome ?? "");
 
   if (!usuario) {
-    return (
-      <Alerta variante="info">Nenhuma sessão ativa detectada.</Alerta>
-    );
+    return <Alerta variante="info">Nenhuma sessão ativa detectada.</Alerta>;
   }
 
-  function encerrar(): void {
-    sair();
-    navegar("/login");
+  async function salvarPerfil(nome: string): Promise<void> {
+    await atualizarUsuario({ nome });
+    setEditando(false);
+    setAviso(`Agora você aparece como ${nome}.`);
   }
+
+  // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
+  const semDados = dados === null;
+  const numeros: readonly Numero[] = [
+    { rotulo: "Registradas por você", valor: semDados ? "—" : String(registradas) },
+    {
+      rotulo: "Ocorrências no mês",
+      valor: semDados ? "—" : String(painel.ocorrenciasMes),
+    },
+    {
+      rotulo: "Recuperado no mês",
+      valor: semDados ? "—" : `${painel.recuperadoMesKg.toLocaleString("pt-BR")} kg`,
+    },
+    {
+      rotulo: "Taxa de aprovação",
+      valor: semDados || painel.taxaAprovacao === null ? "—" : `${painel.taxaAprovacao}%`,
+    },
+  ];
 
   return (
     <div className="perfil">
-      <section className="perfil__cartao card" aria-label="Cabeçalho do perfil">
-        <span className="perfil__avatar" aria-hidden="true">
-          {iniciais(usuario.nome)}
-        </span>
-        <div className="perfil__cartao-info">
-          <h2 className="perfil__nome">{usuario.nome}</h2>
-          <p className="perfil__papel">
-            {ROTULO_PAPEL[usuario.papel]} · {usuario.unidade}
-          </p>
-        </div>
-        <button type="button" className="perfil__editar">
-          <Icone nome="editar" tamanho={16} /> Editar
-        </button>
-      </section>
+      <div className="perfil__coluna">
+        <section className="perfil__cartao perfil__cabecalho" aria-label="Cabeçalho do perfil">
+          <span className="perfil__avatar" aria-hidden="true">
+            {iniciais(usuario.nome)}
+          </span>
+          <div className="perfil__identidade">
+            <h2 className="perfil__nome">{usuario.nome}</h2>
+            <p className="perfil__papel">{rotuloDoPapel(usuario.papel)}</p>
+          </div>
+          <button type="button" className="perfil__editar" onClick={() => setEditando(true)}>
+            <Icone nome="editar" tamanho={16} />
+            Editar
+          </button>
+        </section>
 
-      <section aria-labelledby="perfil-info-titulo">
-        <h3 id="perfil-info-titulo" className="perfil__secao-titulo">
-          Informações
-        </h3>
         {erro ? (
           <Alerta
             variante="erro"
@@ -112,87 +93,96 @@ export default function Perfil(): ReactNode {
             {erro}
           </Alerta>
         ) : null}
-        {semDados && carregando ? (
-          <Spinner compacto rotulo="Carregando suas ocorrências…" />
-        ) : null}
-        <dl className="perfil__grid">
-          <div className="perfil__stat">
-            <dt>E-mail</dt>
-            <dd>{usuario.email}</dd>
-          </div>
-          <div className="perfil__stat">
-            <dt>Unidade</dt>
-            <dd>{usuario.unidade}</dd>
-          </div>
-          <div className="perfil__stat">
-            <dt>Cargo</dt>
-            <dd>{usuario.cargo?.trim() || ROTULO_PAPEL[usuario.papel]}</dd>
-          </div>
-          {dadosReais ? null : (
-            <div className="perfil__stat">
-              <dt>Membro desde</dt>
-              <dd>Março de 2024</dd>
-            </div>
-          )}
-          <div className="perfil__stat">
-            <dt>Ocorrências registradas</dt>
-            <dd>{semDados ? "—" : registradas}</dd>
-          </div>
-          <div className="perfil__stat">
-            <dt>Recuperado no mês</dt>
-            <dd>
+
+        <section className="perfil__cartao" aria-labelledby="perfil-mes">
+          <h2 id="perfil-mes" className="perfil__titulo">
+            Seu mês no painel
+          </h2>
+          {semDados && carregando ? (
+            <Spinner compacto rotulo="Carregando seus números…" />
+          ) : null}
+          <dl className="perfil__numeros">
+            {numeros.map((numero) => (
+              <div key={numero.rotulo} className="perfil__numero">
+                <dt>{numero.rotulo}</dt>
+                <dd>{numero.valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="perfil__cartao" aria-labelledby="perfil-atividade">
+          <h2 id="perfil-atividade" className="perfil__titulo">
+            Minha atividade
+          </h2>
+          {atividades.length > 0 ? (
+            <ul className="perfil__atividades">
+              {atividades.map((atividade) => (
+                <li key={atividade.id} className="perfil__atividade">
+                  <span className="perfil__atividade-avatar" aria-hidden="true">
+                    {iniciais(usuario.nome)}
+                  </span>
+                  <div>
+                    <p className="perfil__atividade-texto">
+                      <strong>Você</strong> {atividade.acao}
+                    </p>
+                    <p className="perfil__atividade-tempo">{atividade.tempo}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="perfil__vazio">
               {semDados
-                ? "—"
-                : `${painel.recuperadoMesKg.toLocaleString("pt-BR")} kg`}
-            </dd>
-          </div>
-          <div className="perfil__stat">
-            <dt>Taxa de aprovação</dt>
-            <dd>
-              {semDados || painel.taxaAprovacao === null
-                ? "—"
-                : `${painel.taxaAprovacao}%`}
-            </dd>
-          </div>
-          {dadosReais ? null : (
-            <div className="perfil__stat">
-              <dt>Cooperativa preferida</dt>
-              <dd>JBS Ambiental</dd>
-            </div>
+                ? "Carregando sua atividade…"
+                : "Você ainda não registrou nem revisou ocorrências."}
+            </p>
           )}
-        </dl>
-      </section>
+        </section>
+      </div>
 
-      <section aria-labelledby="perfil-prefs-titulo">
-        <h3 id="perfil-prefs-titulo" className="perfil__secao-titulo">
-          Preferências
-        </h3>
-        <ul className="perfil__prefs">
-          {PREFERENCIAS.map((p) => (
-            <li key={p.titulo}>
-              <button type="button" className="perfil__pref">
-                <span
-                  className="perfil__pref-icone"
-                  data-cor={p.cor}
-                  aria-hidden="true"
-                >
-                  <Icone nome={p.icone} tamanho={18} />
-                </span>
-                <div>
-                  <p className="perfil__pref-titulo">{p.titulo}</p>
-                  <p className="perfil__pref-sub">{p.subtitulo}</p>
-                </div>
-                <Icone nome="seta-direita" tamanho={16} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="perfil__coluna">
+        <section className="perfil__cartao" aria-labelledby="perfil-conta">
+          <h2 id="perfil-conta" className="perfil__titulo">
+            Dados da conta
+          </h2>
+          <dl className="perfil__dados">
+            <div>
+              <dt>E-mail</dt>
+              <dd>{usuario.email}</dd>
+            </div>
+            <div>
+              <dt>Unidade</dt>
+              <dd>{usuario.unidade}</dd>
+            </div>
+            <div>
+              <dt>Cargo</dt>
+              <dd>{usuario.cargo?.trim() || rotuloDoPapel(usuario.papel)}</dd>
+            </div>
+          </dl>
+        </section>
 
-      <button type="button" className="perfil__sair" onClick={encerrar}>
-        <Icone nome="sair" tamanho={16} />
-        Sair da conta
-      </button>
+        <button type="button" className="perfil__sair" onClick={pedirSaida}>
+          <Icone nome="sair" tamanho={16} />
+          Sair do painel
+        </button>
+      </div>
+
+      {editando ? (
+        <ModalPerfil
+          nomeAtual={usuario.nome}
+          email={usuario.email}
+          aoSalvar={salvarPerfil}
+          aoFechar={() => setEditando(false)}
+        />
+      ) : null}
+
+      <Toast
+        aberto={aviso !== null}
+        titulo="Perfil atualizado"
+        descricao={aviso ?? undefined}
+        aoFechar={() => setAviso(null)}
+      />
     </div>
   );
 }

@@ -7,7 +7,8 @@ import {
   montarPainel,
 } from "../services/painel";
 import type { Ocorrencia } from "../types/ocorrencia";
-import type { PainelInicio } from "../types/painel";
+import type { AtividadeEquipe, PainelInicio } from "../types/painel";
+import { atividadesDaPessoa } from "../utils/painel";
 
 /** Quantas ocorrências a pessoa registrou. */
 export function useRegistradasPor(
@@ -17,6 +18,17 @@ export function useRegistradasPor(
   return useMemo(
     () => contarRegistradasPor(ocorrencias ?? [], usuarioId),
     [ocorrencias, usuarioId],
+  );
+}
+
+/** O que a pessoa fez nas ocorrências, da mais recente para a mais antiga. */
+export function useMinhasAtividades(
+  ocorrencias: readonly Ocorrencia[] | null,
+  nome: string,
+): readonly AtividadeEquipe[] {
+  return useMemo(
+    () => atividadesDaPessoa(ocorrencias ?? [], nome),
+    [ocorrencias, nome],
   );
 }
 

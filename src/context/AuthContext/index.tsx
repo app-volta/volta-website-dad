@@ -74,6 +74,10 @@ interface ValorAuthContext {
   readonly sair: () => void;
   /** Encerra a sessão vencida; a rota privada leva ao login e, depois dele, de volta a esta página. */
   readonly entrarDeNovo: () => void;
+  /** "Sair do painel?" está aberto: só `sair` encerra a sessão, `cancelarSaida` desiste. */
+  readonly confirmandoSaida: boolean;
+  readonly pedirSaida: () => void;
+  readonly cancelarSaida: () => void;
   /** Grava o perfil (PUT /users/me) e só então atualiza a sessão; rejeita se a gravação falhar. */
   readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => Promise<void>;
   readonly limparErro: () => void;
@@ -97,12 +101,14 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
   const [carregando, setCarregando] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sessaoExpirada, setSessaoExpirada] = useState<boolean>(false);
+  const [confirmandoSaida, setConfirmandoSaida] = useState<boolean>(false);
 
   /** Troca a sessão e manda os services esquecerem o que era da pessoa anterior. */
   const aplicarSessao = useCallback((nova: SessaoAutenticada | null) => {
     sessaoAtual = nova;
     encerrarSessaoHttp();
     setSessaoExpirada(false);
+    setConfirmandoSaida(false);
     setSessao(nova);
   }, []);
 
@@ -197,6 +203,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     [],
   );
 
+  const pedirSaida = useCallback(() => setConfirmandoSaida(true), []);
+  const cancelarSaida = useCallback(() => setConfirmandoSaida(false), []);
+
   const limparErro = useCallback(() => setErro(null), []);
 
   const valor = useMemo<ValorAuthContext>(
@@ -210,6 +219,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       cadastrarNovo,
       sair,
       entrarDeNovo: sair,
+      confirmandoSaida,
+      pedirSaida,
+      cancelarSaida,
       atualizarUsuario,
       limparErro,
     }),
@@ -221,6 +233,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       entrar,
       cadastrarNovo,
       sair,
+      confirmandoSaida,
+      pedirSaida,
+      cancelarSaida,
       atualizarUsuario,
       limparErro,
     ],
