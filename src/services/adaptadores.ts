@@ -26,7 +26,6 @@ import type {
   Cooperativa,
   IndicacaoDeCooperativas,
   MaterialAceito,
-  PosicaoMapa,
 } from "../types/cooperativa";
 import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
@@ -514,41 +513,6 @@ function cnpjParaExibir(cnpj: string): string {
   return /^\d{14}$/.test(cnpj) ? mascararCnpj(cnpj) : cnpj;
 }
 
-const MARGEM_MAPA_X = { min: 12, max: 88 } as const;
-const MARGEM_MAPA_Y = { min: 18, max: 82 } as const;
-
-function escalar(
-  valor: number,
-  menor: number,
-  maior: number,
-  margem: { readonly min: number; readonly max: number },
-): number {
-  if (maior === menor) return (margem.min + margem.max) / 2;
-  return margem.min + ((valor - menor) / (maior - menor)) * (margem.max - margem.min);
-}
-
-/**
- * Posição ilustrativa no mapa: as coordenadas reais, proporcionais entre si e
- * ajustadas ao quadro (norte em cima). Não é um mapa de verdade.
- */
-export function posicoesNoMapa(
-  lista: readonly CooperativaApi[],
-): ReadonlyMap<string, PosicaoMapa> {
-  const latitudes = lista.map((c) => c.latitude);
-  const longitudes = lista.map((c) => c.longitude);
-  const [sul, norte] = [Math.min(...latitudes), Math.max(...latitudes)];
-  const [oeste, leste] = [Math.min(...longitudes), Math.max(...longitudes)];
-  return new Map(
-    lista.map((c) => [
-      c.id,
-      {
-        x: Number(escalar(c.longitude, oeste, leste, MARGEM_MAPA_X).toFixed(1)),
-        y: Number((MARGEM_MAPA_Y.min + MARGEM_MAPA_Y.max - escalar(c.latitude, sul, norte, MARGEM_MAPA_Y)).toFixed(1)),
-      },
-    ]),
-  );
-}
-
 /**
  * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
  * nota e as categorias aceitas; contato, capacidade e licença não existem lá e
@@ -556,7 +520,6 @@ export function posicoesNoMapa(
  */
 export function cooperativaDaApi(
   dto: CooperativaApi,
-  posicaoMapa: PosicaoMapa,
   volume: VolumeDaCooperativa,
   distanciaKm: number | null = null,
 ): Cooperativa {
@@ -580,7 +543,8 @@ export function cooperativaDaApi(
     licencaValidaAte: null,
     licencaDocumento: null,
     volumeMensalKg: volume.volumeMensalKg,
-    posicaoMapa,
+    latitude: dto.latitude,
+    longitude: dto.longitude,
   };
 }
 

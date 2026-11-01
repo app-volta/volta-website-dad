@@ -392,113 +392,146 @@
   position: relative;
   height: 290px;
   overflow: hidden;
+  /* Os painéis do Leaflet têm z-index próprio: isolados aqui, não passam por cima de modais e avisos. */
+  isolation: isolate;
   background: #e4edf9;
 }
 
-.coops__via {
+.coops__mapa-quadro {
   position: absolute;
+  inset: 0;
+  background: #e4edf9;
+  font: inherit;
+}
+
+/* As cores do OpenStreetMap são fortes: suavizadas, o mapa fica mais perto do desenho do painel */
+.coops__mapa .leaflet-tile-pane {
+  filter: saturate(0.5) brightness(1.05) contrast(0.92);
+}
+
+/* Janela "Ampliar mapa": o mesmo mapa, com altura de quase a tela toda */
+.coops__mapa--ampliado {
+  /* Sobra espaço para o título, a linha da cooperativa e o botão Fechar na mesma tela */
+  height: clamp(260px, calc(100vh - 320px), 680px);
+  border-radius: 18px;
+}
+
+.coops__mapa-escolhida {
+  margin: 0;
+  color: var(--coop-mudo);
+  font-size: 14px;
+}
+
+.coops__mapa-escolhida strong {
+  color: var(--coop-texto);
+}
+
+.coops__mapa-acoes {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  gap: 6px;
+}
+
+.coops__mapa-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(5, 43, 26, 0.15);
+  color: var(--coop-texto);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.coops__mapa-botao:hover {
   background: #fff;
 }
 
-.coops__via--h1,
-.coops__via--h2 {
-  right: 0;
-  left: 0;
-  height: 10px;
+.coops__mapa-botao:focus-visible {
+  outline: 2px solid var(--coop-texto);
+  outline-offset: 2px;
 }
 
-.coops__via--h1 {
-  top: 99px;
-}
-
-.coops__via--h2 {
-  top: 203px;
-}
-
-.coops__via--v1,
-.coops__via--v2 {
-  top: 0;
-  bottom: 0;
-  width: 10px;
-}
-
-.coops__via--v1 {
-  left: 27.9%;
-}
-
-.coops__via--v2 {
-  left: 64%;
-}
-
-.coops__raio {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 238px;
-  height: 238px;
-  transform: translate(-50%, -50%);
-}
-
-.coops__voce {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 12px;
-  height: 12px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  background: #e0435c;
-  box-shadow: 0 0 0 3px rgba(224, 67, 92, 0.25);
-  transform: translate(-50%, -50%);
-}
-
-.coops__pin {
-  position: absolute;
-  padding: 0;
+/* Pinos: o ícone do Leaflet é só o contêiner; o desenho e a cor vêm do marcador */
+.coops__ponto {
   border: 0;
   background: transparent;
-  color: var(--coop-pino);
-  line-height: 0;
-  transform: translate(-50%, -100%);
 }
 
-.coops__pin svg {
+.coops__marcador {
+  display: block;
   width: 26px;
   height: 36px;
-  transition: width 0.15s ease, height 0.15s ease;
+  color: var(--coop-pino);
+  line-height: 0;
+  filter: drop-shadow(0 2px 3px rgba(5, 43, 26, 0.3));
+  transform-origin: 50% 100%;
+  transition: transform 0.15s ease;
 }
 
-.coops__pin--selecionado {
-  z-index: 2;
+.coops__marcador svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.coops__pin--selecionado svg {
-  width: 36px;
-  height: 49px;
+.coops__ponto--selecionado .coops__marcador {
+  transform: scale(1.38);
 }
 
-.coops__pin:focus-visible {
+.coops__ponto:focus-visible {
   outline: 2px solid var(--coop-texto);
   outline-offset: 2px;
   border-radius: 8px;
 }
 
+/* Controles do Leaflet com o jeito do painel */
+.coops__mapa .leaflet-bar {
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(5, 43, 26, 0.15);
+}
+
+.coops__mapa .leaflet-bar a {
+  width: 30px;
+  height: 30px;
+  color: var(--coop-texto);
+  line-height: 30px;
+}
+
+.coops__mapa .leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 10px;
+}
+
 .coops__mapa-nota {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
-  z-index: 3;
+  bottom: 30px;
+  left: 50%;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: max-content;
+  max-width: calc(100% - 24px);
   height: 35px;
   margin: 0;
+  padding: 0 16px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.95);
   color: var(--coop-texto);
   font-size: 12.5px;
   font-weight: 700;
+  pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .coops__detalhe {

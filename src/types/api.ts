@@ -70,6 +70,9 @@ export interface EmpresaApi {
   readonly name: string;
   readonly cnpj: string;
   readonly address: string | null;
+  /** Só vêm em GET /companies/me; nulas enquanto a empresa não tem coordenadas. */
+  readonly latitude?: number | null;
+  readonly longitude?: number | null;
 }
 
 /** GET /areas/mine */
