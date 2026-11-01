@@ -7,7 +7,6 @@ import type {
   HistoricoColetaApi,
   IncidenteApi,
   NotasDasCooperativasApi,
-  OcorrenciaPorSetorBiApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
@@ -28,7 +27,6 @@ import type {
   MaterialAceito,
   PosicaoMapa,
 } from "../types/cooperativa";
-import type { OcorrenciasDoSetor } from "../types/bi";
 import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
 import { METADADOS_MATERIAL } from "../types/material";
@@ -711,31 +709,4 @@ export function ocorrenciaDaApi(
     ultimaAlteracao: null,
     historico,
   };
-}
-
-/** Nome mostrado quando o BI manda uma linha sem setor. */
-const SETOR_SEM_NOME = "Sem setor";
-
-/**
- * Ocorrências por setor vindas do BI: soma as linhas do mesmo setor, ignora
- * contagens vazias ou inválidas e ordena do setor com mais ocorrências para o
- * com menos (empate: ordem alfabética).
- */
-export function ocorrenciasPorSetorDaApi(
-  linhas: readonly OcorrenciaPorSetorBiApi[],
-): readonly OcorrenciasDoSetor[] {
-  const somaPorSetor = new Map<string, number>();
-  for (const linha of linhas) {
-    const quantidade = Number(linha.ocorrencias);
-    if (!Number.isFinite(quantidade) || quantidade <= 0) continue;
-    const setor = linha.setor?.trim() || SETOR_SEM_NOME;
-    somaPorSetor.set(setor, (somaPorSetor.get(setor) ?? 0) + quantidade);
-  }
-  return [...somaPorSetor]
-    .map(([setor, ocorrencias]) => ({ setor, ocorrencias }))
-    .sort(
-      (a, b) =>
-        b.ocorrencias - a.ocorrencias ||
-        a.setor.localeCompare(b.setor, "pt-BR"),
-    );
 }

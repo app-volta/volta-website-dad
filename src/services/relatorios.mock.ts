@@ -30,6 +30,14 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Recebimento", kg: 160 },
       { nome: "Refeitório", kg: 98 },
     ],
+    ocorrenciasPorSetor: [
+      { nome: "Frigorífico B2", ocorrencias: 16 },
+      { nome: "Expedição", ocorrencias: 12 },
+      { nome: "Manutenção", ocorrencias: 9 },
+      { nome: "Recebimento", ocorrencias: 8 },
+      { nome: "Refeitório", ocorrencias: 4 },
+      { nome: "Laboratório", ocorrencias: 3 },
+    ],
     destinacao: [
       { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 47 },
       { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 31 },
@@ -55,6 +63,14 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Recebimento", kg: 478 },
       { nome: "Refeitório", kg: 301 },
     ],
+    ocorrenciasPorSetor: [
+      { nome: "Frigorífico B2", ocorrencias: 44 },
+      { nome: "Expedição", ocorrencias: 34 },
+      { nome: "Manutenção", ocorrencias: 26 },
+      { nome: "Recebimento", ocorrencias: 22 },
+      { nome: "Refeitório", ocorrencias: 12 },
+      { nome: "Laboratório", ocorrencias: 10 },
+    ],
     destinacao: [
       { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 45 },
       { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 32 },
@@ -79,6 +95,14 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Manutenção", kg: 2250 },
       { nome: "Recebimento", kg: 1910 },
       { nome: "Refeitório", kg: 1230 },
+    ],
+    ocorrenciasPorSetor: [
+      { nome: "Frigorífico B2", ocorrencias: 170 },
+      { nome: "Expedição", ocorrencias: 131 },
+      { nome: "Manutenção", ocorrencias: 98 },
+      { nome: "Recebimento", ocorrencias: 83 },
+      { nome: "Refeitório", ocorrencias: 51 },
+      { nome: "Laboratório", ocorrencias: 38 },
     ],
     destinacao: [
       { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 44 },

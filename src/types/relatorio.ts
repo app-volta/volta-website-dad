@@ -18,6 +18,11 @@ export interface GeracaoPorSetor {
   readonly kg: number;
 }
 
+export interface OcorrenciasDoSetor {
+  readonly nome: string;
+  readonly ocorrencias: number;
+}
+
 export interface DestinacaoCooperativa {
   readonly cooperativaId: string;
   readonly nome: string;
@@ -41,6 +46,8 @@ export interface RelatorioPgrs {
   readonly desvioAterro: number | null;
   readonly porMaterial: readonly RecuperadoPorMaterial[];
   readonly setores: readonly GeracaoPorSetor[];
+  /** Quantas ocorrências cada setor registrou no período, do setor com mais para o com menos. */
+  readonly ocorrenciasPorSetor: readonly OcorrenciasDoSetor[];
   readonly destinacao: readonly DestinacaoCooperativa[];
   /** Score ESG da empresa (GET /esg/score); ausente no protótipo e sem permissão. */
   readonly scoreEsg?: number | null;

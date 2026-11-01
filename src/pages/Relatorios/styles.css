@@ -142,58 +142,13 @@
 }
 
 /* Recuperado por material */
-.rel__barras {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+.rel__cartao .grafico-barras {
+  margin-top: 18px;
+}
+
+.rel__materiais {
   max-width: 529px;
-  height: 200px;
-  margin: 18px auto 0;
-  padding: 0;
-  list-style: none;
-}
-
-.rel__barra-coluna {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 55px;
-}
-
-.rel__barra-valor {
-  margin-bottom: 8px;
-  color: var(--rel-texto);
-  font-size: 12.5px;
-  line-height: 15px;
-  white-space: nowrap;
-}
-
-.rel__barra {
-  width: 100%;
-  border-radius: 10px;
-}
-
-.rel__barra[data-material="papelao"] {
-  background: linear-gradient(#f0b429, #92660c);
-}
-
-.rel__barra[data-material="plastico"] {
-  background: linear-gradient(#5b9bf5, #2563eb);
-}
-
-.rel__barra[data-material="metal"] {
-  background: linear-gradient(#a78bfa, #7c5bd6);
-}
-
-.rel__barra[data-material="vidro"] {
-  background: linear-gradient(#2dd4bf, #0f8f8f);
-}
-
-.rel__barra-nome {
-  margin-top: 8px;
-  color: var(--rel-mudo);
-  font-size: 12px;
-  line-height: 15px;
+  margin: 0 auto;
 }
 
 /* Cartão do PGRS */
@@ -446,8 +401,8 @@
   }
 }
 
-/* Fonte e total do gráfico do BI */
-.rel__bi-fonte {
+/* Total do gráfico de ocorrências por setor */
+.rel__subtitulo {
   margin: 2px 0 0;
   color: var(--rel-mudo);
   font-size: 13px;
