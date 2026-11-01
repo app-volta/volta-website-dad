@@ -39,6 +39,8 @@ export interface EstadoRegistrar {
   readonly analiseFalhou: boolean;
   /** Os dados do resíduo foram preenchidos à mão, sem a análise da IA. */
   readonly semIA: boolean;
+  /** O envio ficou sem resposta: a ocorrência pode ou não ter sido registrada. */
+  readonly envioIncerto: boolean;
 }
 
 export type AcaoRegistrar =
@@ -67,7 +69,13 @@ export type AcaoRegistrar =
   | { readonly tipo: "voltar_aos_detalhes" }
   | { readonly tipo: "voltar_a_analise" }
   | { readonly tipo: "iniciar_registro" }
-  | { readonly tipo: "registro_erro"; readonly mensagem: string }
+  | {
+      readonly tipo: "registro_erro";
+      readonly mensagem: string;
+      /** Sem resposta (rede caiu, tempo esgotado): não dá para saber se chegou. */
+      readonly incerto: boolean;
+    }
+  | { readonly tipo: "fechar_envio_incerto" }
   | {
       readonly tipo: "registro_ok";
       readonly codigo: string;
@@ -94,6 +102,7 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     fotoRecusada: false,
     analiseFalhou: false,
     semIA: false,
+    envioIncerto: false,
   };
 }
 
@@ -195,9 +204,16 @@ export function redutor(
         ? { ...estado, etapa: "analise", erroEnvio: null }
         : estado;
     case "iniciar_registro":
-      return { ...estado, registrando: true, erroEnvio: null };
+      return { ...estado, registrando: true, erroEnvio: null, envioIncerto: false };
     case "registro_erro":
-      return { ...estado, registrando: false, erroEnvio: acao.mensagem };
+      return {
+        ...estado,
+        registrando: false,
+        erroEnvio: acao.mensagem,
+        envioIncerto: acao.incerto,
+      };
+    case "fechar_envio_incerto":
+      return { ...estado, envioIncerto: false };
     case "registro_ok":
       return {
         ...estado,

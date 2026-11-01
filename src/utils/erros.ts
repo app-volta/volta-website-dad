@@ -22,6 +22,14 @@ export function foiSemResposta(excecao: unknown): boolean {
   return typeof status === "number" && (status === 0 || status >= 500);
 }
 
+/**
+ * A conexão caiu ou o tempo acabou sem resposta: o servidor pode ter recebido o
+ * pedido, e a tela não tem como saber. Quem criou algo deve avisar antes de repetir.
+ */
+export function foiResultadoIncerto(excecao: unknown): boolean {
+  return statusDe(excecao) === 0;
+}
+
 /** A API recusou por conflito (409): já existe um cadastro igual. */
 export function foiConflito(excecao: unknown): boolean {
   return statusDe(excecao) === 409;
