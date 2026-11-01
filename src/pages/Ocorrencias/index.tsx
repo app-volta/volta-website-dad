@@ -9,6 +9,7 @@ import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useConexao } from "../../hooks/useConexao";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useDadosReais } from "../../hooks/useModo";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
@@ -72,6 +73,7 @@ export default function Ocorrencias(): ReactNode {
   const podeRevisar =
     !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const acoes = useAcoesOcorrencia();
+  const semRede = !useConexao().online;
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
 
@@ -225,7 +227,7 @@ export default function Ocorrencias(): ReactNode {
           type="button"
           className="ocorrencias__exportar"
           onClick={exportar}
-          disabled={filtradas.length === 0}
+          disabled={filtradas.length === 0 || semRede}
         >
           <Icone nome="download" tamanho={14} />
           Exportar
@@ -498,37 +500,35 @@ export default function Ocorrencias(): ReactNode {
         </div>
       )}
 
-      {podeRevisar && (dados?.length ?? 0) > 0 ? <div
-        className="ocorrencias__lote"
-        role="region"
-        aria-label="Ações em lote"
-      >
-        <span className="ocorrencias__lote-contagem" aria-live="polite">
-          {selecionadas.size}{" "}
-          {selecionadas.size === 1 ? "selecionada" : "selecionadas"}
-        </span>
-        <button
-          type="button"
-          className="ocorrencias__lote-limpar"
-          onClick={() => setSelecionadas(new Set())}
-          disabled={selecionadas.size === 0}
-        >
-          Limpar
-        </button>
-        <button
-          type="button"
-          className="ocorrencias__lote-aprovar"
-          onClick={() => aprovar([...selecionadas])}
-          disabled={selecionadas.size === 0 || aprovando}
-        >
-          <Icone nome="check" tamanho={14} />
-          {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
-        </button>
-      </div> : null}
+      {podeRevisar && selecionadas.size > 0 ? (
+        <div className="ocorrencias__lote" role="region" aria-label="Ações em lote">
+          <span className="ocorrencias__lote-contagem" aria-live="polite">
+            {selecionadas.size}{" "}
+            {selecionadas.size === 1 ? "selecionada" : "selecionadas"}
+          </span>
+          <button
+            type="button"
+            className="ocorrencias__lote-limpar"
+            onClick={() => setSelecionadas(new Set())}
+          >
+            Limpar
+          </button>
+          <button
+            type="button"
+            className="ocorrencias__lote-aprovar"
+            onClick={() => aprovar([...selecionadas])}
+            disabled={aprovando || semRede}
+          >
+            <Icone nome="check" tamanho={14} />
+            {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
+          </button>
+        </div>
+      ) : null}
 
       <GavetaOcorrencia
         ocorrencia={ocorrenciaGaveta}
         aprovando={aprovando}
+        semRede={semRede}
         podeAprovar={podeRevisar}
         aoFechar={() => setGavetaId(null)}
         aoAprovar={(id) => aprovar([id])}

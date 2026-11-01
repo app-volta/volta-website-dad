@@ -28,6 +28,10 @@
   color: #fff;
 }
 
+.toast--erro .toast__icone {
+  background: #b3263e;
+}
+
 .toast__titulo {
   margin: 0;
   font-size: 14.5px;

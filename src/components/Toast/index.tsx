@@ -8,6 +8,8 @@ interface ToastProps {
   readonly aberto: boolean;
   readonly titulo: string;
   readonly descricao?: string;
+  /** `erro` é a variante escura com o ícone vermelho e anuncia na hora (`role=alert`). */
+  readonly variante?: "sucesso" | "erro";
   readonly duracaoMs?: number;
   readonly aoFechar: () => void;
 }
@@ -17,6 +19,7 @@ export function Toast({
   aberto,
   titulo,
   descricao,
+  variante = "sucesso",
   duracaoMs = 4500,
   aoFechar,
 }: ToastProps): ReactNode {
@@ -36,10 +39,16 @@ export function Toast({
 
   if (!aberto) return null;
 
+  const erro = variante === "erro";
+
   return (
-    <div className="toast" role="status" aria-live="polite">
+    <div
+      className={erro ? "toast toast--erro" : "toast"}
+      role={erro ? "alert" : "status"}
+      aria-live={erro ? "assertive" : "polite"}
+    >
       <span className="toast__icone" aria-hidden="true">
-        <Icone nome="check" tamanho={18} />
+        <Icone nome={erro ? "fechar" : "check"} tamanho={18} />
       </span>
       <div>
         <p className="toast__titulo">{titulo}</p>

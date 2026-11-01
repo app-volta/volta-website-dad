@@ -13,6 +13,7 @@ import { TextoComDestaque } from "../../components/TextoComDestaque";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useConexao } from "../../hooks/useConexao";
 import { useMetaRecuperacao } from "../../hooks/useConfiguracoes";
 import { useDicaVolta, useInsightVolta } from "../../hooks/useInsights";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
@@ -115,6 +116,7 @@ function deltaDePontos(pontos: number | null): {
 export default function Home(): ReactNode {
   const { usuario } = useAuth();
   const acoes = useAcoesOcorrencia();
+  const semRede = !useConexao().online;
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [janela, setJanela] = useState<JanelaGrafico>("semanas");
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
@@ -513,7 +515,7 @@ export default function Home(): ReactNode {
                       <button
                         type="button"
                         className="home-fila__botao home-fila__botao--primario"
-                        disabled={aprovandoId !== null}
+                        disabled={aprovandoId !== null || semRede}
                         onClick={() => void aprovar(item.id, item.titulo)}
                       >
                         <Icone nome="check" tamanho={14} />

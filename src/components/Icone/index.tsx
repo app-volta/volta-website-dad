@@ -39,6 +39,7 @@ export type NomeIcone =
   | "download"
   | "alerta"
   | "ciclo"
+  | "sem-conexao"
   | "relogio"
   | "escudo"
   | "predio"
@@ -208,6 +209,9 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
     <path d="M12 3 C12.7 8.3 15.7 10.3 21 11 C15.7 11.7 12.7 13.7 12 19 C11.3 13.7 8.3 11.7 3 11 C8.3 10.3 11.3 8.3 12 3 Z" />
   ),
   ciclo: <path d="M21 4 V10 H15 M20 14 A8 8 0 1 1 17.7 6.3 L21 10" />,
+  "sem-conexao": (
+    <path d="M3 3 L21 21 M2 8.8 C5 6 8.4 4.6 12 4.6 C13 4.6 14 4.7 15 4.9 M22 8.8 C21 7.9 19.9 7.2 18.7 6.7 M5 12.5 C6.6 11 8.6 10.2 10.7 10 M19 12.5 C18.2 11.7 17.3 11.1 16.3 10.7 M8.5 16 C9.4 15.2 10.6 14.8 12 14.8 C13.4 14.8 14.6 15.2 15.5 16 M12 19.5 H12.01" />
+  ),
   relogio: (
     <>
       <circle cx="12" cy="12" r="9" />

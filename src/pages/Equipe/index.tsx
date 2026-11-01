@@ -4,6 +4,8 @@ import type { ReactNode } from "react";
 import { Alerta } from "../../components/Alerta";
 import { CartoesResumo } from "../../components/CartoesResumo";
 import type { CartaoResumo } from "../../components/CartoesResumo";
+import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
+import { EstadoSemAcesso } from "../../components/EstadoSemAcesso";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
@@ -58,7 +60,7 @@ function montarCartoes(resumo: ResumoEquipe): readonly CartaoResumo[] {
 
 export default function Equipe(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
-  const { dados, carregando, erro } = useEquipe(chaveRecarga);
+  const { dados, carregando, erro, semPermissao } = useEquipe(chaveRecarga);
   const acoes = useAcoesEquipe();
   const dadosReais = useDadosReais();
   const { usuario } = useAuth();
@@ -169,7 +171,11 @@ export default function Equipe(): ReactNode {
 
   return (
     <section className="eq" aria-label="Equipe da unidade">
-      {erro ? (
+      {semPermissao ? <EstadoSemAcesso /> : null}
+      {erro && !dados ? (
+        <EstadoForaDoAr aoTentarDeNovo={() => setChaveRecarga((v) => v + 1)} />
+      ) : null}
+      {erro && dados ? (
         <Alerta variante="erro" titulo="Não foi possível carregar">
           {erro}
         </Alerta>

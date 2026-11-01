@@ -5,17 +5,19 @@ import {
   listarCooperativas,
   obterCooperativa,
 } from "../services/cooperativas";
-import type { EstadoRequisicao } from "../types/comum";
+import type { EstadoLista, EstadoRequisicao } from "../types/comum";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import { foiProibido } from "../utils/erros";
 
 /** `chaveRecarga` busca a lista de novo quando muda, sem apagar a que já está na tela. */
 export function useCooperativas(
   chaveRecarga = 0,
-): EstadoRequisicao<readonly Cooperativa[]> {
-  const [estado, setEstado] = useState<EstadoRequisicao<readonly Cooperativa[]>>({
+): EstadoLista<readonly Cooperativa[]> {
+  const [estado, setEstado] = useState<EstadoLista<readonly Cooperativa[]>>({
     dados: null,
     carregando: true,
     erro: null,
+    semPermissao: false,
   });
 
   useEffect(() => {
@@ -25,16 +27,19 @@ export function useCooperativas(
     listarCooperativas(controle.signal)
       .then((lista) => {
         if (!controle.signal.aborted) {
-          setEstado({ dados: lista, carregando: false, erro: null });
+          setEstado({ dados: lista, carregando: false, erro: null, semPermissao: false });
         }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
+        const proibido = foiProibido(excecao);
         setEstado((atual) => ({
           ...atual,
           carregando: false,
-          erro:
-            excecao instanceof Error
+          semPermissao: proibido,
+          erro: proibido
+            ? null
+            : excecao instanceof Error
               ? excecao.message
               : "Falha ao carregar cooperativas.",
         }));

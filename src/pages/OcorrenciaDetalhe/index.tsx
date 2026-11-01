@@ -11,6 +11,7 @@ import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useConexao } from "../../hooks/useConexao";
 import { useDadosReais } from "../../hooks/useModo";
 import { useCooperativasIndicadas } from "../../hooks/useCooperativasIndicadas";
 import {
@@ -116,6 +117,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
     chaveRecarga,
   );
   const acoes = useAcoesOcorrencia();
+  const semRede = !useConexao().online;
   const semelhantes = useSemelhantesNaSemana(dados);
   const { indicacao, aviso: avisoIndicacao } = useCooperativasIndicadas(
     dados?.id ?? null,
@@ -440,6 +442,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("classificar")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
@@ -459,6 +462,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("encaminhar")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
@@ -478,6 +482,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("observacao")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
@@ -520,6 +525,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                       type="button"
                       className="detalhe__aprovar"
                       aria-haspopup="dialog"
+                      disabled={semRede}
                       onClick={() => abrir("aprovar")}
                     >
                       <Icone nome="check" tamanho={16} />
@@ -541,6 +547,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   type="button"
                   className="detalhe__aprovar"
                   aria-haspopup="dialog"
+                  disabled={semRede}
                   onClick={() => abrir("aprovar")}
                 >
                   <Icone nome="check" tamanho={16} />
@@ -550,6 +557,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   type="button"
                   className="detalhe__recusar"
                   aria-haspopup="dialog"
+                  disabled={semRede}
                   onClick={() => abrir("recusar")}
                 >
                   <Icone nome="fechar" tamanho={15} />
