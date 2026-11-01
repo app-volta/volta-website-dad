@@ -1,42 +1,37 @@
 import type { ReactNode } from "react";
 
+import { GraficoBarras } from "../../../components/GraficoBarras";
 import { METADADOS_MATERIAL } from "../../../types/material";
+import type { Material } from "../../../types/material";
 import type { RecuperadoPorMaterial } from "../../../types/relatorio";
 import { formatarKg } from "../../../utils/formatacao";
 
-/** Altura, em px, da barra do material que mais rendeu. */
-const ALTURA_MAXIMA = 154;
-const ALTURA_MINIMA = 12;
+/** Degradê de cada material, da ponta da barra para a base. */
+const DEGRADE_MATERIAL: Readonly<Record<Material, readonly [string, string]>> = {
+  papelao: ["#f0b429", "#92660c"],
+  plastico: ["#5b9bf5", "#2563eb"],
+  metal: ["#a78bfa", "#7c5bd6"],
+  vidro: ["#2dd4bf", "#0f8f8f"],
+};
 
 interface GraficoMateriaisProps {
   readonly itens: readonly RecuperadoPorMaterial[];
 }
 
 export function GraficoMateriais({ itens }: GraficoMateriaisProps): ReactNode {
-  const maior = Math.max(...itens.map((item) => item.kg), 1);
-
   return (
-    <ul className="rel__barras" aria-label="Quilos recuperados por material">
-      {itens.map((item) => {
-        const altura = Math.max(
-          ALTURA_MINIMA,
-          Math.round((item.kg / maior) * ALTURA_MAXIMA),
-        );
-        return (
-          <li key={item.material} className="rel__barra-coluna">
-            <b className="rel__barra-valor">{formatarKg(item.kg)}</b>
-            <span
-              className="rel__barra"
-              data-material={item.material}
-              style={{ height: `${altura}px` }}
-              aria-hidden="true"
-            />
-            <span className="rel__barra-nome">
-              {METADADOS_MATERIAL[item.material].rotulo}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="rel__materiais">
+      <GraficoBarras
+        direcao="colunas"
+        rotulo="Quilos recuperados por material"
+        formatarValor={formatarKg}
+        barras={itens.map((item) => ({
+          chave: item.material,
+          rotulo: METADADOS_MATERIAL[item.material].rotulo,
+          valor: item.kg,
+          degrade: DEGRADE_MATERIAL[item.material],
+        }))}
+      />
+    </div>
   );
 }

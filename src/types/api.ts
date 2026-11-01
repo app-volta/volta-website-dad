@@ -370,16 +370,6 @@ export interface ContextoDaOcorrenciaApi {
   } | null;
 }
 
-/**
- * GET /bi/occurrences-by-sector (volta-api): ocorrências por setor da empresa de
- * quem está logado, lidas da tabela Gold do BI (Databricks). Proposta de
- * contrato; o endpoint ainda não existe.
- */
-export interface OcorrenciaPorSetorBiApi {
-  readonly setor: string | null;
-  readonly ocorrencias: number;
-}
-
 /** Erros da API seguem o ProblemDetail (RFC 7807). */
 export interface ProblemaApi {
   readonly title?: string;

@@ -4,6 +4,7 @@ import type { Ocorrencia } from "../types/ocorrencia";
 import type {
   DestinacaoCooperativa,
   GeracaoPorSetor,
+  OcorrenciasDoSetor,
   PeriodoRelatorio,
   PosicaoNoRanking,
   RelatorioPgrs,
@@ -19,6 +20,9 @@ import {
 
 const LIMITE_SETORES = 5;
 const LIMITE_COOPERATIVAS = 5;
+/** Setores mostrados no gráfico de ocorrências; os demais se juntam em "Outros setores". */
+const LIMITE_SETORES_NO_GRAFICO = 8;
+const NOME_OUTROS_SETORES = "Outros setores";
 
 /** O que o relatório lê da API, já carregado. */
 export interface EntradaRelatorio {
@@ -93,6 +97,28 @@ function geracaoPorSetor(subconjunto: readonly Ocorrencia[]): readonly GeracaoPo
     .slice(0, LIMITE_SETORES);
 }
 
+/** Conta as ocorrências de cada setor, recusadas e pendentes incluídas. */
+function ocorrenciasPorSetor(
+  subconjunto: readonly Ocorrencia[],
+): readonly OcorrenciasDoSetor[] {
+  const contagem = new Map<string, number>();
+  for (const o of subconjunto) {
+    contagem.set(o.localizacao.setor, (contagem.get(o.localizacao.setor) ?? 0) + 1);
+  }
+  const ordenados = [...contagem]
+    .map(([nome, ocorrencias]) => ({ nome, ocorrencias }))
+    .sort(
+      (a, b) => b.ocorrencias - a.ocorrencias || a.nome.localeCompare(b.nome, "pt-BR"),
+    );
+  if (ordenados.length <= LIMITE_SETORES_NO_GRAFICO) return ordenados;
+
+  const principais = ordenados.slice(0, LIMITE_SETORES_NO_GRAFICO - 1);
+  const outros = ordenados
+    .slice(LIMITE_SETORES_NO_GRAFICO - 1)
+    .reduce((soma, setor) => soma + setor.ocorrencias, 0);
+  return [...principais, { nome: NOME_OUTROS_SETORES, ocorrencias: outros }];
+}
+
 function destinacaoPorCooperativa(
   intervalo: Intervalo,
   entrada: EntradaRelatorio,
@@ -155,6 +181,7 @@ export function calcularRelatorio(
       kg: Math.round(somaKg(aprovadas.filter((o) => o.material === material))),
     })),
     setores: geracaoPorSetor(subconjunto),
+    ocorrenciasPorSetor: ocorrenciasPorSetor(subconjunto),
     destinacao: destinacaoPorCooperativa(intervalo, entrada),
     scoreEsg: entrada.scoreEsg,
     posicaoNoRanking: entrada.posicaoNoRanking,
