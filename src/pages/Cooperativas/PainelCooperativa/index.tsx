@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
 
 import { Icone } from "../../../components/Icone";
@@ -12,8 +13,15 @@ import {
   formatarKmOpcional,
   formatarNota,
 } from "../../../utils/formatacao";
+import type { Coordenadas } from "../../../utils/geo";
 import { corDaCooperativa } from ".././cores";
-import { MapaCooperativas } from ".././MapaCooperativas";
+
+// O Leaflet pesa uns 45 kB: fica fora do primeiro carregamento da tela.
+const MapaCooperativas = lazy(() =>
+  import(".././MapaCooperativas").then((modulo) => ({
+    default: modulo.MapaCooperativas,
+  })),
+);
 
 /** Altura, em px, da barra do maior volume. */
 const ALTURA_MAXIMA_BARRA = 87;
@@ -25,6 +33,8 @@ interface PainelCooperativaProps {
   readonly aoSelecionar: (id: string) => void;
   readonly aoAbrirDocumentos: () => void;
   readonly dadosReais: boolean;
+  /** De onde a unidade envia o resíduo, o centro do mapa. */
+  readonly origem: Coordenadas | null;
 }
 
 export function PainelCooperativa({
@@ -33,14 +43,20 @@ export function PainelCooperativa({
   aoSelecionar,
   aoAbrirDocumentos,
   dadosReais,
+  origem,
 }: PainelCooperativaProps): ReactNode {
   return (
     <section className="coops__painel" aria-label="Detalhes da cooperativa">
-      <MapaCooperativas
-        todas={todas}
-        selecionadaId={selecionada?.id ?? null}
-        aoSelecionar={aoSelecionar}
-      />
+      <Suspense
+        fallback={<div className="coops__mapa" role="status" aria-label="Carregando o mapa" />}
+      >
+        <MapaCooperativas
+          todas={todas}
+          selecionadaId={selecionada?.id ?? null}
+          aoSelecionar={aoSelecionar}
+          origem={origem}
+        />
+      </Suspense>
       {selecionada ? (
         <Detalhe
           coop={selecionada}
