@@ -34,6 +34,15 @@ const PADRAO: Configuracoes = {
     setores: 8,
   },
   metaRecuperacaoKg: 1500,
+  metaDoDia: { modo: "dividir", valorFixoKg: 0 },
+  diasDeOperacao: null,
+  metaPorMaterial: null,
+  avisosDaMeta: {
+    incluirNoPgrs: true,
+    mostrarNoInicio: true,
+    avisarMetaDoDia: true,
+    alertarRitmo: false,
+  },
   notificacoes: {
     novaOcorrencia: true,
     licencaVencendo: true,
@@ -151,6 +160,23 @@ export function metaRecuperacaoAtual(): number {
   return USAR_MOCKS ? lerSalvas().metaRecuperacaoKg : (metaDaApi ?? 0);
 }
 
+export type PreferenciasDaMeta = Pick<
+  Configuracoes,
+  "metaDoDia" | "diasDeOperacao" | "metaPorMaterial" | "avisosDaMeta"
+>;
+
+/** O mesmo objeto até a próxima gravação: serve de leitura estável para quem assina a meta. */
+let preferenciasEmCache: PreferenciasDaMeta | null = null;
+
+/** Leitura síncrona do que a meta guarda neste navegador (meta do dia, dias, divisão por material e avisos). */
+export function preferenciasDaMeta(): PreferenciasDaMeta {
+  if (preferenciasEmCache === null) {
+    const { metaDoDia, diasDeOperacao, metaPorMaterial, avisosDaMeta } = lerSalvas();
+    preferenciasEmCache = { metaDoDia, diasDeOperacao, metaPorMaterial, avisosDaMeta };
+  }
+  return preferenciasEmCache;
+}
+
 export async function obterConfiguracoes(
   sinal?: AbortSignal,
 ): Promise<Configuracoes> {
@@ -170,5 +196,7 @@ export async function salvarConfiguracoes(
   }
   const atualizadas = mesclarConfiguracoes(lerSalvas(), parcial);
   salvar(CHAVE_STORAGE, VERSAO_STORAGE, atualizadas);
+  preferenciasEmCache = null;
+  avisarMeta();
   return comDadosDaApi(atualizadas, false, sinal);
 }

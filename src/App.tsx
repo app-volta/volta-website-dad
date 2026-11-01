@@ -20,6 +20,7 @@ const OcorrenciaDetalhe = lazy(() => import("./pages/OcorrenciaDetalhe"));
 const Cooperativas = lazy(() => import("./pages/Cooperativas"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const RelatoriosMetas = lazy(() => import("./pages/RelatoriosMetas"));
 const Equipe = lazy(() => import("./pages/Equipe"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -136,6 +137,17 @@ export default function App(): ReactNode {
               subtitulo="Indicadores e relatório do plano de resíduos"
             >
               <Relatorios />
+            </RotaPrivada>
+          }
+        />
+        <Route
+          path="/relatorios/metas"
+          element={
+            <RotaPrivada
+              titulo="Metas do mês e do dia"
+              subtitulo="Relatórios PGRS · quanto a unidade quer recuperar"
+            >
+              <RelatoriosMetas />
             </RotaPrivada>
           }
         />
