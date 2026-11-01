@@ -30,7 +30,7 @@ import {
   relatorioAutomatico,
 } from "../../utils/analiseOcorrencia";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
-import { foiOcorrenciaDesatualizada } from "../../utils/erros";
+import { foiOcorrenciaDesatualizada, foiSemResposta } from "../../utils/erros";
 import {
   formatarConfianca,
   formatarKm,
@@ -130,6 +130,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const navegar = useNavigate();
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [erroSemResposta, setErroSemResposta] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
   useEffect(() => {
@@ -185,6 +186,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
   ): Promise<void> {
     setSalvando(true);
     setErroAcao(null);
+    setErroSemResposta(false);
     try {
       await acao();
       setChaveRecarga((v) => v + 1);
@@ -195,6 +197,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
         return;
       }
       setErroAcao(excecao instanceof Error ? excecao.message : mensagemPadrao);
+      setErroSemResposta(foiSemResposta(excecao));
     } finally {
       setSalvando(false);
     }
@@ -202,6 +205,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function abrir(destino: Exclude<ModalAtivo, null>): void {
     setErroAcao(null);
+    setErroSemResposta(false);
     setModal(destino);
   }
 
@@ -654,6 +658,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
           ocorrencia={ocorrencia}
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={classificar}
           aoFechar={() => setModal(null)}
         />
@@ -678,6 +683,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
         <ModalRecusar
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={recusar}
           aoFechar={() => setModal(null)}
         />

@@ -19,6 +19,8 @@ interface ModalClassificarProps {
   readonly ocorrencia: Ocorrencia;
   readonly salvando: boolean;
   readonly erro: string | null;
+  /** O erro foi de rede ou do servidor: as escolhas continuam na tela e vale tentar de novo. */
+  readonly semResposta?: boolean;
   readonly aoConfirmar: (nova: NovaClassificacao) => void;
   readonly aoFechar: () => void;
 }
@@ -27,6 +29,7 @@ export function ModalClassificar({
   ocorrencia,
   salvando,
   erro,
+  semResposta = false,
   aoConfirmar,
   aoFechar,
 }: ModalClassificarProps): ReactNode {
@@ -136,8 +139,13 @@ export function ModalClassificar({
       </div>
 
       {erro ? (
-        <Alerta variante="erro" titulo="Não foi possível salvar">
-          {erro}
+        <Alerta
+          variante="erro"
+          titulo={semResposta ? "Não salvamos a alteração" : "Não foi possível salvar"}
+        >
+          {semResposta
+            ? "Suas escolhas continuam aqui. Confira a conexão e tente de novo."
+            : erro}
         </Alerta>
       ) : null}
     </ModalAcao>
