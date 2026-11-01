@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
+import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
 import { ModalSair } from "./components/ModalSair";
 import { ModalSessaoExpirada } from "./components/ModalSessaoExpirada";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -169,6 +170,7 @@ export default function App(): ReactNode {
 
         <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
+      <ModalPrimeiroAcesso />
       <ModalSessaoExpirada />
       <ModalSair />
     </Suspense>
