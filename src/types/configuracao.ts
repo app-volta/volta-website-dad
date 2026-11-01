@@ -12,17 +12,43 @@ export interface PreferenciasNotificacao {
   readonly cadaRegistro: boolean;
 }
 
+/** Como a meta do dia é calculada: a do mês dividida pelos dias, ou um valor fixo. */
+export type ModoMetaDoDia = "dividir" | "fixo";
+
+export interface MetaDoDia {
+  readonly modo: ModoMetaDoDia;
+  /** Quilos por dia quando o modo é "fixo"; 0 enquanto ninguém escolheu um valor. */
+  readonly valorFixoKg: number;
+}
+
+/** Dias em que a unidade opera num mês (`mes` em AAAA-MM); a escolha vale só para esse mês. */
+export interface DiasDeOperacao {
+  readonly mes: string;
+  readonly dias: number;
+}
+
 export interface Configuracoes {
   readonly unidade: UnidadeConfiguracao;
   /** Meta de recuperação por mês, em quilos. */
   readonly metaRecuperacaoKg: number;
+  /** A volta-api só guarda a meta do mês: a do dia e os dias de operação ficam neste navegador. */
+  readonly metaDoDia: MetaDoDia;
+  readonly diasDeOperacao: DiasDeOperacao | null;
   readonly notificacoes: PreferenciasNotificacao;
   /** Deixa o mascote sugerir ações no painel. */
   readonly insights: boolean;
 }
 
+/** O que a tela de Relatórios mostra no aviso "Metas salvas" depois que a tela de metas grava. */
+export interface MetasSalvas {
+  readonly mesKg: number;
+  readonly diaKg: number;
+}
+
 export interface ParcialConfiguracoes {
   readonly metaRecuperacaoKg?: number;
+  readonly metaDoDia?: MetaDoDia;
+  readonly diasDeOperacao?: DiasDeOperacao | null;
   readonly notificacoes?: Partial<PreferenciasNotificacao>;
   readonly insights?: boolean;
 }

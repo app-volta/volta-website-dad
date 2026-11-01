@@ -185,6 +185,7 @@ Regras estritas:
 | `/cadastro` | Cadastro | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |
+| `/relatorios/metas` | Metas do mês e do dia (ADMIN e MANAGER) | Privado |
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |

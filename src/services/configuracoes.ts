@@ -34,6 +34,8 @@ const PADRAO: Configuracoes = {
     setores: 8,
   },
   metaRecuperacaoKg: 1500,
+  metaDoDia: { modo: "dividir", valorFixoKg: 0 },
+  diasDeOperacao: null,
   notificacoes: {
     novaOcorrencia: true,
     licencaVencendo: true,
