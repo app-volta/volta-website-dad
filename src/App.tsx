@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
+import { ModalSair } from "./components/ModalSair";
 import { ModalSessaoExpirada } from "./components/ModalSessaoExpirada";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Spinner } from "./components/Spinner";
@@ -160,12 +161,7 @@ export default function App(): ReactNode {
         <Route
           path="/perfil"
           element={
-            <RotaPrivada
-              titulo="Perfil"
-              subtitulo="Seus dados e unidade"
-              comCta={false}
-              comBusca={false}
-            >
+            <RotaPrivada titulo="Meu perfil" subtitulo="Seus dados e sua atividade">
               <Perfil />
             </RotaPrivada>
           }
@@ -174,6 +170,7 @@ export default function App(): ReactNode {
         <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
       <ModalSessaoExpirada />
+      <ModalSair />
     </Suspense>
   );
 }
