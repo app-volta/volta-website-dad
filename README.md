@@ -79,8 +79,8 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 |------|-----------|
 | Login | `POST /auth/login`, `GET /users/me` |
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
-| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
-| Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
+| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfis EMPLOYEE e MANAGER; o tipo vai em `wasteTypeIds`) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
+| Aprovar e recusar | `PATCH /incidents/{id}/approve` e `PATCH /incidents/{id}/reject` com `reason`, máximo de 200 caracteres (perfil ADMIN ou MANAGER). Encerrar (`/close`) vem depois da coleta e não é feito pelo painel |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
 | Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
