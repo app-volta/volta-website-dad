@@ -14,7 +14,7 @@ import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useConexao } from "../../hooks/useConexao";
-import { useMetaRecuperacao } from "../../hooks/useConfiguracoes";
+import { useMetaRecuperacao } from "../../hooks/useMeta";
 import { useDicaVolta, useInsightVolta } from "../../hooks/useInsights";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { usePainel } from "../../hooks/usePainel";

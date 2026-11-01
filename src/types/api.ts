@@ -54,7 +54,12 @@ export interface AtualizacaoPerfilApi {
   readonly position: string | null;
 }
 
-/** GET /companies/{id} (somente ADMIN). */
+/** GET /goals e PUT /goals. `monthlyKg` é nulo até a empresa definir a meta. */
+export interface MetaApi {
+  readonly monthlyKg: number | null;
+}
+
+/** GET /companies/me (ADMIN e MANAGER) e GET /companies/{id} (somente ADMIN). */
 export interface EmpresaApi {
   readonly id: string;
   readonly name: string;

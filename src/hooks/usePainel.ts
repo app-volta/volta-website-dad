@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { metaRecuperacaoAtual } from "../services/configuracoes";
+import { useMetaRecuperacao } from "./useMeta";
 import {
   PAINEL_COM_DADOS_REAIS,
   contarRegistradasPor,
@@ -42,8 +42,8 @@ interface EstadoPainel {
 export function usePainel(
   ocorrencias: readonly Ocorrencia[] | null,
 ): EstadoPainel {
-  // Lida a cada render: a meta mora no navegador e pode mudar em Configurações.
-  const metaKg = metaRecuperacaoAtual();
+  // A meta pode mudar em Configurações e chega da API depois da primeira tela.
+  const metaKg = useMetaRecuperacao();
   const painel = useMemo(
     () => montarPainel(ocorrencias ?? [], metaKg),
     [ocorrencias, metaKg],

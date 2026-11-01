@@ -25,6 +25,8 @@ const DETALHES_CONHECIDOS: Readonly<Record<string, string>> = {
     "Esta ocorrência tem uma coleta ativa e será encerrada quando a coleta terminar.",
   "Hazardous waste incidents can only be closed after a completed collection":
     "Resíduos perigosos só podem ser encerrados depois de uma coleta concluída.",
+  "Register an ESG metric before setting a goal":
+    "A empresa ainda não tem métricas ESG cadastradas, então a meta não pode ser salva por enquanto.",
   "CNPJ already registered": "Já existe um cadastro com esse CNPJ.",
   "Email already registered": "Já existe uma pessoa com esse e-mail.",
   "You cannot change your own role":

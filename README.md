@@ -84,7 +84,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
 | Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
-| Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
+| Perfil e Configurações | `PUT /users/me` (nome e cargo); meta mensal em `GET /goals` e `PUT /goals` (ADMIN e MANAGER gravam); cartão da unidade em `GET /companies/me` (ADMIN e MANAGER) e `GET /areas/mine` |
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER); o gráfico "Ocorrências por setor" conta as próprias ocorrências, sem endpoint extra |
 | Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
