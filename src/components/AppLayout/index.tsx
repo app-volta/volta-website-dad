@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from "react";
 import type { ReactNode } from "react";
 
 import { AssistenteVolta } from "../AssistenteVolta";
+import { AvisoDeConexao } from "../AvisoDeConexao";
 import { BuscaRapida } from "../BuscaRapida";
 import { Rodape } from "../Rodape";
 import { Sidebar } from "../Sidebar";
@@ -67,6 +68,7 @@ export function AppLayout({
           idBusca={idBusca}
         />
         <main id="conteudo" className="app-main" tabIndex={-1}>
+          <AvisoDeConexao />
           {children}
         </main>
         <Rodape />

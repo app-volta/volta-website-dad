@@ -19,6 +19,8 @@ interface GavetaOcorrenciaProps {
   readonly ocorrencia: Ocorrencia | null;
   readonly aprovando: boolean;
   readonly podeAprovar: boolean;
+  /** Sem internet a aprovação fica parada até a rede voltar. */
+  readonly semRede?: boolean;
   readonly aoFechar: () => void;
   readonly aoAprovar: (id: string) => void;
   readonly aoAbrirCompleta: (id: string) => void;
@@ -37,6 +39,7 @@ export function GavetaOcorrencia({
   ocorrencia,
   aprovando,
   podeAprovar: perfilPodeAprovar,
+  semRede = false,
   aoFechar,
   aoAprovar,
   aoAbrirCompleta,
@@ -206,7 +209,7 @@ export function GavetaOcorrencia({
                 type="button"
                 className="gaveta__botao gaveta__botao--primario"
                 onClick={() => aoAprovar(ocorrencia.id)}
-                disabled={aprovando}
+                disabled={aprovando || semRede}
               >
                 <Icone nome="check" tamanho={14} />
                 {aprovando ? "Aprovando…" : "Aprovar"}

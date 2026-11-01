@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
 import { CartoesResumo } from "../../components/CartoesResumo";
+import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
+import { EstadoSemAcesso } from "../../components/EstadoSemAcesso";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
@@ -36,7 +38,7 @@ interface Aviso {
 
 export default function Cooperativas(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
-  const { dados, carregando, erro } = useCooperativas(chaveRecarga);
+  const { dados, carregando, erro, semPermissao } = useCooperativas(chaveRecarga);
   const acoes = useAcoesCooperativas();
   const dadosReais = useDadosReais();
   const { usuario } = useAuth();
@@ -96,7 +98,11 @@ export default function Cooperativas(): ReactNode {
 
   return (
     <section className="coops" aria-label="Cooperativas parceiras">
-      {erro ? (
+      {semPermissao ? <EstadoSemAcesso /> : null}
+      {erro && !dados ? (
+        <EstadoForaDoAr aoTentarDeNovo={() => setChaveRecarga((v) => v + 1)} />
+      ) : null}
+      {erro && dados ? (
         <Alerta variante="erro" titulo="Não foi possível carregar">
           {erro}
         </Alerta>

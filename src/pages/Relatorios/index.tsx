@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 
-import { Alerta } from "../../components/Alerta";
 import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { CartoesResumo } from "../../components/CartoesResumo";
 import type { CartaoResumo } from "../../components/CartoesResumo";
+import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
@@ -69,13 +69,14 @@ function montarCartoes(relatorio: RelatorioPgrs): readonly CartaoResumo[] {
 export default function Relatorios(): ReactNode {
   const { usuario } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
-  const { dados, carregando, erro } = useRelatorio(periodo);
+  const [chaveRecarga, setChaveRecarga] = useState<number>(0);
+  const { dados, carregando, erro } = useRelatorio(periodo, chaveRecarga);
   const acoes = useAcoesRelatorio();
 
   const [gerando, setGerando] = useState<boolean>(false);
   const [ultimo, setUltimo] = useState<ArquivoGerado | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [erroGeracao, setErroGeracao] = useState<string | null>(null);
+  const [falhouAoGerar, setFalhouAoGerar] = useState<boolean>(false);
 
   function exportarCsv(relatorio: RelatorioPgrs): void {
     baixarCsv(
@@ -86,7 +87,7 @@ export default function Relatorios(): ReactNode {
 
   async function gerar(relatorio: RelatorioPgrs): Promise<void> {
     setGerando(true);
-    setErroGeracao(null);
+    setFalhouAoGerar(false);
     try {
       const { geradoEm } = await acoes.gerarPgrs(relatorio.periodo);
       const arquivo: ArquivoGerado = {
@@ -103,7 +104,7 @@ export default function Relatorios(): ReactNode {
         descricao: `${arquivo.nome} foi baixado.`,
       });
     } catch {
-      setErroGeracao("Não foi possível gerar o PGRS. Tente de novo em instantes.");
+      setFalhouAoGerar(true);
     } finally {
       setGerando(false);
     }
@@ -113,19 +114,16 @@ export default function Relatorios(): ReactNode {
     if (ultimo) baixarCsv(ultimo.nome, ultimo.conteudo);
   }
 
+  if (erro && !dados) {
+    return (
+      <section className="rel" aria-label="Relatórios PGRS">
+        <EstadoForaDoAr aoTentarDeNovo={() => setChaveRecarga((v) => v + 1)} />
+      </section>
+    );
+  }
+
   return (
     <section className="rel" aria-label="Relatórios PGRS">
-      {erro ? (
-        <Alerta variante="erro" titulo="Não foi possível carregar">
-          {erro}
-        </Alerta>
-      ) : null}
-      {erroGeracao ? (
-        <Alerta variante="erro" titulo="PGRS não gerado">
-          {erroGeracao}
-        </Alerta>
-      ) : null}
-
       <div className="rel__topo">
         <div className="rel__periodos" role="group" aria-label="Período do relatório">
           {PERIODOS_RELATORIO.map((item) => (
@@ -219,6 +217,14 @@ export default function Relatorios(): ReactNode {
         titulo={aviso?.titulo ?? ""}
         descricao={aviso?.descricao}
         aoFechar={() => setAviso(null)}
+      />
+      <Toast
+        aberto={falhouAoGerar}
+        variante="erro"
+        titulo="Não geramos o relatório"
+        descricao="Tente de novo em alguns instantes."
+        duracaoMs={6000}
+        aoFechar={() => setFalhouAoGerar(false)}
       />
     </section>
   );
