@@ -817,3 +817,68 @@
   color: var(--reg-mudo);
   cursor: not-allowed;
 }
+
+/* Coluna da foto: a foto e, embaixo dela, os avisos de erro */
+.registrar__coluna {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.registrar__foto--erro {
+  border-color: rgba(207, 28, 56, 0.7);
+}
+
+.registrar__foto-icone--erro {
+  background: #fdeaec;
+  color: #b3263e;
+}
+
+.registrar__erro-campo--icone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.registrar__select--erro {
+  border-color: #cf1c38;
+}
+
+.registrar__faixa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 0.8px solid #f6c9d1;
+  border-radius: 14px;
+  background: #fdeaec;
+  color: #3a2a2d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.registrar__faixa strong {
+  display: block;
+  color: #b3263e;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.registrar__faixa-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid #b3263e;
+  border-radius: 50%;
+  color: #b3263e;
+}
+
+.registrar__faixa-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

@@ -7,7 +7,6 @@ import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { GavetaOcorrencia } from "../../components/GavetaOcorrencia";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
-import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useConexao } from "../../hooks/useConexao";
 import { useDebounce } from "../../hooks/useDebounce";
@@ -30,6 +29,7 @@ import {
   categoriaDe,
 } from "../../utils/statusOcorrencia";
 import type { CategoriaStatus } from "../../utils/statusOcorrencia";
+import { EsqueletoDaTabela } from "./EsqueletoDaTabela";
 import "./styles.css";
 
 type Filtro = "todas" | CategoriaStatus;
@@ -217,7 +217,9 @@ export default function Ocorrencias(): ReactNode {
             }}
           >
             {op.rotulo}
-            <span className="ocorrencias__contagem">{contagens[op.valor]}</span>
+            <span className="ocorrencias__contagem">
+              {carregando && !dados ? "–" : contagens[op.valor]}
+            </span>
           </button>
         ))}
       </div>
@@ -265,9 +267,7 @@ export default function Ocorrencias(): ReactNode {
       ) : null}
 
       {carregando && !dados ? (
-        <div className="ocorrencias__tabela-card">
-          <SkeletonList quantidade={6} rotulo="Carregando ocorrências" />
-        </div>
+        <EsqueletoDaTabela comSelecao={podeRevisar} />
       ) : (
         <div className="ocorrencias__tabela-card">
           <div className="ocorrencias__rolagem">

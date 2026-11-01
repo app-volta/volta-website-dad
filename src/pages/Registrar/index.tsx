@@ -20,6 +20,7 @@ import { METADADOS_MATERIAL } from "../../types/material";
 import { modoDaCamera } from "../../utils/camera";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
+import { foiSemResposta } from "../../utils/erros";
 import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
 import {
   combinar,
@@ -64,11 +65,25 @@ const DE_ONDE_VEM_O_PESO: Readonly<Record<OrigemDoPeso, string>> = {
   nenhum: "A IA não conseguiu estimar pela foto",
 };
 
-function lerArquivo(arquivo: File, aoLer: (base64: string) => void): void {
+/** Maior foto aceita: o envio ao Cloudinary recusa imagens acima de 10 MB. */
+const TAMANHO_MAXIMO_FOTO = 10 * 1024 * 1024;
+
+/** Lê a foto; o que não é imagem, passa do limite ou não abre cai em `aoFalhar`. */
+function lerArquivo(
+  arquivo: File,
+  aoLer: (base64: string) => void,
+  aoFalhar: () => void,
+): void {
+  if (!arquivo.type.startsWith("image/") || arquivo.size > TAMANHO_MAXIMO_FOTO) {
+    aoFalhar();
+    return;
+  }
   const leitor = new FileReader();
   leitor.onload = () => {
     if (typeof leitor.result === "string") aoLer(leitor.result);
+    else aoFalhar();
   };
+  leitor.onerror = aoFalhar;
   leitor.readAsDataURL(arquivo);
 }
 
@@ -106,7 +121,11 @@ export default function Registrar(): ReactNode {
   function selecionarFoto(evento: ChangeEvent<HTMLInputElement>): void {
     const arquivo = evento.target.files?.[0];
     if (!arquivo) return;
-    lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
+    lerArquivo(
+      arquivo,
+      (foto) => despachar({ tipo: "definir_foto", foto }),
+      () => despachar({ tipo: "foto_recusada" }),
+    );
     evento.target.value = "";
   }
 
@@ -114,8 +133,12 @@ export default function Registrar(): ReactNode {
     evento.preventDefault();
     setArrastando(false);
     const arquivo = evento.dataTransfer.files?.[0];
-    if (!arquivo || !arquivo.type.startsWith("image/")) return;
-    lerArquivo(arquivo, (foto) => despachar({ tipo: "definir_foto", foto }));
+    if (!arquivo) return;
+    lerArquivo(
+      arquivo,
+      (foto) => despachar({ tipo: "definir_foto", foto }),
+      () => despachar({ tipo: "foto_recusada" }),
+    );
   }
 
   function usarCamera(): void {
@@ -133,7 +156,10 @@ export default function Registrar(): ReactNode {
     const validacao = combinar({
       foto: validarFoto(estado.fotoBase64),
       descricao: descricaoInformada ? validarDescricao(estado.descricao) : null,
-      setor: validarObrigatorio(estado.setor, "o setor", 80),
+      setor:
+        estado.setor.trim() === ""
+          ? "Escolha onde está o resíduo."
+          : validarObrigatorio(estado.setor, "o setor", 80),
       peso: validarPeso(estado.pesoInformado),
     });
     if (!validacao.valido) {
@@ -149,8 +175,22 @@ export default function Registrar(): ReactNode {
         tipo: "analise_erro",
         mensagem:
           excecao instanceof Error ? excecao.message : "Falha ao analisar.",
+        semResposta: foiSemResposta(excecao),
       });
     }
+  }
+
+  /** Segue sem a IA: a pessoa escolhe o tipo e corrige o que souber antes de registrar. */
+  function preencherSemIa(): void {
+    despachar({
+      tipo: "preencher_sem_ia",
+      classificacao: {
+        material: null,
+        confianca: null,
+        recomendacao: "",
+        analisadaEm: new Date().toISOString(),
+      },
+    });
   }
 
   /** Só aqui a ocorrência é criada: já com a foto enviada e com o que a pessoa corrigiu. */
@@ -242,7 +282,8 @@ export default function Registrar(): ReactNode {
 
   const emAnalise = estado.etapa === "analise";
   const concluida = emAnalise && estado.classificacao !== null;
-  const analisando = emAnalise && estado.classificacao === null;
+  const analiseFalhou = emAnalise && estado.analiseFalhou;
+  const analisando = emAnalise && estado.classificacao === null && !analiseFalhou;
   const passo = estado.etapa === "detalhes" ? 1 : 2;
   const rotuloPrioridade =
     PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
@@ -261,6 +302,19 @@ export default function Registrar(): ReactNode {
     )?.valor ??
     "";
   const nivelDeContaminacao = estado.classificacao?.contaminacao ?? "";
+  const fotoComErro = !estado.fotoBase64 && (estado.fotoRecusada || Boolean(estado.erroCampo.foto));
+  const classeDaFoto = [
+    "registrar__foto",
+    arrastando ? "registrar__foto--arrastando" : "",
+    fotoComErro ? "registrar__foto--erro" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const valorAusente = analiseFalhou ? (
+    <p className="registrar__ia-valor">—</p>
+  ) : (
+    <span className="registrar__ia-esqueleto" />
+  );
 
   return (
     <div className="registrar">
@@ -313,7 +367,7 @@ export default function Registrar(): ReactNode {
 
       <p className="sr-only" role="status" aria-live="polite">
         {analisando ? "A IA está analisando a foto." : null}
-        {concluida ? "Análise concluída." : null}
+        {concluida && !estado.semIA ? "Análise concluída." : null}
       </p>
 
       {erroSetores ? (
@@ -321,26 +375,16 @@ export default function Registrar(): ReactNode {
           {erroSetores}
         </Alerta>
       ) : null}
-      {estado.erroEnvio ? (
-        <Alerta
-          variante="erro"
-          titulo={
-            estado.etapa === "detalhes"
-              ? "Não foi possível analisar a foto"
-              : "Não foi possível registrar"
-          }
-        >
+      {estado.erroEnvio && estado.etapa === "detalhes" ? (
+        <Alerta variante="erro" titulo="Não foi possível analisar a foto">
           {estado.erroEnvio}
         </Alerta>
       ) : null}
 
       <div className="registrar__linha">
+        <div className="registrar__coluna">
         <div
-          className={
-            arrastando
-              ? "registrar__foto registrar__foto--arrastando"
-              : "registrar__foto"
-          }
+          className={classeDaFoto}
           onDragOver={(evento) => {
             if (estado.etapa !== "detalhes") return;
             evento.preventDefault();
@@ -361,8 +405,17 @@ export default function Registrar(): ReactNode {
               ) : null}
               {emAnalise ? (
                 <span className="registrar__selo">
-                  <Icone nome={concluida ? "check" : "brilho"} tamanho={12} />
-                  {concluida ? "Análise concluída" : "Analisando…"}
+                  <Icone
+                    nome={concluida ? (estado.semIA ? "editar" : "check") : "brilho"}
+                    tamanho={12}
+                  />
+                  {concluida
+                    ? estado.semIA
+                      ? "Preenchido por você"
+                      : "Análise concluída"
+                    : analiseFalhou
+                      ? "Análise parada"
+                      : "Analisando…"}
                 </span>
               ) : null}
               <button
@@ -395,15 +448,25 @@ export default function Registrar(): ReactNode {
             </>
           ) : (
             <div className="registrar__foto-vazio">
-              <span className="registrar__foto-icone" aria-hidden="true">
+              <span
+                className={
+                  estado.fotoRecusada
+                    ? "registrar__foto-icone registrar__foto-icone--erro"
+                    : "registrar__foto-icone"
+                }
+                aria-hidden="true"
+              >
                 <Icone nome="camera" tamanho={30} />
               </span>
-              <p className="registrar__foto-titulo">
-                Arraste a foto do resíduo aqui
+              <p className="registrar__foto-titulo" role={estado.fotoRecusada ? "alert" : undefined}>
+                {estado.fotoRecusada
+                  ? "Não conseguimos usar essa foto"
+                  : "Arraste a foto do resíduo aqui"}
               </p>
               <p className="registrar__foto-desc">
-                ou escolha um arquivo · a IA identifica tipo, contaminação e
-                quantidade
+                {estado.fotoRecusada
+                  ? "Tente de novo ou escolha outra imagem, com boa luz e o resíduo visível."
+                  : "ou escolha um arquivo · a IA identifica tipo, contaminação e quantidade"}
               </p>
               <div className="registrar__foto-botoes">
                 <button
@@ -423,13 +486,51 @@ export default function Registrar(): ReactNode {
                   </button>
                 )}
               </div>
-              {estado.erroCampo.foto ? (
-                <p role="alert" className="registrar__erro-campo">
-                  {estado.erroCampo.foto}
-                </p>
-              ) : null}
             </div>
           )}
+        </div>
+        {estado.erroCampo.foto ? (
+          <p role="alert" className="registrar__erro-campo registrar__erro-campo--icone">
+            <Icone nome="alerta" tamanho={13} /> {estado.erroCampo.foto}
+          </p>
+        ) : null}
+        {emAnalise && (analiseFalhou || estado.erroEnvio) ? (
+          <div className="registrar__faixa" role="alert">
+            <span className="registrar__faixa-icone" aria-hidden="true">
+              <Icone nome="fechar" tamanho={13} />
+            </span>
+            <div>
+              <strong>
+                {analiseFalhou
+                  ? "A análise da IA não respondeu"
+                  : "Não conseguimos enviar a ocorrência"}
+              </strong>
+              <span>
+                {analiseFalhou
+                  ? "Sua foto continua aqui. Tente de novo ou preencha os dados sem a IA."
+                  : "Foto e dados continuam aqui. " + (estado.erroEnvio ?? "")}
+              </span>
+            </div>
+          </div>
+        ) : null}
+        {analiseFalhou ? (
+          <div className="registrar__faixa-acoes">
+            <button
+              type="button"
+              className="registrar__botao registrar__botao--primario"
+              onClick={analisar}
+            >
+              <Icone nome="ciclo" tamanho={15} /> Tentar de novo
+            </button>
+            <button
+              type="button"
+              className="registrar__botao registrar__botao--contorno"
+              onClick={preencherSemIa}
+            >
+              Preencher sem a IA
+            </button>
+          </div>
+        ) : null}
         </div>
 
         {estado.etapa === "detalhes" ? (
@@ -473,7 +574,13 @@ export default function Registrar(): ReactNode {
               <label htmlFor="reg-setor" className="registrar__rotulo">
                 Onde está?
               </label>
-              <div className="registrar__select">
+              <div
+                className={
+                  estado.erroCampo.setor
+                    ? "registrar__select registrar__select--erro"
+                    : "registrar__select"
+                }
+              >
                 <Icone nome="pin" tamanho={18} />
                 <select
                   id="reg-setor"
@@ -493,6 +600,11 @@ export default function Registrar(): ReactNode {
                 </select>
                 <Icone nome="seta-baixo" tamanho={18} />
               </div>
+              {estado.erroCampo.setor ? (
+                <p role="alert" className="registrar__erro-campo registrar__erro-campo--icone">
+                  <Icone nome="alerta" tamanho={13} /> {estado.erroCampo.setor}
+                </p>
+              ) : null}
             </div>
 
             <div className="registrar__campo">
@@ -590,15 +702,15 @@ export default function Registrar(): ReactNode {
                 type="button"
                 className="registrar__botao registrar__botao--primario registrar__botao--largo"
                 onClick={analisar}
-                disabled={!estado.fotoBase64}
+                disabled={estado.fotoRecusada}
               >
                 <Icone nome="brilho" tamanho={16} /> Analisar com IA
               </button>
-              {estado.fotoBase64 ? null : (
+              {estado.fotoRecusada ? (
                 <p className="registrar__dica">
                   Adicione uma foto pra liberar a análise
                 </p>
-              )}
+              ) : null}
               {estado.classificacao ? (
                 <button
                   type="button"
@@ -659,7 +771,7 @@ export default function Registrar(): ReactNode {
                     <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
                   )
                 ) : (
-                  <span className="registrar__ia-esqueleto" />
+                  valorAusente
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="vidro">
@@ -696,7 +808,7 @@ export default function Registrar(): ReactNode {
                     </p>
                   )
                 ) : (
-                  <span className="registrar__ia-esqueleto" />
+                  valorAusente
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="plastico">
@@ -742,7 +854,7 @@ export default function Registrar(): ReactNode {
                     </>
                   )
                 ) : (
-                  <span className="registrar__ia-esqueleto" />
+                  valorAusente
                 )}
               </div>
               <div className="registrar__ia-card" data-cor="metal">
@@ -758,12 +870,12 @@ export default function Registrar(): ReactNode {
                         : "—"}
                   </p>
                 ) : (
-                  <span className="registrar__ia-esqueleto" />
+                  valorAusente
                 )}
               </div>
             </div>
 
-            {analisando ? (
+            {analisando || analiseFalhou ? (
               <div className="registrar__olhando">
                 <img
                   src={mascoteCompleto}
@@ -772,7 +884,11 @@ export default function Registrar(): ReactNode {
                   height={179}
                   className="registrar__olhando-mascote"
                 />
-                <p>O VOLTA está olhando a foto com atenção…</p>
+                <p>
+                  {analiseFalhou
+                    ? "A análise não terminou. Tente de novo ou preencha os dados sem a IA."
+                    : "O VOLTA está olhando a foto com atenção…"}
+                </p>
               </div>
             ) : null}
 
@@ -788,6 +904,7 @@ export default function Registrar(): ReactNode {
                   </div>
                 ) : null}
 
+                {estado.semIA ? null : (
                 <div className="registrar__recomenda">
                   <img
                     src={mascoteCompleto}
@@ -805,10 +922,13 @@ export default function Registrar(): ReactNode {
                     </p>
                   </div>
                 </div>
+                )}
 
                 {estado.editando ? (
                   <p className="registrar__dica">
-                    Corrija o que a IA errou e toque em Concluir edição.
+                    {estado.semIA
+                      ? "Escolha o tipo do resíduo, preencha o que souber e confirme."
+                      : "Corrija o que a IA errou e toque em Concluir edição."}
                   </p>
                 ) : null}
 
@@ -817,7 +937,11 @@ export default function Registrar(): ReactNode {
                     type="button"
                     className="registrar__botao registrar__botao--primario registrar__botao--largo"
                     onClick={registrar}
-                    disabled={estado.registrando || erroPeso !== null}
+                    disabled={
+                      estado.registrando ||
+                      erroPeso !== null ||
+                      (estado.semIA && valorDoTipo === "")
+                    }
                   >
                     {estado.registrando ? "Registrando…" : "Confirmar e registrar"}
                   </button>

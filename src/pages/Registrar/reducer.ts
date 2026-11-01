@@ -33,6 +33,12 @@ export interface EstadoRegistrar {
   readonly codigoGerado: string | null;
   /** A foto chegou ao serviço de imagens (ou não precisava chegar, como no mock). */
   readonly fotoGuardada: boolean;
+  /** A foto escolhida não serve: não é imagem, passa do limite ou não abriu. */
+  readonly fotoRecusada: boolean;
+  /** A IA não respondeu: a foto continua aqui e a pessoa tenta de novo ou preenche sem a IA. */
+  readonly analiseFalhou: boolean;
+  /** Os dados do resíduo foram preenchidos à mão, sem a análise da IA. */
+  readonly semIA: boolean;
 }
 
 export type AcaoRegistrar =
@@ -48,7 +54,14 @@ export type AcaoRegistrar =
     }
   | { readonly tipo: "iniciar_analise" }
   | { readonly tipo: "analise_pronta"; readonly classificacao: ClassificacaoIA }
-  | { readonly tipo: "analise_erro"; readonly mensagem: string }
+  | {
+      readonly tipo: "analise_erro";
+      readonly mensagem: string;
+      /** O serviço não respondeu (rede, tempo esgotado, 5xx): vale tentar de novo. */
+      readonly semResposta: boolean;
+    }
+  | { readonly tipo: "foto_recusada" }
+  | { readonly tipo: "preencher_sem_ia"; readonly classificacao: ClassificacaoIA }
   | { readonly tipo: "alternar_edicao" }
   | { readonly tipo: "ajustar_analise"; readonly ajuste: AjusteDaAnalise }
   | { readonly tipo: "voltar_aos_detalhes" }
@@ -78,6 +91,9 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     registrando: false,
     codigoGerado: null,
     fotoGuardada: true,
+    fotoRecusada: false,
+    analiseFalhou: false,
+    semIA: false,
   };
 }
 
@@ -91,6 +107,20 @@ export function redutor(
       return {
         ...estado,
         fotoBase64: acao.foto,
+        fotoRecusada: false,
+        analiseFalhou: false,
+        semIA: false,
+        classificacao: null,
+        editando: false,
+        erroCampo: {},
+      };
+    case "foto_recusada":
+      return {
+        ...estado,
+        fotoBase64: null,
+        fotoRecusada: true,
+        analiseFalhou: false,
+        semIA: false,
         classificacao: null,
         editando: false,
         erroCampo: {},
@@ -112,17 +142,39 @@ export function redutor(
         ...estado,
         etapa: "analise",
         classificacao: null,
+        analiseFalhou: false,
+        semIA: false,
         editando: false,
         erroEnvio: null,
       };
     case "analise_pronta":
       return { ...estado, classificacao: acao.classificacao, erroEnvio: null };
     case "analise_erro":
+      // Sem resposta, fica na análise com a foto à vista: tentar de novo ou preencher
+      // sem a IA. Um erro de regra (foto inconclusiva, perfil sem permissão) volta aos detalhes.
+      return acao.semResposta
+        ? {
+            ...estado,
+            etapa: "analise",
+            classificacao: null,
+            analiseFalhou: true,
+            erroEnvio: acao.mensagem,
+          }
+        : {
+            ...estado,
+            etapa: "detalhes",
+            classificacao: null,
+            analiseFalhou: false,
+            erroEnvio: acao.mensagem,
+          };
+    case "preencher_sem_ia":
       return {
         ...estado,
-        etapa: "detalhes",
-        classificacao: null,
-        erroEnvio: acao.mensagem,
+        classificacao: acao.classificacao,
+        analiseFalhou: false,
+        semIA: true,
+        editando: true,
+        erroEnvio: null,
       };
     case "alternar_edicao":
       return { ...estado, editando: !estado.editando };
@@ -131,7 +183,13 @@ export function redutor(
         ? { ...estado, classificacao: { ...estado.classificacao, ...acao.ajuste } }
         : estado;
     case "voltar_aos_detalhes":
-      return { ...estado, etapa: "detalhes", editando: false, erroEnvio: null };
+      return {
+        ...estado,
+        etapa: "detalhes",
+        editando: false,
+        analiseFalhou: false,
+        erroEnvio: null,
+      };
     case "voltar_a_analise":
       return estado.classificacao
         ? { ...estado, etapa: "analise", erroEnvio: null }
