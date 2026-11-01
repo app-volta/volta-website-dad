@@ -182,6 +182,7 @@ export function calcularPainel(
   }));
   const dosQuatro = porMaterial.reduce((total, item) => total + item.kg, 0);
 
+  const temMeta = metaMensalKg > 0;
   const metaSemanal = Math.round((metaMensalKg * 7) / 30);
   const semanas: readonly PontoRecuperacao[] = porSemana(
     aprovadas,
@@ -191,7 +192,7 @@ export function calcularPainel(
   ).map((valor, indice) => ({
     rotulo: `S${indice + 1}`,
     valor: Math.round(valor),
-    meta: metaSemanal,
+    meta: temMeta ? metaSemanal : undefined,
   }));
 
   const meses: readonly PontoRecuperacao[] = Array.from(
@@ -202,7 +203,7 @@ export function calcularPainel(
       return {
         rotulo: rotuloDoMes(inicio),
         valor: Math.round(somaKg(entre(aprovadas, inicio, fim))),
-        meta: metaMensalKg,
+        meta: temMeta ? metaMensalKg : undefined,
       };
     },
   );

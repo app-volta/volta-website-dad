@@ -151,13 +151,20 @@ export default function Home(): ReactNode {
   const pendentes = fila.length;
   const totalMes = painel.recuperadoMesKg;
   const metaMes = useMetaRecuperacao();
-  const progressoMeta = Math.min((totalMes / metaMes) * 100, 100);
+  // Sem meta definida (0) não há percentual: as telas escondem o que dependeria dela.
+  const temMeta = metaMes > 0;
+  const progressoMeta = temMeta ? Math.min((totalMes / metaMes) * 100, 100) : 0;
   // Com a API ainda carregando, os números reais ainda não existem: mostra "—".
   const aguardandoDados = dadosReais && dados === null;
   const kgNaFila = (dados ?? [])
     .filter((o) => fila.some((item) => item.id === o.id))
     .reduce((soma, o) => soma + o.pesoKg, 0);
-  const projecaoMeta = Math.round(((totalMes + kgNaFila) / metaMes) * 100);
+  const projecaoMeta = temMeta
+    ? Math.round(((totalMes + kgNaFila) / metaMes) * 100)
+    : 0;
+  const textoDaMeta = temMeta
+    ? `${Math.round(progressoMeta)}% da meta`
+    : "sem meta definida";
   const deltaOcorrencias = deltaDeOcorrencias(painel.ocorrenciasVariacao);
   const deltaTaxa = deltaDePontos(painel.taxaVariacaoPontos);
   const materiaisMes = [
@@ -228,9 +235,16 @@ export default function Home(): ReactNode {
           </h2>
           <p className="home-hero__texto">
             A unidade já recuperou <strong>{totalMes.toLocaleString("pt-BR")} kg</strong>{" "}
-            este mês — <strong>{Math.round(progressoMeta)}%</strong> da meta.
+            este mês
+            {temMeta ? (
+              <>
+                {" "}— <strong>{Math.round(progressoMeta)}%</strong> da meta.
+              </>
+            ) : (
+              "."
+            )}
             {podeRevisar && dadosReais
-              ? kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
+              ? temMeta && kgNaFila > 0 && projecaoMeta > Math.round(progressoMeta)
                 ? ` Aprovando a fila de hoje, vocês chegam a ${projecaoMeta}%.`
                 : ""
               : !dadosReais
@@ -296,8 +310,8 @@ export default function Home(): ReactNode {
             }
             delta={
               painel.recuperadoVariacaoPct === null
-                ? `${Math.round(progressoMeta)}% da meta`
-                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}% · ${Math.round(progressoMeta)}% da meta`
+                ? textoDaMeta
+                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}% · ${textoDaMeta}`
             }
             direcao={
               painel.recuperadoVariacaoPct !== null && painel.recuperadoVariacaoPct < 0
@@ -369,10 +383,12 @@ export default function Home(): ReactNode {
               <span className="home-legenda__ponto home-legenda__ponto--valor" />
               kg recuperados
             </span>
-            <span className="home-legenda__item">
-              <span className="home-legenda__ponto home-legenda__ponto--meta" />
-              meta semanal proporcional
-            </span>
+            {temMeta ? (
+              <span className="home-legenda__item">
+                <span className="home-legenda__ponto home-legenda__ponto--meta" />
+                meta semanal proporcional
+              </span>
+            ) : null}
           </div>
         </section>
 
@@ -407,28 +423,30 @@ export default function Home(): ReactNode {
               ))}
             </ul>
           </div>
-          <div className="home-meta">
-            <div className="home-meta__topo">
-              <span>Meta do mês</span>
-              <span>
-                {totalMes.toLocaleString("pt-BR")} de{" "}
-                {metaMes.toLocaleString("pt-BR")} kg
-              </span>
+          {temMeta ? (
+            <div className="home-meta">
+              <div className="home-meta__topo">
+                <span>Meta do mês</span>
+                <span>
+                  {totalMes.toLocaleString("pt-BR")} de{" "}
+                  {metaMes.toLocaleString("pt-BR")} kg
+                </span>
+              </div>
+              <div
+                className="home-meta__barra"
+                role="progressbar"
+                aria-label="Progresso da meta de recuperação do mês"
+                aria-valuenow={Math.round(progressoMeta)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <span
+                  className="home-meta__barra-preenchida"
+                  style={{ width: `${progressoMeta}%` }}
+                />
+              </div>
             </div>
-            <div
-              className="home-meta__barra"
-              role="progressbar"
-              aria-label="Progresso da meta de recuperação do mês"
-              aria-valuenow={Math.round(progressoMeta)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <span
-                className="home-meta__barra-preenchida"
-                style={{ width: `${progressoMeta}%` }}
-              />
-            </div>
-          </div>
+          ) : null}
         </section>
       </div>
 
