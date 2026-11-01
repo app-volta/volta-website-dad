@@ -6,7 +6,7 @@ import { aguardar } from "./http";
 /**
  * MOCK de classificação por IA.
  *
- * O backend real deverá receber a foto do resíduo e retornar {material, confianca, recomendacao}.
+ * O backend real deverá receber a foto do resíduo e retornar {material, recomendacao}.
  * Enquanto isso não existe, este mock:
  *   1. Simula latência de rede (~1.6s).
  *   2. Escolhe um material com base no hash simples da imagem, para respostas
@@ -45,10 +45,8 @@ export async function classificarFoto(
     throw new Error("É preciso fornecer uma foto para classificar.");
   }
   const material = escolherMaterialDeterministico(fotoBase64);
-  const confianca = 0.78 + ((fotoBase64.length % 20) / 100);
   return {
     material,
-    confianca: Math.min(0.98, Number(confianca.toFixed(2))),
     contaminacao: "baixa",
     tipoDetectado: METADADOS_MATERIAL[material].rotulo,
     pesoEstimadoKg: 38,

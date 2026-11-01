@@ -29,10 +29,8 @@ import {
   recomendacaoVolta,
   relatorioAutomatico,
 } from "../../utils/analiseOcorrencia";
-import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { foiOcorrenciaDesatualizada, foiSemResposta } from "../../utils/erros";
 import {
-  formatarConfianca,
   formatarKm,
   formatarNotaDaCooperativa,
   descreverPeso,
@@ -170,7 +168,6 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   const ocorrencia = dados;
   const categoria = categoriaDe(ocorrencia.status);
-  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -340,36 +337,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   <Icone nome="brilho" tamanho={12} />
                   Análise concluída
                 </span>
-                {(confianca === null ? [] : DETECCOES).map((d) => (
-                  <span
-                    key={`${d.esquerda}-${d.topo}`}
-                    className="detalhe__deteccao"
-                    aria-hidden="true"
-                    style={{
-                      left: `${d.esquerda}%`,
-                      top: `${d.topo}%`,
-                      width: `${d.largura}%`,
-                      height: `${d.altura}%`,
-                    }}
-                  >
-                    <span className="detalhe__deteccao-rotulo">
-                      {rotuloDeteccao(
-                        d,
-                        material ?? ocorrencia.titulo,
-                        Math.round((confianca ?? 0) * 100),
-                      )}
-                    </span>
-                  </span>
-                ))}
               </div>
               <div className="detalhe__fatos">
                 <div className="detalhe__fato">
                   <p>Local</p>
                   <strong>{ocorrencia.localizacao.setor}</strong>
-                </div>
-                <div className="detalhe__fato">
-                  <p>Confiança da IA</p>
-                  <strong>{formatarConfianca(confianca)}</strong>
                 </div>
               </div>
             </div>

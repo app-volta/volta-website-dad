@@ -30,7 +30,6 @@ export function EsqueletoDaTabela({
               <th className="ocorrencias__col-ocorrencia">Ocorrência</th>
               <th className="ocorrencias__col-setor">Setor</th>
               <th className="ocorrencias__col-peso">Peso</th>
-              <th className="ocorrencias__col-confianca">Confiança IA</th>
               <th className="ocorrencias__col-prioridade">Prioridade</th>
               <th className="ocorrencias__col-status">Status</th>
               <th className="ocorrencias__col-registrada">Registrada</th>
@@ -59,9 +58,6 @@ export function EsqueletoDaTabela({
                 </td>
                 <td>
                   <span className="ocorrencias__esqueleto ocorrencias__esqueleto--curta" />
-                </td>
-                <td>
-                  <span className="ocorrencias__esqueleto ocorrencias__esqueleto--media" />
                 </td>
                 <td>
                   <span className="ocorrencias__esqueleto ocorrencias__esqueleto--pilula" />

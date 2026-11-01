@@ -18,10 +18,9 @@ import type {
 } from "../../types/classificacao";
 import { METADADOS_MATERIAL } from "../../types/material";
 import { modoDaCamera } from "../../utils/camera";
-import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
 import { foiResultadoIncerto, foiSemResposta } from "../../utils/erros";
-import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
+import { descreverPeso } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
@@ -187,7 +186,6 @@ export default function Registrar(): ReactNode {
       tipo: "preencher_sem_ia",
       classificacao: {
         material: null,
-        confianca: null,
         recomendacao: "",
         analisadaEm: new Date().toISOString(),
       },
@@ -289,8 +287,6 @@ export default function Registrar(): ReactNode {
   const passo = estado.etapa === "detalhes" ? 1 : 2;
   const rotuloPrioridade =
     PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
-  const confianca = estado.classificacao?.confianca ?? null;
-  const confiancaPct = Math.round((confianca ?? 0) * 100);
   const materialRotulo = estado.classificacao?.material
     ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
     : "";
@@ -438,25 +434,6 @@ export default function Registrar(): ReactNode {
                 <Icone nome="galeria" tamanho={15} />
                 Trocar
               </button>
-              {concluida && estado.classificacao && confianca !== null
-                ? DETECCOES.map((d) => (
-                    <span
-                      key={`${d.esquerda}-${d.topo}`}
-                      className="registrar__deteccao"
-                      aria-hidden="true"
-                      style={{
-                        left: `${d.esquerda}%`,
-                        top: `${d.topo}%`,
-                        width: `${d.largura}%`,
-                        height: `${d.altura}%`,
-                      }}
-                    >
-                      <span className="registrar__deteccao-rotulo">
-                        {rotuloDeteccao(d, materialRotulo, confiancaPct)}
-                      </span>
-                    </span>
-                  ))
-                : null}
             </>
           ) : (
             <div className="registrar__foto-vazio">
@@ -906,16 +883,6 @@ export default function Registrar(): ReactNode {
 
             {concluida && estado.classificacao ? (
               <>
-                {confianca !== null ? (
-                  <div className="registrar__confianca">
-                    <span>Confiança da IA</span>
-                    <div className="registrar__confianca-barra">
-                      <span style={{ width: `${confianca * 100}%` }} />
-                    </div>
-                    <strong>{formatarConfianca(confianca)}</strong>
-                  </div>
-                ) : null}
-
                 {estado.semIA ? null : (
                 <div className="registrar__recomenda">
                   <img
