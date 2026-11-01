@@ -362,15 +362,16 @@ function localizar(id: string): Ocorrencia {
 
 const NOME_DO_PERFIL: Readonly<Record<string, string>> = {
   ADMIN: "administrador",
-  MANAGER: "gestor",
   OPERATOR: "operador",
 };
 
-/** A volta-api só deixa o perfil EMPLOYEE criar ocorrência; avisar antes poupa a análise da IA. */
+/** A volta-api só deixa os perfis EMPLOYEE e MANAGER criar ocorrência; avisar antes poupa a análise da IA. */
 function mensagemSePerfilNaoRegistra(): string | null {
   const perfil = obterUsuarioAtual()?.perfil;
-  if (perfil === undefined || perfil === "EMPLOYEE") return null;
-  return `Só colaboradores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador.`;
+  if (perfil === undefined || perfil === "EMPLOYEE" || perfil === "MANAGER") {
+    return null;
+  }
+  return `Só colaboradores e gestores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador ou gestor.`;
 }
 
 /** Tipos de resíduo que a pessoa pode escolher ao conferir a análise (um por categoria). */
@@ -469,7 +470,7 @@ export async function criarOcorrencia(
     // Sessão antiga, sem o perfil guardado: a API recusa e a mensagem explica o motivo.
     if (excecao instanceof ErroHttp && excecao.status === 403) {
       throw new Error(
-        "Só colaboradores registram ocorrências. Saia e entre com um usuário colaborador.",
+        "Só colaboradores e gestores registram ocorrências. Saia e entre com um usuário colaborador ou gestor.",
       );
     }
     throw excecao;
