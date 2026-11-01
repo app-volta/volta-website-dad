@@ -30,6 +30,7 @@ import {
   eventoDaColeta,
   ocorrenciaDaApi,
   opcoesDeTipo,
+  statusDaApi,
   tipoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
@@ -46,15 +47,17 @@ import {
 } from "./http";
 
 /**
- * Ocorrências na volta-api (GET/POST /incidents, PATCH /incidents/{id}/close,
- * GET /incidents/{id}/ai-report). Mantém as mesmas assinaturas do mock.
+ * Ocorrências na volta-api (GET/POST /incidents, PATCH /incidents/{id}/approve e
+ * /reject, GET /incidents/{id}/ai-report). Mantém as mesmas assinaturas do mock.
  *
- * A API ainda não tem recusar, encaminhar, observação nem reclassificação, e o
- * status dela é só PENDING ou CLOSED. Essas quatro ações ficam registradas
- * neste navegador (localStorage, por usuário) e são aplicadas por cima do que a
- * API devolve. O mesmo vale para a análise da IA (recomendação e relatório): a
- * volta-api só a devolve se alguém gravar o laudo, então ela fica guardada neste
- * navegador, por usuário. Quando o backend ganhar os endpoints, só este arquivo muda.
+ * A API ainda não tem encaminhar, observação nem reclassificação pelo painel.
+ * Essas três ações ficam registradas neste navegador (localStorage, por usuário)
+ * e são aplicadas por cima do que a API devolve. Aprovar e recusar gravam no
+ * servidor, que passa a ser quem decide o status.
+ *
+ * O mesmo vale para a análise da IA (recomendação e relatório): a volta-api só a
+ * devolve se alguém gravar o laudo, então ela fica guardada neste navegador, por
+ * usuário. Quando o backend ganhar os endpoints, só este arquivo muda.
  */
 
 const CHAVE_LOCAIS = "volta:ocorrencias-locais";
@@ -71,7 +74,6 @@ interface AlteracaoLocal {
   readonly prioridade?: PrioridadeOcorrencia;
   readonly perigoso?: boolean;
   readonly setorDestino?: string | null;
-  readonly motivoRecusa?: string | null;
   readonly ultimaAlteracao?: string | null;
   readonly atualizadaEm?: string;
   readonly eventos?: readonly EventoOcorrencia[];
@@ -133,17 +135,16 @@ function usar<T>(local: T | undefined, base: T): T {
 function aplicarAlteracoes(base: Ocorrencia): Ocorrencia {
   const alteracao = lerLocais()[base.id];
   if (!alteracao) return base;
-  // Se a API já encerrou a ocorrência, o servidor decide.
-  const encerrada = base.status === "aprovada";
+  // Depois que o servidor aprova, recusa ou encerra, é ele quem decide o status.
+  const decididaNoServidor = base.status !== "classificada";
   return {
     ...base,
-    status: encerrada ? base.status : usar(alteracao.status, base.status),
+    status: decididaNoServidor ? base.status : usar(alteracao.status, base.status),
     material: usar(alteracao.material, base.material),
     qualidade: usar(alteracao.qualidade, base.qualidade),
     prioridade: usar(alteracao.prioridade, base.prioridade),
     perigoso: usar(alteracao.perigoso, base.perigoso),
     setorDestino: usar(alteracao.setorDestino, base.setorDestino),
-    motivoRecusa: usar(alteracao.motivoRecusa, base.motivoRecusa),
     ultimaAlteracao: usar(alteracao.ultimaAlteracao, base.ultimaAlteracao),
     atualizadaEm: usar(alteracao.atualizadaEm, base.atualizadaEm),
     historico: [...base.historico, ...(alteracao.eventos ?? [])],
@@ -361,15 +362,16 @@ function localizar(id: string): Ocorrencia {
 
 const NOME_DO_PERFIL: Readonly<Record<string, string>> = {
   ADMIN: "administrador",
-  MANAGER: "gestor",
   OPERATOR: "operador",
 };
 
-/** A volta-api só deixa o perfil EMPLOYEE criar ocorrência; avisar antes poupa a análise da IA. */
+/** A volta-api só deixa os perfis EMPLOYEE e MANAGER criar ocorrência; avisar antes poupa a análise da IA. */
 function mensagemSePerfilNaoRegistra(): string | null {
   const perfil = obterUsuarioAtual()?.perfil;
-  if (perfil === undefined || perfil === "EMPLOYEE") return null;
-  return `Só colaboradores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador.`;
+  if (perfil === undefined || perfil === "EMPLOYEE" || perfil === "MANAGER") {
+    return null;
+  }
+  return `Só colaboradores e gestores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador ou gestor.`;
 }
 
 /** Tipos de resíduo que a pessoa pode escolher ao conferir a análise (um por categoria). */
@@ -450,7 +452,7 @@ export async function criarOcorrencia(
   const peso = classificacao.pesoEstimadoKg ?? null;
   const corpo: NovoIncidenteApi = {
     areaId: area.id,
-    wasteTypeId: tipo.id,
+    wasteTypeIds: [tipo.id],
     photoUrl: endereco,
     employeeDescription: entrada.descricao,
     contaminationLevel: classificacao.contaminacao
@@ -468,7 +470,7 @@ export async function criarOcorrencia(
     // Sessão antiga, sem o perfil guardado: a API recusa e a mensagem explica o motivo.
     if (excecao instanceof ErroHttp && excecao.status === 403) {
       throw new Error(
-        "Só colaboradores registram ocorrências. Saia e entre com um usuário colaborador.",
+        "Só colaboradores e gestores registram ocorrências. Saia e entre com um usuário colaborador ou gestor.",
       );
     }
     throw excecao;
@@ -515,10 +517,32 @@ function registrarLocal(
   return localizar(id);
 }
 
-async function encerrarNaApi(id: string, sinal?: AbortSignal): Promise<void> {
-  await requisitar<void>(`/incidents/${id}/close`, { metodo: "PATCH", sinal });
+/** Maior motivo de recusa que a volta-api aceita. */
+const MOTIVO_MAXIMO = 200;
+
+/**
+ * Aprova (PENDING → APPROVED) ou recusa (PENDING → REJECTED) no servidor e
+ * guarda na lista o status e o motivo que ele devolveu.
+ */
+async function decidirNaApi(
+  id: string,
+  decisao: "approve" | "reject",
+  corpo?: { readonly reason: string },
+  sinal?: AbortSignal,
+): Promise<void> {
+  const resposta = await requisitar<IncidenteApi>(
+    `/incidents/${id}/${decisao}`,
+    { metodo: "PATCH", corpo, sinal },
+  );
   bases = bases.map((item) =>
-    item.id === id ? { ...item, status: "aprovada" } : item,
+    item.id === id
+      ? {
+          ...item,
+          status: statusDaApi(resposta.status),
+          motivoRecusa:
+            resposta.status === "REJECTED" ? (resposta.changeReason ?? null) : null,
+        }
+      : item,
   );
 }
 
@@ -527,10 +551,10 @@ export async function aprovarOcorrencia(
   autor: string,
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
-  await encerrarNaApi(id, sinal);
+  await decidirNaApi(id, "approve", undefined, sinal);
   return registrarLocal(
     id,
-    { status: "aprovada" },
+    {},
     { tipo: "aprovacao", autor, texto: "aprovou a ocorrência" },
   );
 }
@@ -572,9 +596,10 @@ export async function recusarOcorrencia(
   motivo: string,
   autor: string,
 ): Promise<Ocorrencia> {
+  await decidirNaApi(id, "reject", { reason: motivo.trim().slice(0, MOTIVO_MAXIMO) });
   return registrarLocal(
     id,
-    { status: "recusada", motivoRecusa: motivo },
+    {},
     { tipo: "recusa", autor, texto: `recusou a ocorrência · ${motivo}` },
   );
 }

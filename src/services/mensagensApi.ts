@@ -9,6 +9,7 @@ import type { ProblemaApi } from "../types/api";
 const DETALHES_DE_OCORRENCIA_DESATUALIZADA: ReadonlySet<string> = new Set([
   "Incident is already closed",
   "Only pending incidents can be approved",
+  "Only pending incidents can be rejected",
   "Only pending incidents can be edited",
 ]);
 
@@ -20,6 +21,7 @@ const DETALHES_CONHECIDOS: Readonly<Record<string, string>> = {
     "Você não tem permissão para esta ação.",
   "Incident is already closed": "Esta ocorrência já foi encerrada.",
   "Only pending incidents can be approved": MENSAGEM_JA_NAO_AGUARDA,
+  "Only pending incidents can be rejected": MENSAGEM_JA_NAO_AGUARDA,
   "Only pending incidents can be edited": MENSAGEM_JA_NAO_AGUARDA,
   "Incident has an active collection and will be closed when it is completed":
     "Esta ocorrência tem uma coleta ativa e será encerrada quando a coleta terminar.",

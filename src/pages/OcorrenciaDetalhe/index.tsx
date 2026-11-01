@@ -543,9 +543,19 @@ export default function OcorrenciaDetalhe(): ReactNode {
                       <Icone nome="check" tamanho={16} />
                       Aprovar ocorrência
                     </button>
+                    <button
+                      type="button"
+                      className="detalhe__recusar"
+                      aria-haspopup="dialog"
+                      disabled={semRede}
+                      onClick={() => abrir("recusar")}
+                    >
+                      <Icone nome="fechar" tamanho={15} />
+                      Recusar
+                    </button>
                   </div>
                   <Alerta variante="info" titulo="Outras ações indisponíveis">
-                    A API ainda não salva reclassificação, recusa, encaminhamento ou observações.
+                    A API ainda não salva reclassificação, encaminhamento ou observações.
                   </Alerta>
                 </>
               ) : (
