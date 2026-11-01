@@ -10,6 +10,7 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import { foiConflito } from "../../utils/erros";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useAcoesEquipe, useEquipe } from "../../hooks/useEquipe";
 import { useDadosReais } from "../../hooks/useModo";
@@ -69,6 +70,8 @@ export default function Equipe(): ReactNode {
   const [convidando, setConvidando] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroConvite, setErroConvite] = useState<string | null>(null);
+  /** E-mail que a API recusou por já estar cadastrado; o campo avisa enquanto ele não mudar. */
+  const [emailRecusado, setEmailRecusado] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
@@ -82,6 +85,7 @@ export default function Equipe(): ReactNode {
 
   function abrirConvite(): void {
     setErroConvite(null);
+    setEmailRecusado(null);
     setConvidando(true);
   }
 
@@ -105,6 +109,10 @@ export default function Equipe(): ReactNode {
             },
       );
     } catch (excecao: unknown) {
+      if (foiConflito(excecao)) {
+        setEmailRecusado(convite.email);
+        return;
+      }
       setErroConvite(
         excecao instanceof Error ? excecao.message : "Falha ao enviar o convite.",
       );
@@ -244,6 +252,7 @@ export default function Equipe(): ReactNode {
           criaAcesso={dadosReais}
           salvando={salvando}
           erro={erroConvite}
+          emailRecusado={emailRecusado}
           aoConfirmar={(convite) => void convidar(convite)}
           aoFechar={() => setConvidando(false)}
         />

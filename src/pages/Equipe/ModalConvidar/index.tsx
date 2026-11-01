@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { Alerta } from "../../../components/Alerta";
@@ -19,6 +19,8 @@ interface ModalConvidarProps {
   readonly criaAcesso?: boolean;
   readonly salvando: boolean;
   readonly erro: string | null;
+  /** E-mail que a API recusou por já estar cadastrado: o campo avisa até a pessoa mudá-lo. */
+  readonly emailRecusado?: string | null;
   readonly aoConfirmar: (convite: NovoConvite) => void;
   readonly aoFechar: () => void;
 }
@@ -27,6 +29,7 @@ export function ModalConvidar({
   criaAcesso = false,
   salvando,
   erro,
+  emailRecusado = null,
   aoConfirmar,
   aoFechar,
 }: ModalConvidarProps): ReactNode {
@@ -41,7 +44,14 @@ export function ModalConvidar({
   const [papel, setPapel] = useState<PapelEquipe>("colaborador");
   const [tentou, setTentou] = useState<boolean>(false);
 
-  const erroEmail = validarEmailConvite(email);
+  const emailJaCadastrado = emailRecusado !== null && email === emailRecusado;
+  useEffect(() => {
+    if (emailRecusado !== null) emailRef.current?.focus();
+  }, [emailRecusado]);
+
+  const erroEmail =
+    validarEmailConvite(email) ??
+    (emailJaCadastrado ? "Este e-mail já está cadastrado. Confira ou use outro." : null);
   const erroNome = criaAcesso && nome.trim().length < 3 ? "Informe o nome da pessoa." : null;
   const erroSenha =
     criaAcesso && (senha.length < 8 || senha.length > 72)
