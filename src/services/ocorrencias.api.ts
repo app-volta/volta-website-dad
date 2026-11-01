@@ -450,7 +450,7 @@ export async function criarOcorrencia(
   const peso = classificacao.pesoEstimadoKg ?? null;
   const corpo: NovoIncidenteApi = {
     areaId: area.id,
-    wasteTypeId: tipo.id,
+    wasteTypeIds: [tipo.id],
     photoUrl: endereco,
     employeeDescription: entrada.descricao,
     contaminationLevel: classificacao.contaminacao

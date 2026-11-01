@@ -13,6 +13,7 @@ import type {
   RespostaChatApi,
   RiscoApi,
   StatusColetaApi,
+  StatusIncidenteApi,
   TipoResiduoApi,
   UsuarioApi,
 } from "../types/api";
@@ -622,6 +623,42 @@ export function indicacaoDaApi(
   };
 }
 
+const STATUS_DA_API: Readonly<Record<StatusIncidenteApi, StatusOcorrencia>> = {
+  PENDING: "classificada",
+  APPROVED: "aprovada",
+  REJECTED: "recusada",
+  CLOSED: "finalizada",
+};
+
+export function statusDaApi(status: StatusIncidenteApi): StatusOcorrencia {
+  return STATUS_DA_API[status] ?? "classificada";
+}
+
+const GRAVIDADE_DO_RISCO: Readonly<Record<RiscoApi, number>> = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+};
+
+/**
+ * A ocorrência pode ter vários tipos de resíduo, mas as telas mostram um só: o
+ * mais perigoso e, no empate, o de menor id (a API devolve a lista sem ordem fixa).
+ */
+function tipoPrincipal(
+  tipos: readonly TipoResiduoApi[],
+): TipoResiduoApi | undefined {
+  const peso = (tipo: TipoResiduoApi): number =>
+    (tipo.wasteClass === "CLASSE_I" ? 10 : 0) +
+    (GRAVIDADE_DO_RISCO[tipo.defaultRiskLevel] ?? 0);
+  return [...tipos]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .reduce<TipoResiduoApi | undefined>(
+      (melhor, tipo) =>
+        melhor === undefined || peso(tipo) > peso(melhor) ? tipo : melhor,
+      undefined,
+    );
+}
+
 export interface ExtrasOcorrencia {
   readonly relatorio?: RelatorioIaApi | null;
   readonly coleta?: readonly EventoOcorrencia[];
@@ -634,20 +671,23 @@ export function ocorrenciaDaApi(
   catalogo: CatalogoApi,
   extras: ExtrasOcorrencia = {},
 ): Ocorrencia {
-  const tipo = catalogo.tipos.get(dto.wasteTypeId);
+  const tipos = dto.wasteTypeIds.flatMap((id) => catalogo.tipos.get(id) ?? []);
+  const tipo = tipoPrincipal(tipos);
   const area = catalogo.areas.get(dto.areaId);
   const material = tipo ? (MATERIAL_POR_CATEGORIA[tipo.category] ?? null) : null;
-  const titulo = material
+  const rotuloDoTipo = material
     ? METADADOS_MATERIAL[material].rotulo
     : tipo
       ? (ROTULO_CATEGORIA[tipo.category] ?? "Resíduo")
       : "Resíduo";
+  // Com mais de um tipo, o título avisa quantos vêm junto: "Plástico +1".
+  const titulo =
+    tipos.length > 1 ? `${rotuloDoTipo} +${tipos.length - 1}` : rotuloDoTipo;
 
   const criadaEm = instanteUtc(dto.registeredAt);
   const codigo = codigoDaOcorrencia(dto.id);
   const autor = extras.autorNome ?? "Colaborador";
-  const status: StatusOcorrencia =
-    dto.status === "CLOSED" ? "aprovada" : "classificada";
+  const status = statusDaApi(dto.status);
 
   const classificacao =
     extras.classificacao ??
@@ -702,10 +742,10 @@ export function ocorrenciaDaApi(
     criadaPorNome: autor,
     qualidade: "A",
     perigoso:
-      tipo?.wasteClass === "CLASSE_I" ||
+      tipos.some((item) => item.wasteClass === "CLASSE_I") ||
       contaminacaoDaApi(dto.contaminationLevel) === "alta",
     setorDestino: null,
-    motivoRecusa: null,
+    motivoRecusa: dto.status === "REJECTED" ? (dto.changeReason ?? null) : null,
     ultimaAlteracao: null,
     historico,
   };

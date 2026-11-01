@@ -12,7 +12,8 @@ export type RiscoApi = "LOW" | "MEDIUM" | "HIGH";
 
 export type PrioridadeApi = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
-export type StatusIncidenteApi = "PENDING" | "CLOSED";
+/** Ciclo da ocorrência na volta-api: PENDING → APPROVED → CLOSED, ou PENDING → REJECTED. */
+export type StatusIncidenteApi = "PENDING" | "APPROVED" | "REJECTED" | "CLOSED";
 
 export type CategoriaResiduoApi =
   | "PAPEL"
@@ -86,7 +87,7 @@ export interface IncidenteApi {
   readonly companyId: string;
   readonly userId: string;
   readonly areaId: string;
-  readonly wasteTypeId: string;
+  readonly wasteTypeIds: readonly string[];
   readonly photoUrl: string | null;
   readonly employeeDescription: string;
   readonly contaminationLevel: RiscoApi | null;
@@ -94,12 +95,14 @@ export interface IncidenteApi {
   readonly priority: PrioridadeApi;
   readonly status: StatusIncidenteApi;
   readonly registeredAt: string;
+  /** Motivo da última alteração; numa ocorrência recusada, é o motivo da recusa. */
+  readonly changeReason?: string | null;
 }
 
-/** POST /incidents (somente o perfil EMPLOYEE registra). */
+/** POST /incidents (os perfis EMPLOYEE e MANAGER registram). */
 export interface NovoIncidenteApi {
   readonly areaId: string;
-  readonly wasteTypeId: string;
+  readonly wasteTypeIds: readonly string[];
   readonly photoUrl: string | null;
   readonly employeeDescription: string;
   readonly contaminationLevel: RiscoApi | null;
