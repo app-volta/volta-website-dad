@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { ReactNode } from "react";
 
 import { Icone } from "../../../components/Icone";
+import { ModalAcao } from "../../../components/ModalAcao";
 import type { Cooperativa } from "../../../types/cooperativa";
 import {
   estadoLicenca,
@@ -45,6 +46,8 @@ export function PainelCooperativa({
   dadosReais,
   origem,
 }: PainelCooperativaProps): ReactNode {
+  const [ampliado, setAmpliado] = useState(false);
+
   return (
     <section className="coops__painel" aria-label="Detalhes da cooperativa">
       <Suspense
@@ -55,7 +58,42 @@ export function PainelCooperativa({
           selecionadaId={selecionada?.id ?? null}
           aoSelecionar={aoSelecionar}
           origem={origem}
+          aoAmpliar={() => setAmpliado(true)}
         />
+        {ampliado ? (
+          <ModalAcao
+            aberto
+            icone="pin"
+            tom="verde"
+            largura={1120}
+            titulo="Mapa das cooperativas"
+            subtitulo="Clique num pino para escolher a cooperativa."
+            aoFechar={() => setAmpliado(false)}
+            rodape={
+              <button
+                type="button"
+                className="modal-acao__botao modal-acao__botao--contorno"
+                onClick={() => setAmpliado(false)}
+              >
+                Fechar
+              </button>
+            }
+          >
+            <MapaCooperativas
+              todas={todas}
+              selecionadaId={selecionada?.id ?? null}
+              aoSelecionar={aoSelecionar}
+              origem={origem}
+              ampliado
+            />
+            {selecionada ? (
+              <p className="coops__mapa-escolhida" aria-live="polite">
+                Selecionada: <strong>{selecionada.nome}</strong>. Feche a janela para ver os
+                detalhes.
+              </p>
+            ) : null}
+          </ModalAcao>
+        ) : null}
       </Suspense>
       {selecionada ? (
         <Detalhe

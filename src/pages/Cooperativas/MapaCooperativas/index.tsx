@@ -3,6 +3,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 
+import { Icone } from "../../../components/Icone";
 import type { Cooperativa } from "../../../types/cooperativa";
 import { cooperativasNoRaio, temDistancias } from "../../../utils/cooperativas";
 import type { Coordenadas } from "../../../utils/geo";
@@ -28,6 +29,10 @@ interface MapaCooperativasProps {
   readonly aoSelecionar: (id: string) => void;
   /** De onde a unidade envia o resíduo; sem isso o mapa se ajusta às cooperativas. */
   readonly origem: Coordenadas | null;
+  /** Mapa grande, dentro da janela "Ampliar mapa": a roda do mouse dá zoom. */
+  readonly ampliado?: boolean;
+  /** Abre o mapa grande; sem isso o botão "Ampliar mapa" não aparece. */
+  readonly aoAmpliar?: () => void;
 }
 
 interface CooperativaNoMapa extends Cooperativa {
@@ -78,6 +83,8 @@ export function MapaCooperativas({
   selecionadaId,
   aoSelecionar,
   origem,
+  ampliado = false,
+  aoAmpliar,
 }: MapaCooperativasProps): ReactNode {
   const quadro = useRef<HTMLDivElement | null>(null);
   const mapa = useRef<L.Map | null>(null);
@@ -90,12 +97,13 @@ export function MapaCooperativas({
     selecionar.current = aoSelecionar;
   }, [aoSelecionar]);
 
-  // O mapa nasce uma vez e some junto com o componente.
+  // O mapa nasce uma vez e some junto com o componente. No quadro pequeno a roda do mouse
+  // segue rolando a página; no ampliado, que cobre a tela, ela dá zoom.
   useEffect(() => {
     if (!quadro.current) return undefined;
     const instancia = L.map(quadro.current, {
       attributionControl: false,
-      scrollWheelZoom: false,
+      scrollWheelZoom: ampliado,
     }).setView(CENTRO_DO_BRASIL, 4);
     L.tileLayer(URL_DOS_MAPAS, { maxZoom: 19 }).addTo(instancia);
     L.control.attribution({ prefix: false }).addAttribution(CREDITO).addTo(instancia);
@@ -111,7 +119,7 @@ export function MapaCooperativas({
       mapa.current = null;
       camada.current = null;
     };
-  }, []);
+  }, [ampliado]);
 
   // Enquadra de novo só quando a unidade ou a lista mudam, não a cada seleção.
   useEffect(() => {
@@ -175,21 +183,31 @@ export function MapaCooperativas({
 
   return (
     <div
-      className="coops__mapa"
+      className={ampliado ? "coops__mapa coops__mapa--ampliado" : "coops__mapa"}
       role="group"
       aria-label="Mapa das cooperativas"
     >
       <div ref={quadro} className="coops__mapa-quadro" />
-      {noMapa.length > 0 ? (
-        <button
-          type="button"
-          className="coops__mapa-todas"
-          onClick={() =>
-            mapa.current && enquadrar(mapa.current, noMapa, origem, true)
-          }
-        >
-          Ver todas
-        </button>
+      {noMapa.length > 0 || aoAmpliar ? (
+        <div className="coops__mapa-acoes">
+          {noMapa.length > 0 ? (
+            <button
+              type="button"
+              className="coops__mapa-botao"
+              onClick={() =>
+                mapa.current && enquadrar(mapa.current, noMapa, origem, true)
+              }
+            >
+              Ver todas
+            </button>
+          ) : null}
+          {aoAmpliar ? (
+            <button type="button" className="coops__mapa-botao" onClick={aoAmpliar}>
+              <Icone nome="expandir" tamanho={13} />
+              Ampliar mapa
+            </button>
+          ) : null}
+        </div>
       ) : null}
       <p className="coops__mapa-nota">
         {!temDistancias(todas)
