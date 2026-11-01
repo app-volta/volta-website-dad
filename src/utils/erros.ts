@@ -22,6 +22,24 @@ export function foiSemResposta(excecao: unknown): boolean {
   return typeof status === "number" && (status === 0 || status >= 500);
 }
 
+/** A API recusou por conflito (409): já existe um cadastro igual. */
+export function foiConflito(excecao: unknown): boolean {
+  return statusDe(excecao) === 409;
+}
+
+/**
+ * Outra pessoa já aprovou, recusou ou encerrou a ocorrência enquanto ela estava
+ * aberta, e a ação da pessoa não foi aplicada.
+ */
+export function foiOcorrenciaDesatualizada(excecao: unknown): boolean {
+  return (
+    typeof excecao === "object" &&
+    excecao !== null &&
+    "desatualizada" in excecao &&
+    excecao.desatualizada === true
+  );
+}
+
 /**
  * O erro veio de uma resposta 403 (o perfil não pode ver aquilo)? A tela mostra
  * "acesso restrito" em vez de uma falha.
