@@ -5,7 +5,7 @@ import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { contaminacao, recomendacaoDaIa } from "../../utils/analiseOcorrencia";
-import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
+import { descreverPeso } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -81,7 +81,6 @@ export function GavetaOcorrencia({
     }
   }
 
-  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -141,12 +140,6 @@ export function GavetaOcorrencia({
               src={ocorrencia.fotoUrl}
               alt={`Foto da ocorrência ${ocorrencia.titulo}`}
             />
-            {confianca === null ? null : (
-              <span className="gaveta__selo">
-                <Icone nome="brilho" tamanho={12} />
-                Confiança da IA {formatarConfianca(confianca)}
-              </span>
-            )}
           </div>
 
           <div className="gaveta__selos">

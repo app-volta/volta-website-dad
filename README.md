@@ -119,8 +119,8 @@ devolve as pessoas de todas as empresas; a tela filtra pela empresa de quem
 está logado.
 
 O que a volta-api não guarda aparece como "—" ou "Não informada": cidade,
-contato, distância, capacidade e licença das cooperativas, setor das pessoas e
-confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
+contato, distância, capacidade e licença das cooperativas e o setor das pessoas.
+Cadastrar cooperativa pede latitude e longitude e não envia a
 licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
 porque não há convite por e-mail.
 

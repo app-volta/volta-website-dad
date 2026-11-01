@@ -18,15 +18,6 @@ export function formatarDistanciaKm(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
-export function formatarPorcentagem(razao: number): string {
-  return `${Math.round(razao * 100)}%`;
-}
-
-/** Confiança da IA; "—" quando a fonte não informa (a volta-api não envia). */
-export function formatarConfianca(confianca: number | null): string {
-  return confianca === null ? "—" : formatarPorcentagem(confianca);
-}
-
 /**
  * Peso estimado em kg; "—" enquanto ninguém informou. Usa espaço sem quebra
  * para o valor não se partir em duas linhas numa coluna estreita. A versão

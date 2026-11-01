@@ -163,25 +163,22 @@
   width: 4.6%;
 }
 .ocorrencias__tabela .ocorrencias__col-ocorrencia {
-  width: 21.6%;
+  width: 26.6%;
 }
 .ocorrencias__tabela .ocorrencias__col-setor {
-  width: 11%;
+  width: 13%;
 }
 .ocorrencias__tabela .ocorrencias__col-peso {
   width: 7.4%;
-}
-.ocorrencias__tabela .ocorrencias__col-confianca {
-  width: 11.8%;
 }
 .ocorrencias__tabela .ocorrencias__col-prioridade {
   width: 9.8%;
 }
 .ocorrencias__tabela .ocorrencias__col-status {
-  width: 18.8%;
+  width: 21.2%;
 }
 .ocorrencias__tabela .ocorrencias__col-registrada {
-  width: 10.8%;
+  width: 13.2%;
 }
 .ocorrencias__tabela .ocorrencias__col-abrir {
   width: 4.2%;
@@ -250,31 +247,6 @@
   color: var(--oc-mudo);
   font-size: 12px;
   line-height: 15px;
-}
-
-.ocorrencias__confianca {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ocorrencias__confianca strong {
-  font-size: 12.5px;
-}
-
-.ocorrencias__barra {
-  width: 61px;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #edf2ee;
-}
-
-.ocorrencias__barra span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
 }
 
 .ocorrencias__pill {
