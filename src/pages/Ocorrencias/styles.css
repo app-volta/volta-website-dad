@@ -524,3 +524,87 @@
   border-radius: 1px;
   background: #fff;
 }
+
+/* Tabela enquanto a lista carrega */
+.ocorrencias__tabela tbody tr.ocorrencias__esqueleto-linha {
+  cursor: default;
+}
+
+.ocorrencias__tabela tbody tr.ocorrencias__esqueleto-linha:hover {
+  background: transparent;
+}
+
+.ocorrencias__esqueleto {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf2ee 0%, #e0e7e2 50%, #edf2ee 100%);
+  background-size: 200% 100%;
+  animation: ocorrencias-brilho 1.6s linear infinite;
+}
+
+.ocorrencias__esqueleto--caixa {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+}
+
+.ocorrencias__esqueleto--icone {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.ocorrencias__esqueleto--longa {
+  width: 150px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--curta {
+  width: 54px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--media {
+  width: 92px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--pilula {
+  width: 48px;
+  height: 22px;
+}
+
+.ocorrencias__esqueleto--pilula-larga {
+  width: 110px;
+  height: 22px;
+}
+
+.ocorrencias__esqueleto-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ocorrencias__esqueleto-linhas {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@keyframes ocorrencias-brilho {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocorrencias__esqueleto {
+    animation: none;
+  }
+}

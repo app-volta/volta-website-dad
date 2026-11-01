@@ -50,7 +50,7 @@ export function validarDescricao(valor: string): string | null {
 }
 
 export function validarFoto(valor: string | null): string | null {
-  if (!valor) return "Anexe uma foto do resíduo.";
+  if (!valor) return "Adicione uma foto do resíduo.";
   return null;
 }
 
