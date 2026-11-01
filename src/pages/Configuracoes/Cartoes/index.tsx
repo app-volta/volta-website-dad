@@ -13,12 +13,14 @@ interface CartaoPerfilProps {
   readonly nome: string;
   readonly papel: string;
   readonly aoEditar: () => void;
+  readonly aoAlterarSenha: () => void;
 }
 
 export function CartaoPerfil({
   nome,
   papel,
   aoEditar,
+  aoAlterarSenha,
 }: CartaoPerfilProps): ReactNode {
   return (
     <section className="cfg__cartao cfg__perfil" aria-label="Seu perfil">
@@ -37,6 +39,15 @@ export function CartaoPerfil({
       >
         <Icone nome="editar" tamanho={14} />
         Editar
+      </button>
+      <button
+        type="button"
+        className="cfg__botao-contorno"
+        aria-haspopup="dialog"
+        onClick={aoAlterarSenha}
+      >
+        <Icone nome="cadeado" tamanho={14} />
+        Senha
       </button>
     </section>
   );

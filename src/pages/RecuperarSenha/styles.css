@@ -1,0 +1,123 @@
+.recuperar__voltar {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: clamp(12px, 3vh, 28px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0e7c48;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recuperar__voltar:hover {
+  color: var(--verde-escuro);
+  text-decoration: underline;
+}
+
+.recuperar__chip {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  background: #e2f7ec;
+  color: #0e7c48;
+}
+
+.recuperar__chip--grande {
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+}
+
+.recuperar__email {
+  overflow-wrap: anywhere;
+}
+
+.recuperar__nova {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recuperar__reenviar {
+  align-self: flex-start;
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #0e7c48;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+button.recuperar__reenviar:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.recuperar__reenviar--espera {
+  color: #5d6961;
+}
+
+.recuperar__reenviar:disabled {
+  color: #5d6961;
+}
+
+/* Código de 4 dígitos: um campo invisível recebe a digitação; os quadrados mostram o resultado. */
+.codigo {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(8px, 3vw, 24px);
+  margin: 6px 0 2px;
+}
+
+.codigo__digito {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1.5px solid #e8ede9;
+  border-radius: 16px;
+  background: #fff;
+  color: #16211b;
+  font-size: 2rem;
+  font-weight: 800;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.codigo__digito--cheio {
+  border-color: #22c06f;
+}
+
+.codigo--foco .codigo__digito--proximo {
+  border-color: #22c06f;
+  box-shadow: var(--foco);
+}
+
+.codigo--erro .codigo__digito {
+  border-color: #e8556c;
+}
+
+.codigo__entrada {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: text;
+  /* 16px evita o zoom automático do navegador do celular ao tocar no campo. */
+  font-size: 16px;
+}
+
+/* O título recebe o foco por código ao terminar (para o leitor de tela anunciar); o contorno só atrapalha o desenho. */
+.login-tela__titulo[tabindex="-1"]:focus {
+  outline: none;
+}

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
+import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
 import { ModalSair } from "./components/ModalSair";
 import { ModalSessaoExpirada } from "./components/ModalSessaoExpirada";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -11,6 +12,7 @@ import { useAuth } from "./context/AuthContext";
 
 const Login = lazy(() => import("./pages/Login"));
 const Cadastro = lazy(() => import("./pages/Cadastro"));
+const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
 const Home = lazy(() => import("./pages/Home"));
 const Registrar = lazy(() => import("./pages/Registrar"));
 const Ocorrencias = lazy(() => import("./pages/Ocorrencias"));
@@ -82,6 +84,7 @@ export default function App(): ReactNode {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
         <Route
           path="/"
@@ -169,6 +172,7 @@ export default function App(): ReactNode {
 
         <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
+      <ModalPrimeiroAcesso />
       <ModalSessaoExpirada />
       <ModalSair />
     </Suspense>

@@ -49,6 +49,20 @@ export function foiOcorrenciaDesatualizada(excecao: unknown): boolean {
 }
 
 /**
+ * A mensagem que a API ligou a um campo do formulário (por exemplo `senhaAtual`),
+ * ou `null` quando o erro não é de um campo.
+ */
+export function mensagemDoCampo(excecao: unknown, campo: string): string | null {
+  if (typeof excecao !== "object" || excecao === null || !("campos" in excecao)) {
+    return null;
+  }
+  const campos = excecao.campos;
+  if (typeof campos !== "object" || campos === null) return null;
+  const mensagem = (campos as Readonly<Record<string, unknown>>)[campo];
+  return typeof mensagem === "string" ? mensagem : null;
+}
+
+/**
  * O erro veio de uma resposta 403 (o perfil não pode ver aquilo)? A tela mostra
  * "acesso restrito" em vez de uma falha.
  */

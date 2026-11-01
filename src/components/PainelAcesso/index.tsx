@@ -9,13 +9,21 @@ interface PainelAcessoProps {
   readonly titulo: readonly string[];
   readonly texto: string;
   readonly destaques: readonly string[];
+  /** Falas do mascote no balão; sem elas, a saudação das telas de entrada. */
+  readonly balao?: readonly string[];
 }
+
+const BALAO_PADRAO: readonly string[] = [
+  "Oi! Eu sou o VOLTA.",
+  "Bora deixar a unidade em dia?",
+];
 
 /** Painel decorativo das telas de login e cadastro (`aria-hidden`), com título, texto e destaques. */
 export function PainelAcesso({
   titulo,
   texto,
   destaques,
+  balao = BALAO_PADRAO,
 }: PainelAcessoProps): ReactNode {
   return (
     <aside className="painel-acesso" aria-hidden="true">
@@ -78,8 +86,9 @@ export function PainelAcesso({
       </div>
 
       <div className="painel-acesso__balao">
-        <p>Oi! Eu sou o VOLTA.</p>
-        <p>Bora deixar a unidade em dia?</p>
+        {balao.map((fala) => (
+          <p key={fala}>{fala}</p>
+        ))}
       </div>
 
       <img

@@ -33,10 +33,14 @@ export interface CredenciaisApi {
   readonly password: string;
 }
 
-/** Resposta de POST /auth/login. `expiresIn` vem em milissegundos. */
+/**
+ * Resposta de POST /auth/login. `expiresIn` vem em milissegundos. `firstLogin`
+ * é verdadeiro até a pessoa trocar a senha provisória (PUT /users/me/password).
+ */
 export interface TokenApi {
   readonly token: string;
   readonly expiresIn: number;
+  readonly firstLogin: boolean;
 }
 
 /** GET /users/me */

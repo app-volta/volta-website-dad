@@ -8,6 +8,7 @@ import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
+import { TEXTOS_DE_ENTRADA } from "../../components/PainelAcesso/textos";
 import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
 import { foiNaoAutorizado } from "../../utils/erros";
@@ -75,15 +76,7 @@ export default function Login(): ReactNode {
       <a href="#conteudo" className="skip-link">
         Pular para o conteúdo principal
       </a>
-      <PainelAcesso
-        titulo={["Cuidar do descarte", "ficou simples."]}
-        texto="Aprove ocorrências, acompanhe metas e gerencie as cooperativas parceiras da sua unidade num lugar só."
-        destaques={[
-          "Aprovação de ocorrências em um clique",
-          "Relatório PGRS gerado automaticamente",
-          "Cooperativas homologadas e com licença em dia",
-        ]}
-      />
+      <PainelAcesso {...TEXTOS_DE_ENTRADA} />
 
       <div className="login-tela__form-lado login-tela__form-lado--entrar">
         <div className="login-tela__form-card">
@@ -151,7 +144,7 @@ export default function Login(): ReactNode {
                   </span>
                   <span>Manter conectado</span>
                 </label>
-                <Link to="/cadastro" className="login-tela__esqueci">
+                <Link to="/recuperar-senha" className="login-tela__esqueci">
                   Esqueci minha senha
                 </Link>
               </div>

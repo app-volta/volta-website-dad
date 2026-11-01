@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
+import { ModalSenha } from "../../components/ModalSenha";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import type { AlteracoesUsuario } from "../../context/AuthContext";
+import { useAcoesDeSenha } from "../../hooks/useAcoesDeSenha";
 import {
   useConfiguracoes,
   useRecuperadoNoMesKg,
@@ -33,6 +35,8 @@ export default function Configuracoes(): ReactNode {
   const recuperadoNoMesKg = useRecuperadoNoMesKg();
 
   const [editandoPerfil, setEditandoPerfil] = useState<boolean>(false);
+  const [trocandoSenha, setTrocandoSenha] = useState<boolean>(false);
+  const senha = useAcoesDeSenha();
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
   async function salvarMeta(metaKg: number): Promise<boolean> {
@@ -52,6 +56,15 @@ export default function Configuracoes(): ReactNode {
     setAviso({
       titulo: "Perfil atualizado",
       descricao: `Agora você aparece como ${alteracoes.nome}.`,
+    });
+  }
+
+  async function salvarSenha(atual: string, nova: string): Promise<void> {
+    await senha.trocar(atual, nova);
+    setTrocandoSenha(false);
+    setAviso({
+      titulo: "Senha alterada",
+      descricao: "Use a senha nova no próximo acesso.",
     });
   }
 
@@ -82,6 +95,7 @@ export default function Configuracoes(): ReactNode {
               nome={usuario?.nome ?? "Usuário"}
               papel={papel}
               aoEditar={() => setEditandoPerfil(true)}
+              aoAlterarSenha={() => setTrocandoSenha(true)}
             />
             <CartaoUnidade unidade={dados.unidade} />
             <CartaoMeta
@@ -115,6 +129,13 @@ export default function Configuracoes(): ReactNode {
           email={usuario.email}
           aoSalvar={salvarPerfil}
           aoFechar={() => setEditandoPerfil(false)}
+        />
+      ) : null}
+
+      {trocandoSenha ? (
+        <ModalSenha
+          aoSalvar={salvarSenha}
+          aoFechar={() => setTrocandoSenha(false)}
         />
       ) : null}
 

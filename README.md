@@ -77,7 +77,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 
 | Tela | Endpoints |
 |------|-----------|
-| Login | `POST /auth/login`, `GET /users/me` |
+| Login e senha | `POST /auth/login` (devolve `firstLogin`) e `GET /users/me`; esqueci minha senha: `POST /auth/forgot-password`, `POST /auth/verify-code` e `POST /auth/reset-password`; trocar a senha: `PUT /users/me/password` |
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
 | Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfis EMPLOYEE e MANAGER; o tipo vai em `wasteTypeIds`) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
 | Aprovar e recusar | `PATCH /incidents/{id}/approve` e `PATCH /incidents/{id}/reject` com `reason`, máximo de 200 caracteres (perfil ADMIN ou MANAGER). Encerrar (`/close`) vem depois da coleta e não é feito pelo painel |

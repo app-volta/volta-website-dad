@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
+import { ModalSenha } from "../../components/ModalSenha";
 import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import type { AlteracoesUsuario } from "../../context/AuthContext";
+import { useAcoesDeSenha } from "../../hooks/useAcoesDeSenha";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import {
   useMinhasAtividades,
@@ -17,6 +19,11 @@ import { iniciais, rotuloDoPapel } from "../../utils/pessoa";
 import { ModalPerfil } from "../Configuracoes/ModalPerfil";
 import "./styles.css";
 
+interface Aviso {
+  readonly titulo: string;
+  readonly descricao: string;
+}
+
 interface Numero {
   readonly rotulo: string;
   readonly valor: string;
@@ -26,7 +33,9 @@ export default function Perfil(): ReactNode {
   const { usuario, pedirSaida, atualizarUsuario } = useAuth();
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [editando, setEditando] = useState<boolean>(false);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [trocandoSenha, setTrocandoSenha] = useState<boolean>(false);
+  const [aviso, setAviso] = useState<Aviso | null>(null);
+  const senha = useAcoesDeSenha();
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const { painel } = usePainel(dados);
   const registradas = useRegistradasPor(dados, usuario?.id ?? "");
@@ -39,7 +48,19 @@ export default function Perfil(): ReactNode {
   async function salvarPerfil(alteracoes: AlteracoesUsuario): Promise<void> {
     await atualizarUsuario(alteracoes);
     setEditando(false);
-    setAviso(`Agora você aparece como ${alteracoes.nome}.`);
+    setAviso({
+      titulo: "Perfil atualizado",
+      descricao: `Agora você aparece como ${alteracoes.nome}.`,
+    });
+  }
+
+  async function salvarSenha(atual: string, nova: string): Promise<void> {
+    await senha.trocar(atual, nova);
+    setTrocandoSenha(false);
+    setAviso({
+      titulo: "Senha alterada",
+      descricao: "Use a senha nova no próximo acesso.",
+    });
   }
 
   // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
@@ -74,6 +95,15 @@ export default function Perfil(): ReactNode {
           <button type="button" className="perfil__editar" onClick={() => setEditando(true)}>
             <Icone nome="editar" tamanho={16} />
             Editar
+          </button>
+          <button
+            type="button"
+            className="perfil__editar"
+            aria-haspopup="dialog"
+            onClick={() => setTrocandoSenha(true)}
+          >
+            <Icone nome="cadeado" tamanho={16} />
+            Alterar senha
           </button>
         </section>
 
@@ -179,10 +209,17 @@ export default function Perfil(): ReactNode {
         />
       ) : null}
 
+      {trocandoSenha ? (
+        <ModalSenha
+          aoSalvar={salvarSenha}
+          aoFechar={() => setTrocandoSenha(false)}
+        />
+      ) : null}
+
       <Toast
         aberto={aviso !== null}
-        titulo="Perfil atualizado"
-        descricao={aviso ?? undefined}
+        titulo={aviso?.titulo ?? ""}
+        descricao={aviso?.descricao}
         aoFechar={() => setAviso(null)}
       />
     </div>
