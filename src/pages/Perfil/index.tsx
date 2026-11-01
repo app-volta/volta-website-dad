@@ -6,6 +6,7 @@ import { Icone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import type { AlteracoesUsuario } from "../../context/AuthContext";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import {
   useMinhasAtividades,
@@ -35,10 +36,10 @@ export default function Perfil(): ReactNode {
     return <Alerta variante="info">Nenhuma sessão ativa detectada.</Alerta>;
   }
 
-  async function salvarPerfil(nome: string): Promise<void> {
-    await atualizarUsuario({ nome });
+  async function salvarPerfil(alteracoes: AlteracoesUsuario): Promise<void> {
+    await atualizarUsuario(alteracoes);
     setEditando(false);
-    setAviso(`Agora você aparece como ${nome}.`);
+    setAviso(`Agora você aparece como ${alteracoes.nome}.`);
   }
 
   // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
@@ -171,6 +172,7 @@ export default function Perfil(): ReactNode {
       {editando ? (
         <ModalPerfil
           nomeAtual={usuario.nome}
+          cargoAtual={usuario.cargo ?? ""}
           email={usuario.email}
           aoSalvar={salvarPerfil}
           aoFechar={() => setEditando(false)}

@@ -2,32 +2,40 @@ import { useId, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 
 import { ModalAcao } from "../../../components/ModalAcao";
+import type { AlteracoesUsuario } from "../../../context/AuthContext";
 import { validarNome } from "../../../utils/validadores";
 import ".././modal.css";
 
+/** Maior cargo que a volta-api aceita. */
+const CARGO_MAXIMO = 100;
+
 interface ModalPerfilProps {
   readonly nomeAtual: string;
+  readonly cargoAtual: string;
   readonly email: string;
   /** Grava o perfil; rejeita com o motivo quando o servidor recusa. */
-  readonly aoSalvar: (nome: string) => Promise<void>;
+  readonly aoSalvar: (alteracoes: AlteracoesUsuario) => Promise<void>;
   readonly aoFechar: () => void;
 }
 
 export function ModalPerfil({
   nomeAtual,
+  cargoAtual,
   email,
   aoSalvar,
   aoFechar,
 }: ModalPerfilProps): ReactNode {
   const idFormulario = useId();
   const idNome = useId();
+  const idCargo = useId();
   const nomeRef = useRef<HTMLInputElement | null>(null);
   const [nome, setNome] = useState<string>(nomeAtual);
+  const [cargo, setCargo] = useState<string>(cargoAtual);
   const [tentou, setTentou] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroServidor, setErroServidor] = useState<string | null>(null);
 
-  const erro = validarNome(nome);
+  const erro = nome.trim() === "" ? "Informe seu nome." : validarNome(nome);
 
   async function enviar(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
@@ -39,7 +47,7 @@ export function ModalPerfil({
     setSalvando(true);
     setErroServidor(null);
     try {
-      await aoSalvar(nome.trim());
+      await aoSalvar({ nome: nome.trim(), cargo: cargo.trim() });
     } catch (excecao: unknown) {
       setErroServidor(
         excecao instanceof Error
@@ -57,7 +65,7 @@ export function ModalPerfil({
       tom="verde"
       largura={480}
       titulo="Editar perfil"
-      subtitulo="O nome aparece para a equipe e nos relatórios."
+      subtitulo="Esses dados aparecem pra sua equipe."
       aoFechar={aoFechar}
       rodape={
         <>
@@ -95,6 +103,7 @@ export function ModalPerfil({
             type="text"
             className={`cfg-form__campo${tentou && erro ? " cfg-form__campo--erro" : ""}`}
             value={nome}
+            placeholder="Seu nome completo"
             maxLength={80}
             autoComplete="name"
             aria-invalid={tentou && erro ? true : undefined}
@@ -110,6 +119,21 @@ export function ModalPerfil({
         <div className="cfg-form__grupo">
           <span className="cfg-form__rotulo">E-mail</span>
           <p className="cfg-form__somente-leitura">{email}</p>
+        </div>
+        <div className="cfg-form__grupo">
+          <label className="cfg-form__rotulo" htmlFor={idCargo}>
+            Cargo
+          </label>
+          <input
+            id={idCargo}
+            type="text"
+            className="cfg-form__campo"
+            value={cargo}
+            placeholder="Ex.: Analista ambiental"
+            maxLength={CARGO_MAXIMO}
+            autoComplete="organization-title"
+            onChange={(evento) => setCargo(evento.target.value)}
+          />
         </div>
         {erroServidor ? (
           <p className="cfg-form__erro" role="alert">
