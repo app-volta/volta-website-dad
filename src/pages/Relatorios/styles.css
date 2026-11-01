@@ -75,6 +75,12 @@
   color: var(--rel-texto);
 }
 
+.rel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .rel__exportar {
   display: inline-flex;
   align-items: center;
@@ -87,6 +93,10 @@
   color: var(--rel-texto);
   font-size: 14px;
   font-weight: 700;
+}
+
+a.rel__exportar {
+  text-decoration: none;
 }
 
 .rel__exportar:hover:not(:disabled) {
