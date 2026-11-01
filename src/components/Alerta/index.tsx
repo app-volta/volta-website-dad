@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 
+import { Icone } from "../Icone";
+import type { NomeIcone } from "../Icone";
 import "./styles.css";
+
+const ICONES: Readonly<Record<VarianteAlerta, NomeIcone>> = {
+  erro: "fechar",
+  sucesso: "check",
+  info: "alerta",
+};
 
 export type VarianteAlerta = "erro" | "sucesso" | "info";
 
@@ -21,6 +29,9 @@ export function Alerta({
   const role = variante === "erro" ? "alert" : "status";
   return (
     <div className={`alerta alerta--${variante}`} role={role}>
+      <span className="alerta__icone" aria-hidden="true">
+        <Icone nome={ICONES[variante]} tamanho={11} />
+      </span>
       <div className="alerta__conteudo">
         {titulo ? <strong className="alerta__titulo">{titulo}</strong> : null}
         <div>{children}</div>
