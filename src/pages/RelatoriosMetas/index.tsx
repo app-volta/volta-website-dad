@@ -28,7 +28,7 @@ export default function RelatoriosMetas(): ReactNode {
   const { dados, carregando, erro, atualizar, limparErro } = useConfiguracoes();
   // Uma só busca das ocorrências serve ao número do mês e ao de hoje.
   const { dados: ocorrencias } = useOcorrencias();
-  const recuperadoMesKg = usePainel(ocorrencias).painel.recuperadoMesKg;
+  const { painel } = usePainel(ocorrencias);
   const [agora] = useState<Date>(() => new Date());
   const [salvando, setSalvando] = useState<boolean>(false);
 
@@ -47,6 +47,8 @@ export default function RelatoriosMetas(): ReactNode {
       ...(metaMudou ? { metaRecuperacaoKg: valores.metaMensalKg } : {}),
       diasDeOperacao: { mes: chaveDoMes(agora), dias: valores.dias },
       metaDoDia: plano,
+      metaPorMaterial: valores.metaPorMaterial,
+      avisosDaMeta: valores.avisos,
     });
     if (!salvou) {
       setSalvando(false);
@@ -77,8 +79,10 @@ export default function RelatoriosMetas(): ReactNode {
     <FormularioDeMetas
       configuracoes={dados}
       agora={agora}
-      recuperadoMesKg={recuperadoMesKg}
+      recuperadoMesKg={painel.recuperadoMesKg}
       recuperadoHojeKg={recuperadoHojeKg(ocorrencias ?? [], agora)}
+      recuperadoPorMaterial={painel.porMaterial}
+      outrosKg={painel.outrosKg}
       salvando={salvando}
       erroDoServidor={erro}
       aoSalvar={(valores) => void salvar(valores)}

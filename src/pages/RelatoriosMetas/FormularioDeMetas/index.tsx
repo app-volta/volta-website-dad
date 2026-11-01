@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
 
@@ -6,20 +6,34 @@ import { Alerta } from "../../../components/Alerta";
 import { Icone } from "../../../components/Icone";
 import type { NomeIcone } from "../../../components/Icone";
 import { Mascote } from "../../../components/Mascote";
-import type { Configuracoes, ModoMetaDoDia } from "../../../types/configuracao";
+import type {
+  AvisosDaMeta,
+  Configuracoes,
+  MetaPorMaterial,
+  ModoMetaDoDia,
+} from "../../../types/configuracao";
+import { MATERIAIS } from "../../../types/material";
+import type { Material } from "../../../types/material";
+import type { RecuperadoDoMaterial } from "../../../types/painel";
 import {
   lerQuilos,
   percentualDaMeta,
   validarMeta,
 } from "../../../utils/configuracoes";
 import {
+  distribuirMeta,
   diasDeOperacaoDoMes,
   diasDeOperacaoPadrao,
+  divisaoInicial,
+  mensagemDaSomaDiferente,
   metaDoDiaKg,
   nomeDoMes,
+  somaDasMetas,
   validarDias,
   validarValorFixoDoDia,
 } from "../../../utils/metas";
+import { CartaoAvisosDaMeta } from "../CartaoAvisosDaMeta";
+import { CartaoMetaPorMaterial } from "../CartaoMetaPorMaterial";
 
 /** As metas já conferidas, prontas para gravar. */
 export interface ValoresDeMetas {
@@ -27,6 +41,8 @@ export interface ValoresDeMetas {
   readonly dias: number;
   readonly modo: ModoMetaDoDia;
   readonly valorFixoKg: number;
+  readonly metaPorMaterial: MetaPorMaterial;
+  readonly avisos: AvisosDaMeta;
 }
 
 interface FormularioDeMetasProps {
@@ -34,6 +50,8 @@ interface FormularioDeMetasProps {
   readonly agora: Date;
   readonly recuperadoMesKg: number;
   readonly recuperadoHojeKg: number;
+  readonly recuperadoPorMaterial: readonly RecuperadoDoMaterial[];
+  readonly outrosKg: number;
   readonly salvando: boolean;
   /** Por que o servidor não gravou (por exemplo, a empresa ainda não tem métrica ESG). */
   readonly erroDoServidor: string | null;
@@ -88,12 +106,31 @@ function kg(valor: number): string {
   return `${valor.toLocaleString("pt-BR")} kg`;
 }
 
-/** 20e · Metas do mês e do dia: a meta mensal, os dias de operação e como a meta do dia é calculada. */
+function comoMapa(lista: readonly RecuperadoDoMaterial[]): Record<Material, number> {
+  return Object.fromEntries(
+    MATERIAIS.map((material) => [
+      material,
+      lista.find((item) => item.material === material)?.kg ?? 0,
+    ]),
+  ) as Record<Material, number>;
+}
+
+function comoTextos(
+  valores: Readonly<Record<Material, number>> | null,
+): Record<Material, string> {
+  return Object.fromEntries(
+    MATERIAIS.map((material) => [material, valores ? String(valores[material]) : ""]),
+  ) as Record<Material, string>;
+}
+
+/** 20e · Metas do mês e do dia: meta mensal, dias de operação, meta do dia, meta por material e avisos. */
 export function FormularioDeMetas({
   configuracoes,
   agora,
   recuperadoMesKg,
   recuperadoHojeKg,
+  recuperadoPorMaterial,
+  outrosKg,
   salvando,
   erroDoServidor,
   aoSalvar,
@@ -102,6 +139,18 @@ export function FormularioDeMetas({
   const idMeta = `${idBase}-meta`;
   const idDias = `${idBase}-dias`;
   const idFixo = `${idBase}-fixo`;
+  const formulario = useRef<HTMLFormElement | null>(null);
+  const recuperadoDosMateriais = useMemo(
+    () => comoMapa(recuperadoPorMaterial),
+    [recuperadoPorMaterial],
+  );
+  const [inicial] = useState(() =>
+    divisaoInicial(
+      configuracoes.metaRecuperacaoKg,
+      configuracoes.metaPorMaterial,
+      recuperadoDosMateriais,
+    ),
+  );
   const [metaTexto, setMetaTexto] = useState<string>(
     configuracoes.metaRecuperacaoKg > 0
       ? String(Math.round(configuracoes.metaRecuperacaoKg))
@@ -116,6 +165,13 @@ export function FormularioDeMetas({
       ? String(configuracoes.metaDoDia.valorFixoKg)
       : "",
   );
+  const [textosDosMateriais, setTextosDosMateriais] = useState<Record<Material, string>>(
+    () => comoTextos(inicial.valores),
+  );
+  // Depois que a pessoa mexe numa meta de material, a meta do mês deixa de repartir sozinha.
+  const [divisaoManual, setDivisaoManual] = useState<boolean>(false);
+  const [ultimoMaterial, setUltimoMaterial] = useState<Material | null>(null);
+  const [avisos, setAvisos] = useState<AvisosDaMeta>(configuracoes.avisosDaMeta);
   const [tentou, setTentou] = useState<boolean>(false);
 
   const metaKg = lerQuilos(metaTexto);
@@ -134,6 +190,25 @@ export function FormularioDeMetas({
         ? "Informe quantos quilos por dia."
         : validarValorFixoDoDia(fixoKg, problemaDaMeta ? Infinity : metaKg);
 
+  const valoresDosMateriais = Object.fromEntries(
+    MATERIAIS.map((material) => [material, lerQuilos(textosDosMateriais[material])]),
+  ) as Record<Material, number>;
+  const todosOsMateriaisValidos = MATERIAIS.every(
+    (material) => !Number.isNaN(valoresDosMateriais[material]),
+  );
+  const errosDosMateriais: Partial<Record<Material, string>> = tentou
+    ? Object.fromEntries(
+        MATERIAIS.filter((material) => Number.isNaN(valoresDosMateriais[material])).map(
+          (material) => [material, "Informe a meta, só com números."],
+        ),
+      )
+    : {};
+  const somaDosMateriais = somaDasMetas(valoresDosMateriais);
+  // E19: a soma só precisa fechar a meta do mês quando os dois lados estão certos.
+  const somaNaoFecha =
+    problemaDaMeta === null && todosOsMateriaisValidos && somaDosMateriais !== metaKg;
+  const mensagemDaSoma = somaNaoFecha ? mensagemDaSomaDiferente(somaDosMateriais, metaKg) : null;
+
   // Enquanto um campo está inválido, o resumo usa 0 (meta) ou o padrão do mês (dias).
   const metaDoMesKg = problemaDaMeta === null ? metaKg : 0;
   const diasDoMes = problemaDosDias === null ? dias : diasDeOperacaoPadrao(agora);
@@ -146,20 +221,62 @@ export function FormularioDeMetas({
   const faltamKg = Math.max(0, metaDoMesKg - recuperadoMesKg);
   const mes = nomeDoMes(agora);
 
+  function mudarMeta(texto: string): void {
+    setMetaTexto(texto);
+    const nova = lerQuilos(texto);
+    // A meta do mês repartida sozinha acompanha a nova meta, sem desmanchar a divisão que a pessoa escolheu.
+    if (!divisaoManual && !Number.isNaN(nova) && validarMeta(nova) === null) {
+      setTextosDosMateriais(comoTextos(distribuirMeta(nova, inicial.partes)));
+    }
+  }
+
+  function mudarMaterial(material: Material, texto: string): void {
+    setTextosDosMateriais((atuais) => ({ ...atuais, [material]: texto }));
+    setDivisaoManual(true);
+    setUltimoMaterial(material);
+  }
+
+  function refazerDivisao(): void {
+    if (problemaDaMeta === null) {
+      setTextosDosMateriais(comoTextos(distribuirMeta(metaKg, inicial.partes)));
+    }
+    setDivisaoManual(false);
+    setUltimoMaterial(null);
+  }
+
+  function focarPrimeiroInvalido(): void {
+    requestAnimationFrame(() =>
+      formulario.current
+        ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+        ?.focus(),
+    );
+  }
+
   function enviar(evento: FormEvent<HTMLFormElement>): void {
     evento.preventDefault();
     setTentou(true);
-    if (problemaDaMeta || problemaDosDias || problemaDoFixo) return;
+    if (
+      problemaDaMeta ||
+      problemaDosDias ||
+      problemaDoFixo ||
+      !todosOsMateriaisValidos ||
+      somaNaoFecha
+    ) {
+      focarPrimeiroInvalido();
+      return;
+    }
     aoSalvar({
       metaMensalKg: metaKg,
       dias,
       modo,
       valorFixoKg: modo === "fixo" ? fixoKg : configuracoes.metaDoDia.valorFixoKg,
+      metaPorMaterial: valoresDosMateriais,
+      avisos,
     });
   }
 
   return (
-    <form className="metas" onSubmit={enviar} noValidate>
+    <form className="metas" ref={formulario} onSubmit={enviar} noValidate>
       <div className="metas__topo">
         <Link to="/relatorios" className="metas__botao">
           <Icone nome="seta-esquerda" tamanho={14} />
@@ -208,7 +325,7 @@ export function FormularioDeMetas({
                   rotuloAcessivel="Meta mensal em quilos por mês"
                   erro={tentou ? problemaDaMeta : null}
                   descritoPor={`${idMeta}-ajuda ${idMeta}-erro`}
-                  aoMudar={setMetaTexto}
+                  aoMudar={mudarMeta}
                 />
                 {tentou && problemaDaMeta ? (
                   <p className="metas__erro" id={`${idMeta}-erro`}>
@@ -216,7 +333,7 @@ export function FormularioDeMetas({
                   </p>
                 ) : null}
                 <p className="metas__ajuda" id={`${idMeta}-ajuda`}>
-                  Aparece no Início e nas notificações do painel.
+                  Aparece no Início, nas notificações e no relatório PGRS.
                 </p>
               </div>
               <div>
@@ -270,6 +387,25 @@ export function FormularioDeMetas({
               </div>
             </div>
           </section>
+
+          <CartaoMetaPorMaterial
+            textos={textosDosMateriais}
+            valores={valoresDosMateriais}
+            recuperadoKg={recuperadoDosMateriais}
+            outrosKg={outrosKg}
+            dias={diasDoMes}
+            legenda={
+              modo === "fixo"
+                ? `A soma fecha a meta do mês. Por dia é a meta de cada material ÷ ${diasDoMes} dias.`
+                : `A soma fecha a meta do mês. A meta do dia é a do mês ÷ ${diasDoMes} dias.`
+            }
+            mensagemDaSoma={mensagemDaSoma}
+            campoComAlerta={somaNaoFecha ? (ultimoMaterial ?? MATERIAIS[0]) : null}
+            errosDosCampos={errosDosMateriais}
+            dividido={!divisaoManual}
+            aoMudar={mudarMaterial}
+            aoRefazer={refazerDivisao}
+          />
         </div>
 
         <div className="metas__coluna">
@@ -369,6 +505,13 @@ export function FormularioDeMetas({
             </div>
           </section>
 
+          <CartaoAvisosDaMeta
+            avisos={avisos}
+            aoAlterar={(chave, ligado) =>
+              setAvisos((atuais) => ({ ...atuais, [chave]: ligado }))
+            }
+          />
+
           <aside className="metas__dica">
             <div className="metas__dica-mascote" aria-hidden="true">
               <Mascote tamanho={49} altura={85} />
@@ -379,8 +522,8 @@ export function FormularioDeMetas({
                 Dica do VOLTA
               </h2>
               <p className="metas__dica-texto">
-                Mudou a meta do mês ou os dias de operação? A meta do dia se
-                recalcula sozinha.
+                Mudou a meta do mês ou os dias de operação? A meta do dia e a de
+                cada material se recalculam sozinhas.
               </p>
             </div>
           </aside>

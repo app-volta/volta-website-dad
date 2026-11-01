@@ -19,6 +19,11 @@ export function mesclarConfiguracoes(
       parcial.diasDeOperacao === undefined
         ? atual.diasDeOperacao
         : parcial.diasDeOperacao,
+    metaPorMaterial:
+      parcial.metaPorMaterial === undefined
+        ? atual.metaPorMaterial
+        : parcial.metaPorMaterial,
+    avisosDaMeta: { ...atual.avisosDaMeta, ...parcial.avisosDaMeta },
     insights: parcial.insights ?? atual.insights,
     notificacoes: { ...atual.notificacoes, ...parcial.notificacoes },
   };
