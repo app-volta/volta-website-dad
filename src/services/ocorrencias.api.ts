@@ -16,6 +16,7 @@ import type {
   Ocorrencia,
   PrioridadeOcorrencia,
   QualidadeMaterial,
+  ResultadoDaAprovacao,
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { carregar, salvar } from "../utils/armazenamento";
@@ -538,7 +539,7 @@ export async function aprovarOcorrencias(
   ids: readonly string[],
   autor: string,
   sinal?: AbortSignal,
-): Promise<number> {
+): Promise<ResultadoDaAprovacao> {
   const elegiveis = ids.filter((id) => {
     const item = cache.find((ocorrencia) => ocorrencia.id === id);
     return item !== undefined && aguardaAprovacao(item.status);
@@ -546,11 +547,24 @@ export async function aprovarOcorrencias(
   const resultados = await Promise.allSettled(
     elegiveis.map((id) => aprovarOcorrencia(id, autor, sinal)),
   );
-  const aprovadas = resultados.filter((r) => r.status === "fulfilled").length;
-  const falha = resultados.find((r) => r.status === "rejected");
-  // Se nenhuma foi aprovada, mostra o motivo; se algumas foram, devolve a contagem.
-  if (aprovadas === 0 && falha) throw falha.reason;
-  return aprovadas;
+  const falhas = resultados.flatMap((resultado, indice) =>
+    resultado.status === "rejected"
+      ? [
+          {
+            id: elegiveis[indice],
+            motivo:
+              resultado.reason instanceof Error
+                ? resultado.reason.message
+                : "Não foi possível aprovar.",
+          },
+        ]
+      : [],
+  );
+  const aprovadas = resultados.length - falhas.length;
+  // Se nenhuma foi aprovada, mostra o motivo; se algumas foram, devolve o resultado.
+  const primeira = resultados.find((r) => r.status === "rejected");
+  if (aprovadas === 0 && primeira) throw primeira.reason;
+  return { aprovadas, falhas };
 }
 
 export async function recusarOcorrencia(

@@ -13,6 +13,7 @@ import {
   useCooperativas,
 } from "../../hooks/useCooperativas";
 import { useAuth } from "../../context/AuthContext";
+import { foiConflito } from "../../utils/erros";
 import { useDadosReais } from "../../hooks/useModo";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
@@ -50,6 +51,8 @@ export default function Cooperativas(): ReactNode {
   const [adicionando, setAdicionando] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroCadastro, setErroCadastro] = useState<string | null>(null);
+  /** CNPJ que a API recusou por já estar cadastrado; o campo avisa enquanto ele não mudar. */
+  const [cnpjRecusado, setCnpjRecusado] = useState<string | null>(null);
   const [verDocumentos, setVerDocumentos] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
@@ -64,6 +67,7 @@ export default function Cooperativas(): ReactNode {
 
   function abrirCadastro(): void {
     setErroCadastro(null);
+    setCnpjRecusado(null);
     setAdicionando(true);
   }
 
@@ -88,6 +92,10 @@ export default function Cooperativas(): ReactNode {
             },
       );
     } catch (excecao: unknown) {
+      if (foiConflito(excecao)) {
+        setCnpjRecusado(novos.cnpj);
+        return;
+      }
       setErroCadastro(
         excecao instanceof Error ? excecao.message : "Falha ao cadastrar.",
       );
@@ -167,6 +175,7 @@ export default function Cooperativas(): ReactNode {
           cadastroNaApi={dadosReais}
           salvando={salvando}
           erro={erroCadastro}
+          cnpjRecusado={cnpjRecusado}
           aoConfirmar={(novos) => void cadastrar(novos)}
           aoFechar={() => setAdicionando(false)}
         />

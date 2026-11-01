@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, FormEvent, ReactNode } from "react";
 
 import { Alerta } from "../../../components/Alerta";
@@ -31,6 +31,8 @@ interface ModalAdicionarProps {
   readonly cadastroNaApi?: boolean;
   readonly salvando: boolean;
   readonly erro: string | null;
+  /** CNPJ que a API recusou por já estar cadastrado: o campo avisa até a pessoa mudá-lo. */
+  readonly cnpjRecusado?: string | null;
   readonly aoConfirmar: (dados: NovaCooperativa) => void;
   readonly aoFechar: () => void;
 }
@@ -53,6 +55,7 @@ export function ModalAdicionar({
   cadastroNaApi = false,
   salvando,
   erro,
+  cnpjRecusado = null,
   aoConfirmar,
   aoFechar,
 }: ModalAdicionarProps): ReactNode {
@@ -75,6 +78,17 @@ export function ModalAdicionar({
 
   const erroNome = validarNomeCooperativa(nome);
   const erroCnpj = validarCnpj(cnpj);
+  const cnpjJaCadastrado = cnpjRecusado !== null && cnpj === cnpjRecusado;
+  const erroDoCampoCnpj =
+    tentou && erroCnpj
+      ? erroCnpj
+      : cnpjJaCadastrado
+        ? "Este CNPJ já está cadastrado. Confira o número."
+        : null;
+
+  useEffect(() => {
+    if (cnpjRecusado !== null) cnpjRef.current?.focus();
+  }, [cnpjRecusado]);
   const erroMateriais = validarMateriais(materiais);
   const erroLicenca = validarLicenca(arquivo);
   const erroLatitude = cadastroNaApi ? validarLatitude(latitude) : null;
@@ -197,7 +211,7 @@ export function ModalAdicionar({
           id={idCnpj}
           rotulo="CNPJ"
           icone="documento"
-          erro={tentou ? erroCnpj : null}
+          erro={erroDoCampoCnpj}
         >
           <input
             ref={cnpjRef}
@@ -207,8 +221,8 @@ export function ModalAdicionar({
             value={cnpj}
             placeholder="00.000.000/0001-00"
             autoComplete="off"
-            aria-invalid={tentou && erroCnpj ? true : undefined}
-            aria-describedby={tentou && erroCnpj ? `${idCnpj}-erro` : undefined}
+            aria-invalid={erroDoCampoCnpj ? true : undefined}
+            aria-describedby={erroDoCampoCnpj ? `${idCnpj}-erro` : undefined}
             onChange={(evento) =>
               atualizar("cnpj", mascararCnpj(evento.target.value))
             }

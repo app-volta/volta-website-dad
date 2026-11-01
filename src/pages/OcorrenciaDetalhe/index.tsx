@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { Alerta } from "../../components/Alerta";
@@ -30,6 +30,7 @@ import {
   relatorioAutomatico,
 } from "../../utils/analiseOcorrencia";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
+import { foiOcorrenciaDesatualizada, foiSemResposta } from "../../utils/erros";
 import {
   formatarConfianca,
   formatarKm,
@@ -45,6 +46,7 @@ import {
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
 import { ModalClassificar } from "./modais/ModalClassificar";
+import { ModalDesatualizada } from "./modais/ModalDesatualizada";
 import { ModalEncaminhar } from "./modais/ModalEncaminhar";
 import { ModalObservacao } from "./modais/ModalObservacao";
 import { ModalRecusar } from "./modais/ModalRecusar";
@@ -58,6 +60,7 @@ type ModalAtivo =
   | "classificar"
   | "encaminhar"
   | "observacao"
+  | "desatualizada"
   | null;
 
 interface Aviso {
@@ -124,8 +127,10 @@ export default function OcorrenciaDetalhe(): ReactNode {
     dados ? aguardaAprovacao(dados.status) : false,
   );
   const [modal, setModal] = useState<ModalAtivo>(null);
+  const navegar = useNavigate();
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [erroSemResposta, setErroSemResposta] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
   useEffect(() => {
@@ -181,12 +186,18 @@ export default function OcorrenciaDetalhe(): ReactNode {
   ): Promise<void> {
     setSalvando(true);
     setErroAcao(null);
+    setErroSemResposta(false);
     try {
       await acao();
       setChaveRecarga((v) => v + 1);
       aoConcluir();
     } catch (excecao) {
+      if (foiOcorrenciaDesatualizada(excecao)) {
+        setModal("desatualizada");
+        return;
+      }
       setErroAcao(excecao instanceof Error ? excecao.message : mensagemPadrao);
+      setErroSemResposta(foiSemResposta(excecao));
     } finally {
       setSalvando(false);
     }
@@ -194,6 +205,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function abrir(destino: Exclude<ModalAtivo, null>): void {
     setErroAcao(null);
+    setErroSemResposta(false);
     setModal(destino);
   }
 
@@ -622,6 +634,14 @@ export default function OcorrenciaDetalhe(): ReactNode {
         aoConfirmar={aprovar}
         aoFechar={() => setModal(null)}
       />
+      <ModalDesatualizada
+        aberto={modal === "desatualizada"}
+        aoVerAgora={() => {
+          setModal(null);
+          setChaveRecarga((v) => v + 1);
+        }}
+        aoVoltarParaLista={() => navegar("/ocorrencias")}
+      />
       <ModalSucesso
         aberto={modal === "sucesso"}
         numero={numero}
@@ -638,6 +658,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
           ocorrencia={ocorrencia}
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={classificar}
           aoFechar={() => setModal(null)}
         />
@@ -662,6 +683,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
         <ModalRecusar
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={recusar}
           aoFechar={() => setModal(null)}
         />

@@ -16,6 +16,8 @@ const MOTIVOS_RECUSA: readonly string[] = [
 interface ModalRecusarProps {
   readonly salvando: boolean;
   readonly erro: string | null;
+  /** O erro foi de rede ou do servidor: o motivo continua escolhido e vale tentar de novo. */
+  readonly semResposta?: boolean;
   readonly aoConfirmar: (motivo: string) => void;
   readonly aoFechar: () => void;
 }
@@ -23,6 +25,7 @@ interface ModalRecusarProps {
 export function ModalRecusar({
   salvando,
   erro,
+  semResposta = false,
   aoConfirmar,
   aoFechar,
 }: ModalRecusarProps): ReactNode {
@@ -73,8 +76,13 @@ export function ModalRecusar({
         ))}
       </fieldset>
       {erro ? (
-        <Alerta variante="erro" titulo="Não foi possível recusar">
-          {erro}
+        <Alerta
+          variante="erro"
+          titulo={semResposta ? "Não conseguimos recusar" : "Não foi possível recusar"}
+        >
+          {semResposta
+            ? "O motivo continua escolhido. Confira a conexão e tente de novo."
+            : erro}
         </Alerta>
       ) : null}
     </ModalAcao>

@@ -6,6 +6,7 @@ import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import type { AlteracoesUsuario } from "../../context/AuthContext";
 import {
   useConfiguracoes,
   useRecuperadoNoMesKg,
@@ -45,10 +46,13 @@ export default function Configuracoes(): ReactNode {
     return salvou;
   }
 
-  async function salvarPerfil(nome: string): Promise<void> {
-    await atualizarUsuario({ nome });
+  async function salvarPerfil(alteracoes: AlteracoesUsuario): Promise<void> {
+    await atualizarUsuario(alteracoes);
     setEditandoPerfil(false);
-    setAviso({ titulo: "Perfil atualizado", descricao: `Agora você aparece como ${nome}.` });
+    setAviso({
+      titulo: "Perfil atualizado",
+      descricao: `Agora você aparece como ${alteracoes.nome}.`,
+    });
   }
 
   const papel = usuario ? rotuloDoPapel(usuario.papel) : "Operador";
@@ -107,6 +111,7 @@ export default function Configuracoes(): ReactNode {
       {editandoPerfil && usuario ? (
         <ModalPerfil
           nomeAtual={usuario.nome}
+          cargoAtual={usuario.cargo ?? ""}
           email={usuario.email}
           aoSalvar={salvarPerfil}
           aoFechar={() => setEditandoPerfil(false)}

@@ -20,7 +20,7 @@ import { METADADOS_MATERIAL } from "../../types/material";
 import { modoDaCamera } from "../../utils/camera";
 import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
 import { contaminacao } from "../../utils/analiseOcorrencia";
-import { foiSemResposta } from "../../utils/erros";
+import { foiResultadoIncerto, foiSemResposta } from "../../utils/erros";
 import { descreverPeso, formatarConfianca } from "../../utils/formatacao";
 import {
   combinar,
@@ -36,6 +36,7 @@ import {
   type OrigemDoPeso,
   type Prioridade,
 } from "./reducer";
+import { ModalEnvioIncerto } from "./ModalEnvioIncerto";
 import "./styles.css";
 
 const PRIORIDADES: readonly {
@@ -221,6 +222,7 @@ export default function Registrar(): ReactNode {
         tipo: "registro_erro",
         mensagem:
           excecao instanceof Error ? excecao.message : "Falha ao registrar.",
+        incerto: foiResultadoIncerto(excecao),
       });
     }
   }
@@ -336,6 +338,16 @@ export default function Registrar(): ReactNode {
         tabIndex={-1}
         aria-hidden="true"
         onChange={selecionarFoto}
+      />
+
+      <ModalEnvioIncerto
+        aberto={estado.envioIncerto}
+        aoConferir={() => navegar("/ocorrencias")}
+        aoEnviarDeNovo={() => {
+          despachar({ tipo: "fechar_envio_incerto" });
+          void registrar();
+        }}
+        aoFechar={() => despachar({ tipo: "fechar_envio_incerto" })}
       />
 
       <ModalCamera
