@@ -9,6 +9,7 @@ import type {
   NovaOcorrencia,
   Ocorrencia,
   PrioridadeOcorrencia,
+  ResultadoDaAprovacao,
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { ErroHttp, aguardar } from "./http";
@@ -411,7 +412,7 @@ export async function aprovarOcorrencias(
   ids: readonly string[],
   autor: string,
   sinal?: AbortSignal,
-): Promise<number> {
+): Promise<ResultadoDaAprovacao> {
   await aguardar(600, sinal);
   let aprovadas = 0;
   for (const id of ids) {
@@ -424,7 +425,7 @@ export async function aprovarOcorrencias(
     );
     aprovadas += 1;
   }
-  return aprovadas;
+  return { aprovadas, falhas: [] };
 }
 
 export async function aprovarOcorrencia(

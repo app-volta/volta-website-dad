@@ -30,6 +30,8 @@ import {
 } from "../../utils/statusOcorrencia";
 import type { CategoriaStatus } from "../../utils/statusOcorrencia";
 import { EsqueletoDaTabela } from "./EsqueletoDaTabela";
+import { ModalAprovacaoParcial } from "./ModalAprovacaoParcial";
+import type { FalhaMostrada } from "./ModalAprovacaoParcial";
 import "./styles.css";
 
 type Filtro = "todas" | CategoriaStatus;
@@ -55,6 +57,12 @@ function textoBuscavel(o: Ocorrencia): string {
     .toLowerCase();
 }
 
+interface ResultadoParcial {
+  readonly aprovadas: number;
+  readonly total: number;
+  readonly falhas: readonly FalhaMostrada[];
+}
+
 export default function Ocorrencias(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -65,6 +73,7 @@ export default function Ocorrencias(): ReactNode {
   );
   const [aprovando, setAprovando] = useState<boolean>(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [parcial, setParcial] = useState<ResultadoParcial | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [gavetaId, setGavetaId] = useState<string | null>(null);
   const navegar = useNavigate();
@@ -130,13 +139,35 @@ export default function Ocorrencias(): ReactNode {
     setAviso(null);
     setErroAcao(null);
     try {
-      const aprovadas = await acoes.aprovarVarias(ids, usuario?.nome ?? "Equipe");
+      const { aprovadas, falhas } = await acoes.aprovarVarias(
+        ids,
+        usuario?.nome ?? "Equipe",
+      );
+      // As que ficaram de fora continuam selecionadas, para tentar de novo.
+      const ficaram = new Set(falhas.map((falha) => falha.id));
       setSelecionadas((atual) => {
         const novo = new Set(atual);
-        for (const id of ids) novo.delete(id);
+        for (const id of ids) if (!ficaram.has(id)) novo.delete(id);
         return novo;
       });
       setChaveRecarga((v) => v + 1);
+      if (falhas.length > 0) {
+        setParcial({
+          aprovadas,
+          total: aprovadas + falhas.length,
+          falhas: falhas.map((falha) => {
+            const ocorrencia = dados?.find((o) => o.id === falha.id);
+            return {
+              id: falha.id,
+              rotulo: ocorrencia
+                ? ocorrencia.codigo + " · " + ocorrencia.titulo
+                : "Ocorrência",
+              motivo: falha.motivo,
+            };
+          }),
+        });
+        return;
+      }
       setAviso(
         aprovadas === 0
           ? "Nenhuma das ocorrências selecionadas estava aguardando aprovação."
@@ -524,6 +555,19 @@ export default function Ocorrencias(): ReactNode {
           </button>
         </div>
       ) : null}
+
+      <ModalAprovacaoParcial
+        aberto={parcial !== null}
+        aprovadas={parcial?.aprovadas ?? 0}
+        total={parcial?.total ?? 0}
+        falhas={parcial?.falhas ?? []}
+        aoTentarDeNovo={() => {
+          const ids = parcial?.falhas.map((falha) => falha.id) ?? [];
+          setParcial(null);
+          void aprovar(ids);
+        }}
+        aoFechar={() => setParcial(null)}
+      />
 
       <GavetaOcorrencia
         ocorrencia={ocorrenciaGaveta}

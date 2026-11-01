@@ -3,6 +3,7 @@ import type {
   NovaClassificacao,
   NovaOcorrencia,
   Ocorrencia,
+  ResultadoDaAprovacao,
 } from "../types/ocorrencia";
 import { USAR_MOCKS } from "./http";
 import * as api from "./ocorrencias.api";
@@ -41,7 +42,7 @@ export interface ServicoOcorrencias {
     ids: readonly string[],
     autor: string,
     sinal?: AbortSignal,
-  ) => Promise<number>;
+  ) => Promise<ResultadoDaAprovacao>;
   readonly aprovarOcorrencia: (
     id: string,
     autor: string,

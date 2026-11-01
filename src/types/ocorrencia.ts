@@ -96,3 +96,15 @@ export interface NovaClassificacao {
   readonly prioridade: PrioridadeOcorrencia;
   readonly perigoso: boolean;
 }
+
+/** Uma ocorrência que a aprovação em massa não conseguiu aprovar, e o motivo. */
+export interface FalhaDeAprovacao {
+  readonly id: string;
+  readonly motivo: string;
+}
+
+/** O que a aprovação em massa fez: quantas aprovou e quais ficaram de fora. */
+export interface ResultadoDaAprovacao {
+  readonly aprovadas: number;
+  readonly falhas: readonly FalhaDeAprovacao[];
+}
