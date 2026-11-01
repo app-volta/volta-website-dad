@@ -1,12 +1,11 @@
 import type { TokenApi, UsuarioApi } from "../types/api";
 import type {
   CredenciaisLogin,
-  DadosCadastro,
   SessaoAutenticada,
   Usuario,
 } from "../types/usuario";
 import { usuarioDaApi } from "./adaptadores";
-import { aguardar, ErroHttp, requisitar, USAR_MOCKS } from "./http";
+import { aguardar, requisitar, USAR_MOCKS } from "./http";
 
 /**
  * Autenticação. Com VITE_USAR_MOCKS=false conversa com a volta-api
@@ -72,37 +71,4 @@ export function autenticar(
   return USAR_MOCKS
     ? autenticarMock(credenciais, sinal)
     : autenticarNaApi(credenciais, sinal);
-}
-
-async function cadastrarMock(
-  dados: DadosCadastro,
-  sinal?: AbortSignal,
-): Promise<SessaoAutenticada> {
-  await aguardar(900, sinal);
-  const usuario: Usuario = {
-    id: `user-${Math.random().toString(36).slice(2, 9)}`,
-    nome: dados.nome,
-    email: dados.email,
-    papel: dados.papel,
-    unidade: dados.unidade,
-  };
-  return {
-    usuario,
-    token: `token-${usuario.id}`,
-    expiraEm: new Date(Date.now() + 1000 * 60 * 60 * 8).toISOString(),
-  };
-}
-
-export function cadastrar(
-  dados: DadosCadastro,
-  sinal?: AbortSignal,
-): Promise<SessaoAutenticada> {
-  if (USAR_MOCKS) return cadastrarMock(dados, sinal);
-  // Na volta-api só o ADMIN da empresa cria usuários (POST /users).
-  return Promise.reject(
-    new ErroHttp(
-      "O cadastro é feito pelo administrador da sua empresa. Peça seu acesso a ele.",
-      403,
-    ),
-  );
 }

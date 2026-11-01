@@ -20,14 +20,6 @@ export interface CredenciaisLogin {
   readonly senha: string;
 }
 
-export interface DadosCadastro {
-  readonly nome: string;
-  readonly email: string;
-  readonly senha: string;
-  readonly papel: PapelUsuario;
-  readonly unidade: string;
-}
-
 export interface SessaoAutenticada {
   readonly usuario: Usuario;
   readonly token: string;

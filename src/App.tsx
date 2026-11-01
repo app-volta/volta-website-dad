@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
 import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
@@ -11,7 +11,6 @@ import { Spinner } from "./components/Spinner";
 import { useAuth } from "./context/AuthContext";
 
 const Login = lazy(() => import("./pages/Login"));
-const Cadastro = lazy(() => import("./pages/Cadastro"));
 const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
 const Home = lazy(() => import("./pages/Home"));
 const Registrar = lazy(() => import("./pages/Registrar"));
@@ -83,7 +82,8 @@ export default function App(): ReactNode {
     <Suspense fallback={<Spinner rotulo="Carregando página…" />}>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<Cadastro />} />
+        {/* O cadastro pela web saiu: quem cria acesso é o administrador, em Equipe. */}
+        <Route path="/cadastro" element={<Navigate to="/login" replace />} />
         <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
         <Route

@@ -156,7 +156,7 @@ export default function Login(): ReactNode {
             </form>
 
             <p className="login-tela__cadastro">
-              Novo por aqui? <Link to="/cadastro">Criar conta</Link>
+              Ainda não tem acesso? Peça ao administrador da sua unidade.
             </p>
           </main>
         </div>

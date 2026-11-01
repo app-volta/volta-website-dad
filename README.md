@@ -182,7 +182,7 @@ Regras estritas:
 | Caminho | Página | Acesso |
 |---------|--------|--------|
 | `/login` | Login | Público |
-| `/cadastro` | Cadastro | Público |
+| `/recuperar-senha` | Esqueci minha senha (4 passos) | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |
 | `/ocorrencias` | Lista com filtro por material | Privado |
