@@ -8,7 +8,7 @@ import {
   marcarTodasComoLidas,
   montarNotificacoes,
 } from "../services/notificacoes";
-import { metaRecuperacaoAtual } from "../services/configuracoes";
+import { useMetaRecuperacao } from "./useMeta";
 import {
   assinarMudancas,
   garantirCarregado,
@@ -26,15 +26,10 @@ export function useNotificacoes(): readonly Notificacao[] {
   const lidas = useSyncExternalStore(assinarNotificacoes, lerNotificacoesLidas);
   const pendentes = useSyncExternalStore(assinarMudancas, quantidadeAguardando);
   const ocorrencias = useSyncExternalStore(assinarMudancas, lerOcorrencias);
+  const metaKg = useMetaRecuperacao();
   const podeRevisar =
     usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
-  return montarNotificacoes(
-    lidas,
-    pendentes,
-    ocorrencias,
-    metaRecuperacaoAtual(),
-    podeRevisar,
-  );
+  return montarNotificacoes(lidas, pendentes, ocorrencias, metaKg, podeRevisar);
 }
 
 interface AcoesNotificacoes {

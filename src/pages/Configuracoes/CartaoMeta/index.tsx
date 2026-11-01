@@ -25,16 +25,27 @@ export function CartaoMeta({
   const [texto, setTexto] = useState<string>("");
   const [erro, setErro] = useState<string | null>(null);
 
+  // Sem meta definida (0 vindo da API), o campo fica vazio em vez de mostrar "0".
+  const temMeta = metaKg > 0;
+  const metaInteira = Math.round(metaKg);
   const percentual = percentualDaMeta(recuperadoKg, metaKg);
-  const valorExibido = editando ? texto : metaKg.toLocaleString("pt-BR");
+  const valorExibido = editando
+    ? texto
+    : temMeta
+      ? metaKg.toLocaleString("pt-BR")
+      : "";
 
   function aoFocar(): void {
-    setTexto(String(metaKg));
+    setTexto(temMeta ? String(metaInteira) : "");
     setErro(null);
     setEditando(true);
   }
 
   async function aoSair(): Promise<void> {
+    if (!temMeta && texto.trim() === "") {
+      setEditando(false);
+      return;
+    }
     const novaMeta = lerQuilos(texto);
     const mensagem = Number.isNaN(novaMeta)
       ? "Informe a meta em quilos."
@@ -44,13 +55,13 @@ export function CartaoMeta({
       setErro(mensagem);
       return;
     }
-    if (novaMeta !== metaKg) await aoSalvar(novaMeta);
+    if (novaMeta !== metaInteira) await aoSalvar(novaMeta);
   }
 
   function aoTeclar(evento: KeyboardEvent<HTMLInputElement>): void {
     if (evento.key === "Enter") evento.currentTarget.blur();
     if (evento.key === "Escape") {
-      setTexto(String(metaKg));
+      setTexto(temMeta ? String(metaInteira) : "");
       evento.currentTarget.blur();
     }
   }
@@ -61,7 +72,9 @@ export function CartaoMeta({
         <h2 id="cfg-meta-titulo" className="cfg__titulo">
           Meta de recuperação
         </h2>
-        <span className="cfg__selo">{percentual}% atingido</span>
+        <span className="cfg__selo">
+          {temMeta ? `${percentual}% atingido` : "Sem meta"}
+        </span>
       </div>
 
       <div className="cfg__meta-linha">
@@ -78,6 +91,7 @@ export function CartaoMeta({
             type="text"
             inputMode="numeric"
             value={valorExibido}
+            placeholder="Ex.: 1.500"
             aria-invalid={erro ? true : undefined}
             aria-describedby={erro ? `${idCampo}-erro` : `${idCampo}-ajuda`}
             onFocus={aoFocar}

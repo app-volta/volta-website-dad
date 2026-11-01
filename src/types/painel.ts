@@ -3,7 +3,8 @@ import type { Material } from "./material";
 export interface PontoRecuperacao {
   readonly rotulo: string;
   readonly valor: number;
-  readonly meta: number;
+  /** Meta do período; ausente quando a empresa ainda não definiu uma. */
+  readonly meta?: number;
 }
 
 export interface RecuperadoDoMaterial {

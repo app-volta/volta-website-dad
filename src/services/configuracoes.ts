@@ -1,4 +1,4 @@
-import type { EmpresaApi } from "../types/api";
+import type { EmpresaApi, MetaApi } from "../types/api";
 import type {
   Configuracoes,
   ParcialConfiguracoes,
@@ -11,16 +11,16 @@ import {
   aguardar,
   aoEncerrarSessao,
   ErroHttp,
-  obterUsuarioAtual,
   requisitar,
   USAR_MOCKS,
 } from "./http";
 import { listarSetores } from "./ocorrencias";
 
 /**
- * A volta-api não tem endpoint de preferências: meta, notificações e insights
- * ficam no navegador para sobreviver ao reload. Só o cartão "Unidade" vem da
- * API (GET /companies/{id}, só ADMIN, e GET /areas/mine).
+ * A volta-api guarda a meta mensal de reciclagem da empresa (GET e PUT /goals) e
+ * os dados do cartão "Unidade" (GET /companies/me, ADMIN e MANAGER, e GET
+ * /areas/mine). Ela não tem endpoint de preferências, então notificações e
+ * insights ficam no navegador para sobreviver ao reload.
  */
 
 const CHAVE_STORAGE = "volta:configuracoes";
@@ -47,19 +47,61 @@ const SEM_DADO = "—";
 
 let unidadeDaApi: Promise<UnidadeConfiguracao> | null = null;
 
+/** Meta da API em memória: `null` até a primeira resposta, 0 se a empresa não definiu uma. */
+let metaDaApi: number | null = null;
+let carregandoMeta: Promise<void> | null = null;
+const ouvintesDaMeta = new Set<() => void>();
+
+function avisarMeta(): void {
+  for (const ouvinte of ouvintesDaMeta) ouvinte();
+}
+
 aoEncerrarSessao(() => {
   unidadeDaApi = null;
+  metaDaApi = null;
+  carregandoMeta = null;
+  avisarMeta();
 });
 
-/** Nome, CNPJ e endereço da empresa (só ADMIN lê) e quantos setores ela tem. */
+export function assinarMeta(ouvinte: () => void): () => void {
+  ouvintesDaMeta.add(ouvinte);
+  return () => {
+    ouvintesDaMeta.delete(ouvinte);
+  };
+}
+
+async function carregarMeta(sinal?: AbortSignal): Promise<void> {
+  const resposta = await requisitar<MetaApi>("/goals", { sinal });
+  metaDaApi = resposta.monthlyKg ?? 0;
+  avisarMeta();
+}
+
+/** Busca a meta uma vez por sessão, sem esperar uma tela; quem precisa do número assina a mudança. */
+export function garantirMetaCarregada(): void {
+  if (USAR_MOCKS || metaDaApi !== null || carregandoMeta !== null) return;
+  carregandoMeta = carregarMeta()
+    .catch(() => undefined)
+    .finally(() => {
+      carregandoMeta = null;
+    });
+}
+
+async function gravarMeta(metaKg: number, sinal?: AbortSignal): Promise<void> {
+  const resposta = await requisitar<MetaApi>("/goals", {
+    metodo: "PUT",
+    corpo: { monthlyKg: metaKg },
+    sinal,
+  });
+  metaDaApi = resposta.monthlyKg ?? metaKg;
+  avisarMeta();
+}
+
+/** Nome, CNPJ e endereço da empresa (ADMIN e MANAGER leem) e quantos setores ela tem. */
 function buscarUnidade(): Promise<UnidadeConfiguracao> {
-  const empresaId = obterUsuarioAtual()?.empresaId;
-  const empresa = empresaId
-    ? requisitar<EmpresaApi>(`/companies/${empresaId}`).catch((excecao: unknown) => {
-        if (excecao instanceof ErroHttp && excecao.status === 403) return null;
-        throw excecao;
-      })
-    : Promise.resolve(null);
+  const empresa = requisitar<EmpresaApi>("/companies/me").catch((excecao: unknown) => {
+    if (excecao instanceof ErroHttp && excecao.status === 403) return null;
+    throw excecao;
+  });
   return Promise.all([empresa, listarSetores()]).then(([dados, setores]) => ({
     nome: dados?.name ?? SEM_DADO,
     cnpj: dados ? mascararCnpj(dados.cnpj) : SEM_DADO,
@@ -78,12 +120,22 @@ function obterUnidade(): Promise<UnidadeConfiguracao> {
   return unidadeDaApi;
 }
 
-/** Com a API, o cartão da unidade mostra a empresa de verdade, não o exemplo. */
-async function comUnidadeDaApi(
+/**
+ * Com a API, o cartão da unidade mostra a empresa de verdade e a meta é a que a
+ * empresa definiu, não o exemplo. `recarregarMeta` busca a meta de novo; depois
+ * de gravá-la não precisa, porque a resposta do PUT já a trouxe.
+ */
+async function comDadosDaApi(
   configuracoes: Configuracoes,
+  recarregarMeta: boolean,
+  sinal?: AbortSignal,
 ): Promise<Configuracoes> {
   if (USAR_MOCKS) return configuracoes;
-  return { ...configuracoes, unidade: await obterUnidade() };
+  const [unidade] = await Promise.all([
+    obterUnidade(),
+    recarregarMeta || metaDaApi === null ? carregarMeta(sinal) : Promise.resolve(),
+  ]);
+  return { ...configuracoes, unidade, metaRecuperacaoKg: metaRecuperacaoAtual() };
 }
 
 function lerSalvas(): Configuracoes {
@@ -91,16 +143,19 @@ function lerSalvas(): Configuracoes {
   return salvas ? mesclarConfiguracoes(PADRAO, salvas) : PADRAO;
 }
 
-/** Leitura síncrona da meta, para telas que só precisam do número. */
+/**
+ * Leitura síncrona da meta mensal em kg, para telas que só precisam do número.
+ * Com a API vale 0 enquanto a empresa não definiu uma meta.
+ */
 export function metaRecuperacaoAtual(): number {
-  return lerSalvas().metaRecuperacaoKg;
+  return USAR_MOCKS ? lerSalvas().metaRecuperacaoKg : (metaDaApi ?? 0);
 }
 
 export async function obterConfiguracoes(
   sinal?: AbortSignal,
 ): Promise<Configuracoes> {
   await aguardar(USAR_MOCKS ? 300 : 0, sinal);
-  return comUnidadeDaApi(lerSalvas());
+  return comDadosDaApi(lerSalvas(), true, sinal);
 }
 
 export async function salvarConfiguracoes(
@@ -111,8 +166,9 @@ export async function salvarConfiguracoes(
   if (parcial.metaRecuperacaoKg !== undefined) {
     const erro = validarMeta(parcial.metaRecuperacaoKg);
     if (erro) throw new Error(erro);
+    if (!USAR_MOCKS) await gravarMeta(parcial.metaRecuperacaoKg, sinal);
   }
   const atualizadas = mesclarConfiguracoes(lerSalvas(), parcial);
   salvar(CHAVE_STORAGE, VERSAO_STORAGE, atualizadas);
-  return comUnidadeDaApi(atualizadas);
+  return comDadosDaApi(atualizadas, false, sinal);
 }
