@@ -61,6 +61,7 @@ async function autenticarNaApi(
     usuario: usuarioDaApi(eu),
     token: acesso.token,
     expiraEm: new Date(Date.now() + acesso.expiresIn).toISOString(),
+    primeiroAcesso: acesso.firstLogin === true,
   };
 }
 

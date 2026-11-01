@@ -78,6 +78,8 @@ interface ValorAuthContext {
   readonly confirmandoSaida: boolean;
   readonly pedirSaida: () => void;
   readonly cancelarSaida: () => void;
+  /** A senha provisória foi trocada: libera o painel (a API já guardou `firstLogin = false`). */
+  readonly concluirPrimeiroAcesso: () => void;
   /** Grava o perfil (PUT /users/me) e só então atualiza a sessão; rejeita se a gravação falhar. */
   readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => Promise<void>;
   readonly limparErro: () => void;
@@ -203,6 +205,15 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     [],
   );
 
+  const concluirPrimeiroAcesso = useCallback(() => {
+    setSessao((corrente) => {
+      if (!corrente) return corrente;
+      const proxima = { ...corrente, primeiroAcesso: false };
+      sessaoAtual = proxima;
+      return proxima;
+    });
+  }, []);
+
   const pedirSaida = useCallback(() => setConfirmandoSaida(true), []);
   const cancelarSaida = useCallback(() => setConfirmandoSaida(false), []);
 
@@ -222,6 +233,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       confirmandoSaida,
       pedirSaida,
       cancelarSaida,
+      concluirPrimeiroAcesso,
       atualizarUsuario,
       limparErro,
     }),
@@ -236,6 +248,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       confirmandoSaida,
       pedirSaida,
       cancelarSaida,
+      concluirPrimeiroAcesso,
       atualizarUsuario,
       limparErro,
     ],

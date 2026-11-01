@@ -14,10 +14,17 @@ const DETALHES_DE_OCORRENCIA_DESATUALIZADA: ReadonlySet<string> = new Set([
 
 const MENSAGEM_JA_NAO_AGUARDA = "Esta ocorrência já não está aguardando aprovação.";
 
+/** A troca de senha usa esta mensagem para ligar o erro ao campo da senha atual. */
+export const MENSAGEM_SENHA_ATUAL_INCORRETA = "A senha atual não confere.";
+
 const DETALHES_CONHECIDOS: Readonly<Record<string, string>> = {
   "Invalid credentials": "E-mail ou senha inválidos.",
   "You do not have permission to access this resource":
     "Você não tem permissão para esta ação.",
+  "Invalid or expired code": "O código não confere ou já venceu. Peça um novo.",
+  "Current password is incorrect": MENSAGEM_SENHA_ATUAL_INCORRETA,
+  "New password must be different from the current password":
+    "A nova senha precisa ser diferente da atual.",
   "Incident is already closed": "Esta ocorrência já foi encerrada.",
   "Only pending incidents can be approved": MENSAGEM_JA_NAO_AGUARDA,
   "Only pending incidents can be edited": MENSAGEM_JA_NAO_AGUARDA,
