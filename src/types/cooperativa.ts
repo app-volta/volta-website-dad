@@ -87,6 +87,7 @@ export interface FormularioCooperativa {
   readonly cnpj: string;
   readonly materiais: readonly MaterialAceito[];
   readonly arquivo: File | null;
+  readonly email: string;
   readonly latitude: string;
   readonly longitude: string;
 }
@@ -96,6 +97,8 @@ export interface NovaCooperativa {
   readonly cnpj: string;
   readonly materiais: readonly MaterialAceito[];
   readonly licenca: File | null;
+  /** E-mail de contato, exigido pela volta-api. */
+  readonly email: string;
   /** Localização da sede, exigida pela volta-api. */
   readonly latitude?: number;
   readonly longitude?: number;

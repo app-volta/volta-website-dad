@@ -19,6 +19,7 @@ function daLeituraEnxuta(dto: CooperativaParaPontuacaoApi): CooperativaApi {
     longitude: dto.longitude,
     averageRating: dto.averageRating,
     specialties: dto.specialties.join(","),
+    email: dto.email ?? null,
   };
 }
 

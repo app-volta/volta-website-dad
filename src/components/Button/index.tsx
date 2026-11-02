@@ -43,7 +43,7 @@ export function Button({
       {carregando ? (
         <span className="botao__spinner" aria-hidden="true" />
       ) : null}
-      <span>{children}</span>
+      <span className="botao__conteudo">{children}</span>
     </button>
   );
 }

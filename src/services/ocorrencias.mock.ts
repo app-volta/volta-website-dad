@@ -171,9 +171,27 @@ function decisaoInicial(
   return [];
 }
 
+type RevisaoDaOcorrencia = Pick<
+  Ocorrencia,
+  "revisadaPor" | "revisadaPorNome" | "revisadaEm"
+>;
+
+const SEM_REVISAO: RevisaoDaOcorrencia = {
+  revisadaPor: null,
+  revisadaPorNome: null,
+  revisadaEm: null,
+};
+
+/** Quem decidiu e quando, se o evento é uma aprovação ou recusa; nos outros, nada muda. */
+function revisaoDaDecisao(evento: EventoOcorrencia | undefined): RevisaoDaOcorrencia | null {
+  if (!evento || (evento.tipo !== "aprovacao" && evento.tipo !== "recusa")) return null;
+  return { revisadaPor: "user-atual", revisadaPorNome: evento.autor, revisadaEm: evento.em };
+}
+
 function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
   const codigo = `OCC-${String(numero).padStart(4, "0")}`;
   const analisadaEm = modelo.criadaEm;
+  const decisao = decisaoInicial(codigo, modelo)[0];
   return {
     id: `occ-${String(numero).padStart(4, "0")}`,
     codigo,
@@ -201,6 +219,7 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
     setorDestino: modelo.status === "encaminhada" ? "Expedição" : null,
     motivoRecusa:
       modelo.status === "recusada" ? "Foto não mostra o resíduo" : null,
+    ...(revisaoDaDecisao(decisao) ?? SEM_REVISAO),
     ultimaAlteracao: null,
     historico: [
       ...eventosIniciais(
@@ -211,7 +230,7 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
           : modelo.titulo,
         modelo.criadaEm,
       ),
-      ...decisaoInicial(codigo, modelo),
+      ...(decisao ? [decisao] : []),
     ],
   };
 }
@@ -347,6 +366,7 @@ export async function criarOcorrencia(
     perigoso: false,
     setorDestino: null,
     motivoRecusa: null,
+    ...SEM_REVISAO,
     ultimaAlteracao: null,
     historico: eventosIniciais(
       codigo,
@@ -399,6 +419,7 @@ function registrar(
   const nova: Ocorrencia = {
     ...atual,
     ...mudanca,
+    ...revisaoDaDecisao({ ...evento, id: "", em: agora }),
     atualizadaEm: agora,
     historico: [
       ...atual.historico,

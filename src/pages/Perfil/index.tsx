@@ -14,6 +14,7 @@ import {
   useMinhasAtividades,
   usePainel,
   useRegistradasPor,
+  useRevisoesDe,
 } from "../../hooks/usePainel";
 import { iniciais, rotuloDoPapel } from "../../utils/pessoa";
 import { ModalPerfil } from "../Configuracoes/ModalPerfil";
@@ -40,6 +41,7 @@ export default function Perfil(): ReactNode {
   const { painel } = usePainel(dados);
   const registradas = useRegistradasPor(dados, usuario?.id ?? "");
   const atividades = useMinhasAtividades(dados, usuario?.nome ?? "");
+  const revisoes = useRevisoesDe(dados, usuario?.id ?? "");
 
   if (!usuario) {
     return <Alerta variante="info">Nenhuma sessão ativa detectada.</Alerta>;
@@ -65,6 +67,7 @@ export default function Perfil(): ReactNode {
 
   // Sem a lista, os números não existem: mostrar 0 seria dizer que não há nada.
   const semDados = dados === null;
+  const podeRevisar = usuario.perfil === "ADMIN" || usuario.perfil === "MANAGER";
   const numeros: readonly Numero[] = [
     { rotulo: "Registradas por você", valor: semDados ? "—" : String(registradas) },
     {
@@ -79,6 +82,13 @@ export default function Perfil(): ReactNode {
       rotulo: "Taxa de aprovação",
       valor: semDados || painel.taxaAprovacao === null ? "—" : `${painel.taxaAprovacao}%`,
     },
+    // Só quem decide ocorrências tem o que contar aqui.
+    ...(podeRevisar
+      ? [
+          { rotulo: "Revisadas por você", valor: semDados ? "—" : String(revisoes.quantidade) },
+          { rotulo: "Tempo médio de revisão", valor: semDados ? "—" : (revisoes.tempoMedio ?? "—") },
+        ]
+      : []),
   ];
 
   return (

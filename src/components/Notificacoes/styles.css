@@ -111,6 +111,11 @@
   color: #7250d9;
 }
 
+.notif__icone--azul {
+  background: #e4efff;
+  color: #0b60ec;
+}
+
 .notif__textos {
   display: flex;
   flex-direction: column;

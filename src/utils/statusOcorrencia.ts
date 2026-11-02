@@ -1,7 +1,9 @@
 import type {
+  Ocorrencia,
   PrioridadeOcorrencia,
   StatusOcorrencia,
 } from "../types/ocorrencia";
+import { formatarDataHora } from "./formatacao";
 
 export type CategoriaStatus =
   | "aguardando"
@@ -40,4 +42,25 @@ export function categoriaDe(status: StatusOcorrencia): CategoriaStatus {
 
 export function aguardaAprovacao(status: StatusOcorrencia): boolean {
   return categoriaDe(status) === "aguardando";
+}
+
+/**
+ * Quem aprovou ou recusou e quando, numa frase: "Aprovada por Ana Souza em
+ * 02/11/2026, 14:30". Para a pessoa logada diz "por você"; sem o nome, que a API
+ * não devolve, cita só a data. Nulo quando não há data da decisão (ainda aguarda,
+ * foi encaminhada ou foi decidida antes de a API guardar isso).
+ */
+export function descreverRevisao(
+  ocorrencia: Ocorrencia,
+  usuarioId: string | undefined,
+): string | null {
+  if (!ocorrencia.revisadaEm) return null;
+  const categoria = categoriaDe(ocorrencia.status);
+  if (categoria !== "aprovadas" && categoria !== "recusadas") return null;
+  const acao = categoria === "recusadas" ? "Recusada" : "Aprovada";
+  const quem =
+    usuarioId !== undefined && ocorrencia.revisadaPor === usuarioId
+      ? "você"
+      : ocorrencia.revisadaPorNome;
+  return `${acao}${quem ? ` por ${quem}` : ""} em ${formatarDataHora(ocorrencia.revisadaEm)}`;
 }

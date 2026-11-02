@@ -136,13 +136,40 @@ export function atividadesDaPessoa(
 }
 
 /** Duração em texto corrido: "20 min", "8 h", "1 dia", "3 dias". */
-function duracao(desde: number, agora: number): string {
-  const minutos = Math.max(Math.round((agora - desde) / 60_000), 1);
+export function duracaoEmTexto(ms: number): string {
+  const minutos = Math.max(Math.round(ms / 60_000), 1);
   if (minutos < 60) return `${minutos} min`;
   const horas = Math.round(minutos / 60);
   if (horas < 24) return `${horas} h`;
   const dias = Math.round(horas / 24);
   return `${dias} ${dias === 1 ? "dia" : "dias"}`;
+}
+
+function duracao(desde: number, agora: number): string {
+  return duracaoEmTexto(agora - desde);
+}
+
+/** Ocorrências que a pessoa aprovou ou recusou, pelo id que a API guarda de quem decidiu. */
+export function revisadasPor(
+  lista: readonly Ocorrencia[],
+  usuarioId: string,
+): readonly Ocorrencia[] {
+  return lista.filter((o) => o.revisadaPor !== null && o.revisadaPor === usuarioId);
+}
+
+/**
+ * Quanto tempo, em média, passou do registro até a decisão. Conta só as que têm a
+ * data da decisão; nulo quando nenhuma tem.
+ */
+export function tempoMedioDeRevisaoMs(lista: readonly Ocorrencia[]): number | null {
+  const tempos = lista.flatMap((o) =>
+    o.revisadaEm === null
+      ? []
+      : [Math.max(new Date(o.revisadaEm).getTime() - new Date(o.criadaEm).getTime(), 0)],
+  );
+  return tempos.length === 0
+    ? null
+    : tempos.reduce((soma, tempo) => soma + tempo, 0) / tempos.length;
 }
 
 function textoDeEspera(pendentes: readonly Ocorrencia[], agora: number): string {

@@ -1,5 +1,6 @@
 import type { CooperativaApi, NovaCooperativaApi } from "../types/api";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import { validarEmailDaCooperativa } from "../utils/cooperativas";
 import { distanciaEmKm, maisProximasPrimeiro } from "../utils/geo";
 import type { Coordenadas } from "../utils/geo";
 import { validarCnpj } from "../utils/validadores";
@@ -24,8 +25,8 @@ import {
 /**
  * Cooperativas na volta-api (GET e POST /cooperatives). Só o perfil ADMIN
  * lista e cadastra; para os demais a API responde 403. O volume mensal vem das
- * coletas (GET /collections) e o que a API não guarda (contato, distância,
- * capacidade, licença) fica vazio.
+ * coletas (GET /collections) e o que a API não guarda (nome do contato,
+ * telefone, distância, capacidade, licença) fica vazio.
  */
 
 /**
@@ -121,6 +122,8 @@ export async function adicionarCooperativa(
     throw new Error("Escolha ao menos um material aceito.");
   }
   const { latitude, longitude } = validarLocalizacao(dados);
+  const erroEmail = validarEmailDaCooperativa(dados.email);
+  if (erroEmail) throw new Error(erroEmail);
 
   const corpo: NovaCooperativaApi = {
     name: nome,
@@ -128,6 +131,7 @@ export async function adicionarCooperativa(
     latitude,
     longitude,
     specialties: especialidadesDosMateriais(dados.materiais),
+    email: dados.email.trim().toLowerCase(),
   };
   const criada = await requisitar<CooperativaApi>("/cooperatives", {
     metodo: "POST",

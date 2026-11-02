@@ -16,6 +16,7 @@ import type {
 } from "../../../types/cooperativa";
 import {
   lerCoordenada,
+  validarEmailDaCooperativa,
   validarLatitude,
   validarLicenca,
   validarLongitude,
@@ -47,6 +48,7 @@ const FORMULARIO_VAZIO: FormularioCooperativa = {
   cnpj: "",
   materiais: [],
   arquivo: null,
+  email: "",
   latitude: "",
   longitude: "",
 };
@@ -62,11 +64,13 @@ export function ModalAdicionar({
   const idFormulario = useId();
   const idNome = useId();
   const idCnpj = useId();
+  const idEmail = useId();
   const idLatitude = useId();
   const idLongitude = useId();
   const idRotuloLicenca = useId();
   const nomeRef = useRef<HTMLInputElement | null>(null);
   const cnpjRef = useRef<HTMLInputElement | null>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
 
   // Os campos mudam e são enviados juntos, então ficam num só objeto.
   const [formulario, setFormulario] =
@@ -74,9 +78,10 @@ export function ModalAdicionar({
   const [arrastando, setArrastando] = useState<boolean>(false);
   const [tentou, setTentou] = useState<boolean>(false);
 
-  const { nome, cnpj, materiais, arquivo, latitude, longitude } = formulario;
+  const { nome, cnpj, materiais, arquivo, email, latitude, longitude } = formulario;
 
   const erroNome = validarNomeCooperativa(nome);
+  const erroEmail = validarEmailDaCooperativa(email);
   const erroCnpj = validarCnpj(cnpj);
   const cnpjJaCadastrado = cnpjRecusado !== null && cnpj === cnpjRecusado;
   const erroDoCampoCnpj =
@@ -135,12 +140,17 @@ export function ModalAdicionar({
       cnpjRef.current?.focus();
       return;
     }
+    if (erroEmail) {
+      emailRef.current?.focus();
+      return;
+    }
     if (erroMateriais || erroLicenca || erroLatitude || erroLongitude) return;
     aoConfirmar({
       nome,
       cnpj,
       materiais,
       licenca: arquivo,
+      email,
       ...(cadastroNaApi
         ? { latitude: lerCoordenada(latitude), longitude: lerCoordenada(longitude) }
         : {}),
@@ -226,6 +236,26 @@ export function ModalAdicionar({
             onChange={(evento) =>
               atualizar("cnpj", mascararCnpj(evento.target.value))
             }
+          />
+        </Campo>
+
+        <Campo
+          id={idEmail}
+          rotulo="E-mail de contato"
+          icone="email"
+          erro={tentou ? erroEmail : null}
+        >
+          <input
+            ref={emailRef}
+            id={idEmail}
+            type="email"
+            value={email}
+            placeholder="contato@cooperativa.com.br"
+            maxLength={150}
+            autoComplete="off"
+            aria-invalid={tentou && erroEmail ? true : undefined}
+            aria-describedby={tentou && erroEmail ? `${idEmail}-erro` : undefined}
+            onChange={(evento) => atualizar("email", evento.target.value)}
           />
         </Campo>
 

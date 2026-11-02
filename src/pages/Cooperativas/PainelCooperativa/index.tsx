@@ -33,7 +33,6 @@ interface PainelCooperativaProps {
   readonly selecionada: Cooperativa | null;
   readonly aoSelecionar: (id: string) => void;
   readonly aoAbrirDocumentos: () => void;
-  readonly dadosReais: boolean;
   /** De onde a unidade envia o resíduo, o centro do mapa. */
   readonly origem: Coordenadas | null;
 }
@@ -43,7 +42,6 @@ export function PainelCooperativa({
   selecionada,
   aoSelecionar,
   aoAbrirDocumentos,
-  dadosReais,
   origem,
 }: PainelCooperativaProps): ReactNode {
   const [ampliado, setAmpliado] = useState(false);
@@ -100,7 +98,6 @@ export function PainelCooperativa({
           coop={selecionada}
           cor={corDaCooperativa(selecionada.id, todas)}
           aoAbrirDocumentos={aoAbrirDocumentos}
-          dadosReais={dadosReais}
         />
       ) : (
         <p className="coops__painel-vazio">
@@ -115,12 +112,13 @@ interface DetalheProps {
   readonly coop: Cooperativa;
   readonly cor: string;
   readonly aoAbrirDocumentos: () => void;
-  readonly dadosReais: boolean;
 }
 
-function Detalhe({ coop, cor, aoAbrirDocumentos, dadosReais }: DetalheProps): ReactNode {
+function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
   const estado = estadoLicenca(coop);
-  const contato = [coop.contato, coop.telefone].filter(Boolean).join(" · ");
+  // A volta-api guarda só o e-mail: sem nome nem telefone, ele ocupa a linha de contato.
+  const contato =
+    [coop.contato, coop.telefone].filter(Boolean).join(" · ") || coop.email || "";
   const meses = mesesDoGrafico();
   const maior = Math.max(...coop.volumeMensalKg, 0);
 
@@ -200,21 +198,17 @@ function Detalhe({ coop, cor, aoAbrirDocumentos, dadosReais }: DetalheProps): Re
               type="button"
               className="coops__botao coops__botao--primario"
               disabled
-              title={
-                dadosReais
-                  ? "A API atual não fornece o e-mail da cooperativa."
-                  : "O e-mail fica disponível depois da homologação"
-              }
+              title="Esta cooperativa ainda não tem e-mail cadastrado."
             >
               <Icone nome="email" tamanho={14} />
               Enviar e-mail
             </button>
           )}
-          {dadosReais && !coop.email ? (
+          {coop.email ? null : (
             <small className="coops__email-aviso">
-              Não é uma permissão do seu perfil: a API ainda não fornece o e-mail da cooperativa.
+              Esta cooperativa ainda não tem e-mail cadastrado.
             </small>
-          ) : null}
+          )}
         </div>
         <button
           type="button"
