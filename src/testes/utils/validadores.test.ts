@@ -12,7 +12,7 @@ import {
   validarObrigatorio,
   validarPeso,
   validarSenha,
-} from "./validadores";
+} from "../../utils/validadores";
 
 describe("validarEmail", () => {
   it("pede o e-mail quando vazio ou só espaços", () => {

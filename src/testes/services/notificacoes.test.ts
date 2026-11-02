@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { criarOcorrencia } from "../testes/fabricas";
-import type { AvisosCalculados } from "../utils/metas";
+import { criarOcorrencia } from "../fabricas";
+import type { AvisosCalculados } from "../../utils/metas";
 import {
   assinarNotificacoes,
   lerNotificacoesLidas,
   marcarComoLida,
   marcarTodasComoLidas,
   montarNotificacoes,
-} from "./notificacoes";
+} from "../../services/notificacoes";
 
 // Com a API, as notificações são montadas das ocorrências; com os mocks, vêm de modelos fixos.
-vi.mock("./http", () => ({ USAR_MOCKS: false }));
+vi.mock("../../services/http", () => ({ USAR_MOCKS: false }));
 
 const AGORA = new Date(2026, 10, 18, 15);
 const SEM_AVISOS: AvisosCalculados = { metaDoDiaBatida: null, foraDoRitmo: null };
@@ -177,8 +177,8 @@ describe("notificações lidas", () => {
 describe("notificações de demonstração (modo mock)", () => {
   it("vêm de modelos fixos e só mostram a fila quando há o que aprovar", async () => {
     vi.resetModules();
-    vi.doMock("./http", () => ({ USAR_MOCKS: true }));
-    const modulo = await import("./notificacoes");
+    vi.doMock("../../services/http", () => ({ USAR_MOCKS: true }));
+    const modulo = await import("../../services/notificacoes");
 
     const semFila = modulo.montarNotificacoes(NINGUEM_LEU, 0, [], 1500, true, SEM_AVISOS, AGORA);
     expect(semFila.map((item) => item.id)).toEqual(["aprovacao-0481", "licenca-recicla-vida", "meta-mes"]);
@@ -187,17 +187,17 @@ describe("notificações de demonstração (modo mock)", () => {
     expect(comFila.map((item) => item.id)).toContain("fila-aguardando");
     expect(comFila.find((item) => item.id === "fila-aguardando")?.trechos[0].texto).toBe("3 ocorrências");
 
-    vi.doUnmock("./http");
+    vi.doUnmock("../../services/http");
   });
 
   it("a notificação da meta já vem lida e as outras chegam como novas", async () => {
     vi.resetModules();
-    vi.doMock("./http", () => ({ USAR_MOCKS: true }));
-    const modulo = await import("./notificacoes");
+    vi.doMock("../../services/http", () => ({ USAR_MOCKS: true }));
+    const modulo = await import("../../services/notificacoes");
     const idsLidos = modulo.lerNotificacoesLidas();
     const lista = modulo.montarNotificacoes(idsLidos, 0, [], 1500, true, SEM_AVISOS, AGORA);
     expect(lista.find((item) => item.id === "meta-mes")?.lida).toBe(true);
     expect(lista.find((item) => item.id === "aprovacao-0481")?.lida).toBe(false);
-    vi.doUnmock("./http");
+    vi.doUnmock("../../services/http");
   });
 });

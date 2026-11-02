@@ -8,7 +8,7 @@ import {
   foiResultadoIncerto,
   foiSemResposta,
   mensagemDoCampo,
-} from "./erros";
+} from "../../utils/erros";
 
 const comStatus = (status: unknown): { status: unknown } => ({ status });
 

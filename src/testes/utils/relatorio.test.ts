@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { RelatorioPgrs } from "../types/relatorio";
-import { montarCsv } from "./exportarCsv";
-import { montarCsvRelatorio } from "./relatorio";
+import type { RelatorioPgrs } from "../../types/relatorio";
+import { montarCsv } from "../../utils/exportarCsv";
+import { montarCsvRelatorio } from "../../utils/relatorio";
 
 const SEPARADOR_DE_LINHA = "\r\n";
 

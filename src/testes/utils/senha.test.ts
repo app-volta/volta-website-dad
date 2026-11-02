@@ -6,7 +6,7 @@ import {
   avaliarSenha,
   validarConfirmacao,
   validarNovaSenha,
-} from "./senha";
+} from "../../utils/senha";
 
 describe("avaliarSenha", () => {
   it.each([

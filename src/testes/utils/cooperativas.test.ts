@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarCooperativa } from "../testes/fabricas";
+import { criarCooperativa } from "../fabricas";
 import {
   TAMANHO_MAXIMO_LICENCA_BYTES,
   cooperativasNoRaio,
@@ -17,7 +17,7 @@ import {
   validarLongitude,
   validarMateriais,
   validarNomeCooperativa,
-} from "./cooperativas";
+} from "../../utils/cooperativas";
 
 /** 18/11/2026. */
 const AGORA = new Date(2026, 10, 18, 15);

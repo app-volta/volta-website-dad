@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { criarConfiguracoes } from "../testes/fabricas";
+import { criarConfiguracoes } from "../fabricas";
 import {
   lerQuilos,
   mesclarConfiguracoes,
   percentualDaMeta,
   validarMeta,
-} from "./configuracoes";
+} from "../../utils/configuracoes";
 
 describe("mesclarConfiguracoes", () => {
   const atual = criarConfiguracoes();

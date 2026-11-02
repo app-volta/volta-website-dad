@@ -12,7 +12,7 @@ import {
   formatarPeso,
   formatarRegistro,
   mascararCnpj,
-} from "./formatacao";
+} from "../../utils/formatacao";
 
 const ESPACO_FIXO = " ";
 

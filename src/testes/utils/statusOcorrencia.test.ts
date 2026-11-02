@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { StatusOcorrencia } from "../types/ocorrencia";
-import { aguardaAprovacao, categoriaDe } from "./statusOcorrencia";
+import type { StatusOcorrencia } from "../../types/ocorrencia";
+import { aguardaAprovacao, categoriaDe } from "../../utils/statusOcorrencia";
 
 describe("categoriaDe", () => {
   it.each<[StatusOcorrencia, string]>([

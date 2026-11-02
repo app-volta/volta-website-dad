@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { criarOcorrencia } from "../testes/fabricas";
+import { criarOcorrencia } from "../fabricas";
 import {
   aprovada,
   atividadesDaPessoa,
@@ -8,7 +8,7 @@ import {
   somaKg,
   taxaDeAprovacao,
   tempoRelativo,
-} from "./painel";
+} from "../../utils/painel";
 
 /** Quarta-feira, 18/11/2026, às 15h. */
 const AGORA = new Date(2026, 10, 18, 15);

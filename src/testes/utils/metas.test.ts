@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { criarOcorrencia, criarPreferenciasDaMeta } from "../testes/fabricas";
-import { MATERIAIS } from "../types/material";
-import type { Material } from "../types/material";
+import { criarOcorrencia, criarPreferenciasDaMeta } from "../fabricas";
+import { MATERIAIS } from "../../types/material";
+import type { Material } from "../../types/material";
 import {
   avisosDaMeta,
   chaveDoDia,
@@ -18,7 +18,7 @@ import {
   somaDasMetas,
   validarDias,
   validarValorFixoDoDia,
-} from "./metas";
+} from "../../utils/metas";
 
 function porMaterial(valores: Partial<Record<Material, number>>): Record<Material, number> {
   return { papelao: 0, plastico: 0, metal: 0, vidro: 0, ...valores };

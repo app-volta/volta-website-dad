@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { instanteUtc } from "./datas";
-import { formatarAtividade, nomeDoEmail, validarEmailConvite } from "./equipe";
-import { iniciais, rotuloDoPapel } from "./pessoa";
+import { instanteUtc } from "../../utils/datas";
+import { formatarAtividade, nomeDoEmail, validarEmailConvite } from "../../utils/equipe";
+import { iniciais, rotuloDoPapel } from "../../utils/pessoa";
 
 describe("iniciais", () => {
   it("pega a primeira e a última inicial", () => {

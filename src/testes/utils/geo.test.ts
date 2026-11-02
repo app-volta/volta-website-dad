@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { distanciaEmKm, maisProximasPrimeiro, pontoA } from "./geo";
+import { distanciaEmKm, maisProximasPrimeiro, pontoA } from "../../utils/geo";
 
 const LINS = { latitude: -21.6786, longitude: -49.7425 };
 const SAO_PAULO = { latitude: -23.5505, longitude: -46.6333 };

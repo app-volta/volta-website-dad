@@ -7,7 +7,7 @@ import type {
   IncidenteApi,
   RiscoApi,
   TipoResiduoApi,
-} from "../types/api";
+} from "../../types/api";
 import {
   analiseInconclusiva,
   categoriaDoTexto,
@@ -20,8 +20,8 @@ import {
   statusDaApi,
   tipoDaAnalise,
   usuarioDaApi,
-} from "./adaptadores";
-import type { CatalogoApi } from "./adaptadores";
+} from "../../services/adaptadores";
+import type { CatalogoApi } from "../../services/adaptadores";
 
 function tipo(
   id: string,
