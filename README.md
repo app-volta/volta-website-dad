@@ -115,6 +115,25 @@ esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
 calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
 usuário ADMIN.
 
+## Relatório PGRS em PDF
+
+O botão **Gerar PGRS** (Relatórios) abre `/relatorios/pgrs`, o documento do PGRS em duas
+páginas A4: capa com a unidade, indicadores do período comparados com o anterior, meta
+do mês, recuperado por material e por setor, destinação final por cooperativa (com a
+licença ambiental), amostra das ocorrências aprovadas, recomendações do VOLTA e a
+declaração do responsável. **Salvar como PDF** abre a impressão do navegador: em
+Destino, escolha "Salvar como PDF". O CSS de impressão (`@page` A4, sem margem, cores
+exatas) leva só o documento, e o título da página já vira o nome do arquivo
+(`pgrs-outubro-2026.pdf`). Não há biblioteca de PDF: é o próprio navegador que gera.
+
+- O conteúdo sai de `src/utils/documentoPgrs.ts` (função pura, com testes) e é
+  desenhado por `src/pages/RelatorioPgrs/DocumentoPgrs`. O que a API não informa (CNPJ
+  e endereço para quem não é ADMIN ou MANAGER, licença e distância das cooperativas,
+  comparação com o período anterior sem ocorrências nele) aparece como traço ou some;
+  nada é inventado. As recomendações vêm só dos dados do período.
+- As fontes do documento são Inter e Poppins (`@fontsource`), carregadas só nesta rota.
+- Testado no Chrome. O botão **CSV** do cartão baixa o mesmo PGRS em planilha.
+
 Alguns números não têm endpoint e são calculados no app: o Início e os
 Relatórios contam as ocorrências por data de registro (a API não informa a data
 da aprovação), o desvio do aterro usa as métricas ESG quando existem e, sem
@@ -190,7 +209,7 @@ Regras estritas:
 
 Os testes cobrem a lógica pura, que é onde mora a regra de negócio: `src/utils/`
 (metas e avisos da meta, validadores, senha, painel, formatação, licenças das
-cooperativas, CSV do relatório PGRS, distâncias) e `src/services/` (os
+cooperativas, CSV e documento do relatório PGRS, distâncias) e `src/services/` (os
 adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
 Vitest em ambiente `node`, sem navegador e sem rede.
 
@@ -216,9 +235,14 @@ fica vermelho.
 |---------|--------|--------|
 | `/login` | Login | Público |
 | `/cadastro` | Cadastro | Público |
+| `/recuperar-senha` | Recuperar a senha (e-mail, código de 4 dígitos e senha nova) | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |
+| `/relatorios` | Relatórios PGRS: indicadores do período, gráficos e exportação em CSV | Privado |
 | `/relatorios/metas` | Metas do mês e do dia (ADMIN e MANAGER) | Privado |
+| `/relatorios/pgrs` | Documento do PGRS em duas páginas A4, que a pessoa salva em PDF pelo navegador (`?periodo=mes`, `trimestre` ou `ano`) | Privado |
+| `/equipe` | Equipe e convites (ADMIN) | Privado |
+| `/configuracoes` | Meta, unidade, notificações e senha | Privado |
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |
