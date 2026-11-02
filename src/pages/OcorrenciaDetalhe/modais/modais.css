@@ -238,7 +238,7 @@
   font-size: 12.5px;
 }
 
-.interruptor {
+.modal-interruptor {
   position: relative;
   flex-shrink: 0;
   width: 44px;
@@ -249,11 +249,11 @@
   transition: background 0.15s ease;
 }
 
-.interruptor--ligado {
+.modal-interruptor--ligado {
   background: linear-gradient(135deg, #15874c 30%, #0e7c48 100%);
 }
 
-.interruptor__bolinha {
+.modal-interruptor__bolinha {
   position: absolute;
   top: 3px;
   left: 3px;
@@ -265,7 +265,7 @@
   transition: transform 0.15s ease;
 }
 
-.interruptor--ligado .interruptor__bolinha {
+.modal-interruptor--ligado .modal-interruptor__bolinha {
   transform: translateX(18px);
 }
 

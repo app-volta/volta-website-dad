@@ -1,0 +1,122 @@
+/* Endereço e botão de copiar */
+.email-opcoes__endereco {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px 10px 14px;
+  border: 0.8px solid #dfe7e2;
+  border-radius: 14px;
+  background: #f6f9f7;
+}
+
+.email-opcoes__texto {
+  min-width: 0;
+  color: #16211b;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.email-opcoes__copiar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0.8px solid #cfe0d6;
+  border-radius: 10px;
+  background: #fff;
+  color: #0e7c48;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.email-opcoes__copiar:hover {
+  background: #eef6f1;
+}
+
+.email-opcoes__copiar:focus-visible,
+.email-opcoes__opcao:focus-visible {
+  outline: 3px solid #0e7c48;
+  outline-offset: 2px;
+}
+
+.email-opcoes__aviso {
+  margin: 0;
+  color: #b3263e;
+  font-size: 12.5px;
+}
+
+/* Onde escrever a mensagem */
+.email-opcoes__lista {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.email-opcoes__opcao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0.8px solid #dfe7e2;
+  border-radius: 14px;
+  background: #fff;
+  color: #16211b;
+  text-decoration: none;
+}
+
+.email-opcoes__opcao:hover {
+  border-color: #b9d8c6;
+  background: #f4faf6;
+}
+
+.email-opcoes__icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e2f7ec;
+  color: #0e7c48;
+}
+
+.email-opcoes__textos {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.email-opcoes__textos strong {
+  font-size: 14px;
+}
+
+.email-opcoes__textos small {
+  color: #5d6961;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.email-opcoes__externo {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #5d6961;
+}
+
+@media (max-width: 420px) {
+  .email-opcoes__endereco {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

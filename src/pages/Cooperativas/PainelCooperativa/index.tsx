@@ -16,6 +16,7 @@ import {
 } from "../../../utils/formatacao";
 import type { Coordenadas } from "../../../utils/geo";
 import { corDaCooperativa } from ".././cores";
+import { ModalEmail } from ".././ModalEmail";
 
 // O Leaflet pesa uns 45 kB: fica fora do primeiro carregamento da tela.
 const MapaCooperativas = lazy(() =>
@@ -115,6 +116,7 @@ interface DetalheProps {
 }
 
 function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
+  const [emailAberto, setEmailAberto] = useState(false);
   const estado = estadoLicenca(coop);
   // A volta-api guarda só o e-mail: sem nome nem telefone, ele ocupa a linha de contato.
   const contato =
@@ -185,14 +187,15 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
       <div className="coops__acoes">
         <div className="coops__email">
           {coop.email ? (
-            <a
+            <button
+              type="button"
               className="coops__botao coops__botao--primario"
-              href={`mailto:${coop.email}`}
-              title="Abre seu aplicativo de e-mail; você ainda precisa enviar a mensagem."
+              aria-haspopup="dialog"
+              onClick={() => setEmailAberto(true)}
             >
               <Icone nome="email" tamanho={14} />
               Enviar e-mail
-            </a>
+            </button>
           ) : (
             <button
               type="button"
@@ -219,6 +222,10 @@ function Detalhe({ coop, cor, aoAbrirDocumentos }: DetalheProps): ReactNode {
           Documentos
         </button>
       </div>
+
+      {emailAberto && coop.email ? (
+        <ModalEmail nome={coop.nome} email={coop.email} aoFechar={() => setEmailAberto(false)} />
+      ) : null}
     </div>
   );
 }
