@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
 import { ErroHttp } from "../services/http";
-import { obterOcorrencia, semelhantesNaSemana } from "../services/ocorrencias";
+import { assinarMudancas, lerOcorrencias, obterOcorrencia } from "../services/ocorrencias";
 import type { EstadoRequisicao } from "../types/comum";
 import type { Ocorrencia } from "../types/ocorrencia";
+import { contarSemelhantesNaSemana } from "../utils/ocorrencias";
 
 /** Estado da busca, com `naoEncontrada` quando a ocorrência não existe (ou é de outra unidade). */
 export interface EstadoOcorrencia extends EstadoRequisicao<Ocorrencia> {
@@ -72,5 +73,9 @@ export function useOcorrencia(
 
 /** Quantas ocorrências parecidas a unidade teve na semana; 0 enquanto a ocorrência não chegou. */
 export function useSemelhantesNaSemana(ocorrencia: Ocorrencia | null): number {
-  return ocorrencia ? semelhantesNaSemana(ocorrencia) : 0;
+  const lista = useSyncExternalStore(assinarMudancas, lerOcorrencias);
+  return useMemo(
+    () => (ocorrencia ? contarSemelhantesNaSemana(lista, ocorrencia) : 0),
+    [lista, ocorrencia],
+  );
 }

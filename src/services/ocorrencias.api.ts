@@ -189,17 +189,6 @@ export function quantidadeAguardando(): number {
   return cache.filter((item) => aguardaAprovacao(item.status)).length;
 }
 
-export function semelhantesNaSemana(ocorrencia: Ocorrencia): number {
-  const limite = Date.now() - 7 * 86_400_000;
-  return cache.filter(
-    (item) =>
-      item.titulo === ocorrencia.titulo &&
-      item.localizacao.setor === ocorrencia.localizacao.setor &&
-      new Date(item.criadaEm).getTime() >= limite &&
-      item.criadaEm <= ocorrencia.criadaEm,
-  ).length;
-}
-
 /** Áreas da empresa e tipos de resíduo, buscados uma vez por sessão. */
 function carregarCatalogo(): Promise<CatalogoApi> {
   if (catalogo === null) {

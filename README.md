@@ -168,6 +168,13 @@ do chatbot, mas não é guardada: a volta-api recebe uma URL, e o upload depende
 do armazenamento (S3). Se a IA não confirma o resíduo na foto, o app não cria a
 ocorrência e pede outra foto.
 
+Ao sair, o painel apaga só a sessão (`volta:sessao`). O que ficou guardado neste
+navegador continua lá de propósito, para não perder trabalho que a API ainda não
+guarda: os encaminhamentos, as observações, as reclassificações e as análises da IA,
+que são separados por pessoa (cada login só vê os seus), e as preferências de
+Configurações, que valem para o navegador inteiro. Em um computador compartilhado,
+limpe os dados do site no navegador.
+
 Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
 `src/services/adaptadores.ts`.
 
@@ -204,6 +211,17 @@ Regras estritas:
 - **Todo input tem `<label htmlFor>`** e mensagens de erro com `role="alert"`.
 - **`localStorage` com envelope `{ _versao, dados }`** — versão diferente
   descarta com segurança em vez de quebrar a aplicação.
+- **Convenção de nomes.** Nomes do domínio e das telas ficam em português
+  (`Ocorrencia`, `Cooperativa`, `Alerta`, `Icone`, `Interruptor`,
+  `useOcorrencias`). As peças genéricas de interface, com o nome que o React e a
+  web usam, ficam em inglês (`Button`, `Input`, `Spinner`, `Toast`, `Modal`,
+  `SkeletonList`, `useDebounce`, `usePagination`). Os nomes que juntam as duas
+  coisas (`CooperativaCard`, `MaterialBadge`) seguem a mesma regra: o domínio em
+  português e o tipo da peça em inglês.
+- **"Manter conectado".** Com a opção marcada, a sessão (e o token) fica no
+  `localStorage` e sobrevive ao fechamento do navegador; desmarcada, fica no
+  `sessionStorage`, que o navegador apaga quando a aba fecha. A regra está em
+  `src/utils/sessaoSalva.ts`, com testes.
 
 ## Testes unitários
 
