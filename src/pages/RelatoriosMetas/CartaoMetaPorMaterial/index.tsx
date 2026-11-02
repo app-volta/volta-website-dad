@@ -108,8 +108,8 @@ export function CartaoMetaPorMaterial({
                       {rotulo}
                     </span>
                   </th>
-                  <td>{kg(recuperadoKg[material])}</td>
-                  <td>
+                  <td data-rotulo="Recuperado">{kg(recuperadoKg[material])}</td>
+                  <td data-rotulo="Meta do mês">
                     <div
                       className={`metas__campo metas__campo--compacto${comAlerta ? " metas__campo--erro" : ""}`}
                     >
@@ -134,8 +134,8 @@ export function CartaoMetaPorMaterial({
                       </span>
                     ) : null}
                   </td>
-                  <td>{kg(porDia(valores[material], dias))}</td>
-                  <td>
+                  <td data-rotulo="Por dia">{kg(porDia(valores[material], dias))}</td>
+                  <td data-rotulo="Atingido">
                     <span className="metas__atingido">
                       <span className="metas__mini-trilho" aria-hidden="true">
                         <span style={{ width: `${Math.min(percentual, 100)}%` }} />
@@ -150,10 +150,10 @@ export function CartaoMetaPorMaterial({
           <tfoot>
             <tr>
               <th scope="row">Total da unidade</th>
-              <td>{kg(recuperadoTotal)}</td>
-              <td>{kg(metaTotal)}</td>
-              <td>{kg(porDia(metaTotal, dias))}</td>
-              <td>
+              <td data-rotulo="Recuperado">{kg(recuperadoTotal)}</td>
+              <td data-rotulo="Meta do mês">{kg(metaTotal)}</td>
+              <td data-rotulo="Por dia">{kg(porDia(metaTotal, dias))}</td>
+              <td data-rotulo="Atingido">
                 <span className="metas__atingido">
                   <span className="metas__mini-trilho" aria-hidden="true">
                     <span
