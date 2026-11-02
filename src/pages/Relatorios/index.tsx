@@ -12,7 +12,7 @@ import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useMetaRecuperacao, usePreferenciasDaMeta } from "../../hooks/useMeta";
 import { useDadosReais } from "../../hooks/useModo";
-import { useAcoesRelatorio, useRelatorio } from "../../hooks/useRelatorio";
+import { useRelatorio } from "../../hooks/useRelatorio";
 import type { MetasSalvas } from "../../types/configuracao";
 import { PERIODOS_RELATORIO } from "../../types/relatorio";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../../types/relatorio";
@@ -29,11 +29,6 @@ import { GraficoMateriais } from "./GraficoMateriais";
 import { OcorrenciasPorSetor } from "./OcorrenciasPorSetor";
 import { DestinacaoCooperativas, RankingSetores } from "./Rankings";
 import "./styles.css";
-
-interface ArquivoGerado {
-  readonly nome: string;
-  readonly conteudo: string;
-}
 
 interface Aviso {
   readonly titulo: string;
@@ -94,14 +89,10 @@ export default function Relatorios(): ReactNode {
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro } = useRelatorio(periodo, chaveRecarga);
-  const acoes = useAcoesRelatorio();
 
-  const [gerando, setGerando] = useState<boolean>(false);
-  const [ultimo, setUltimo] = useState<ArquivoGerado | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(() =>
     avisoDasMetas(localizacao.state),
   );
-  const [falhouAoGerar, setFalhouAoGerar] = useState<boolean>(false);
 
   // O aviso já foi lido: limpa o estado da navegação para ele não voltar ao recarregar.
   useEffect(() => {
@@ -137,34 +128,24 @@ export default function Relatorios(): ReactNode {
     );
   }
 
-  async function gerar(relatorio: RelatorioPgrs): Promise<void> {
-    setGerando(true);
-    setFalhouAoGerar(false);
-    try {
-      const { geradoEm } = await acoes.gerarPgrs(relatorio.periodo);
-      const arquivo: ArquivoGerado = {
-        nome: `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`,
-        conteudo: montarCsvRelatorio(
-          relatorio,
-          { unidade: usuario?.unidade ?? "Unidade", geradoEm },
-          metasDoCsv(relatorio),
-        ),
-      };
-      baixarCsv(arquivo.nome, arquivo.conteudo);
-      setUltimo(arquivo);
-      setAviso({
-        titulo: "Relatório PGRS gerado",
-        descricao: `${arquivo.nome} foi baixado.`,
-      });
-    } catch {
-      setFalhouAoGerar(true);
-    } finally {
-      setGerando(false);
-    }
+  /** O documento do PGRS (a pessoa o salva em PDF pelo navegador). */
+  function abrirDocumento(relatorio: RelatorioPgrs): void {
+    navegar(`/relatorios/pgrs?periodo=${relatorio.periodo}`);
   }
 
-  function baixarUltimo(): void {
-    if (ultimo) baixarCsv(ultimo.nome, ultimo.conteudo);
+  /** O mesmo PGRS em planilha, com a unidade e a data de geração no começo. */
+  function baixarCsvDoPgrs(relatorio: RelatorioPgrs): void {
+    const geradoEm = new Date().toISOString();
+    const nome = `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`;
+    baixarCsv(
+      nome,
+      montarCsvRelatorio(
+        relatorio,
+        { unidade: usuario?.unidade ?? "Unidade", geradoEm },
+        metasDoCsv(relatorio),
+      ),
+    );
+    setAviso({ titulo: "CSV do PGRS baixado", descricao: `${nome} foi baixado.` });
   }
 
   if (erro && !dados) {
@@ -236,10 +217,8 @@ export default function Relatorios(): ReactNode {
               periodo={dados.periodo}
               scoreEsg={dados.scoreEsg ?? null}
               posicaoNoRanking={dados.posicaoNoRanking ?? null}
-              gerando={gerando}
-              temUltimo={ultimo !== null}
-              aoGerar={() => void gerar(dados)}
-              aoBaixarUltimo={baixarUltimo}
+              aoGerar={() => abrirDocumento(dados)}
+              aoBaixarCsv={() => baixarCsvDoPgrs(dados)}
             />
           </div>
 
@@ -278,14 +257,6 @@ export default function Relatorios(): ReactNode {
         titulo={aviso?.titulo ?? ""}
         descricao={aviso?.descricao}
         aoFechar={() => setAviso(null)}
-      />
-      <Toast
-        aberto={falhouAoGerar}
-        variante="erro"
-        titulo="Não geramos o relatório"
-        descricao="Tente de novo em alguns instantes."
-        duracaoMs={6000}
-        aoFechar={() => setFalhouAoGerar(false)}
       />
     </section>
   );
