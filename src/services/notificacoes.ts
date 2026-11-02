@@ -1,6 +1,8 @@
 import type { Notificacao } from "../types/notificacao";
 import type { Ocorrencia } from "../types/ocorrencia";
 import { criarArmazem } from "../utils/armazem";
+import { chaveDoDia, chaveDoMes } from "../utils/metas";
+import type { AvisosCalculados } from "../utils/metas";
 import { calcularPainel, tempoRelativo } from "../utils/painel";
 import { USAR_MOCKS } from "./http";
 
@@ -144,7 +146,7 @@ function notificacoesDaApi(
   return lista;
 }
 
-export function montarNotificacoes(
+function notificacoesDaFonte(
   idsLidos: ReadonlySet<string>,
   pendentes: number,
   ocorrencias: readonly Ocorrencia[],
@@ -162,6 +164,62 @@ export function montarNotificacoes(
     trechos: modelo.trechos(pendentes),
     lida: idsLidos.has(modelo.id),
   }));
+}
+
+/** Os avisos da meta que a pessoa ligou em Metas do mês e do dia. */
+function notificacoesDaMeta(
+  avisos: AvisosCalculados,
+  idsLidos: ReadonlySet<string>,
+  agora: Date,
+): readonly Notificacao[] {
+  const lista: Notificacao[] = [];
+  if (avisos.metaDoDiaBatida) {
+    const id = `meta-dia-${chaveDoDia(agora)}`;
+    const { hojeKg, metaDoDiaKg } = avisos.metaDoDiaBatida;
+    lista.push({
+      id,
+      tipo: "meta",
+      trechos: [
+        { texto: "A unidade bateu a " },
+        { texto: "meta de hoje", destaque: true },
+        { texto: ` · ${hojeKg.toLocaleString("pt-BR")} de ${metaDoDiaKg.toLocaleString("pt-BR")} kg` },
+      ],
+      quando: "hoje",
+      destino: "/relatorios/metas",
+      lida: idsLidos.has(id),
+    });
+  }
+  if (avisos.foraDoRitmo) {
+    const id = `meta-ritmo-${chaveDoMes(agora)}`;
+    lista.push({
+      id,
+      tipo: "meta",
+      trechos: [
+        { texto: "O mês saiu do ritmo: " },
+        { texto: `${avisos.foraDoRitmo.atingidoPct}% da meta`, destaque: true },
+        { texto: ` com ${avisos.foraDoRitmo.esperadoPct}% dos dias passados` },
+      ],
+      quando: "este mês",
+      destino: "/relatorios/metas",
+      lida: idsLidos.has(id),
+    });
+  }
+  return lista;
+}
+
+export function montarNotificacoes(
+  idsLidos: ReadonlySet<string>,
+  pendentes: number,
+  ocorrencias: readonly Ocorrencia[],
+  metaKg: number,
+  podeRevisar: boolean,
+  avisosDaMeta: AvisosCalculados,
+  agora: Date = new Date(),
+): readonly Notificacao[] {
+  return [
+    ...notificacoesDaFonte(idsLidos, pendentes, ocorrencias, metaKg, podeRevisar),
+    ...notificacoesDaMeta(avisosDaMeta, idsLidos, agora),
+  ];
 }
 
 export function marcarComoLida(id: string): void {
