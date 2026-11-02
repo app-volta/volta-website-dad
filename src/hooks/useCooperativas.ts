@@ -4,43 +4,70 @@ import {
   adicionarCooperativa,
   listarCooperativas,
   obterCooperativa,
+  obterOrigemDoMapa,
 } from "../services/cooperativas";
-import type { EstadoRequisicao } from "../types/comum";
+import type { EstadoLista, EstadoRequisicao } from "../types/comum";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import { foiProibido } from "../utils/erros";
+import type { Coordenadas } from "../utils/geo";
 
 /** `chaveRecarga` busca a lista de novo quando muda, sem apagar a que já está na tela. */
 export function useCooperativas(
   chaveRecarga = 0,
-): EstadoRequisicao<readonly Cooperativa[]> {
-  const [dados, setDados] = useState<readonly Cooperativa[] | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(true);
-  const [erro, setErro] = useState<string | null>(null);
+): EstadoLista<readonly Cooperativa[]> {
+  const [estado, setEstado] = useState<EstadoLista<readonly Cooperativa[]>>({
+    dados: null,
+    carregando: true,
+    erro: null,
+    semPermissao: false,
+  });
 
   useEffect(() => {
     const controle = new AbortController();
-    setCarregando(true);
-    setErro(null);
+    setEstado((atual) => ({ ...atual, carregando: true, erro: null }));
 
     listarCooperativas(controle.signal)
       .then((lista) => {
-        if (!controle.signal.aborted) setDados(lista);
+        if (!controle.signal.aborted) {
+          setEstado({ dados: lista, carregando: false, erro: null, semPermissao: false });
+        }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Falha ao carregar cooperativas.",
-        );
-      })
-      .finally(() => {
-        if (!controle.signal.aborted) setCarregando(false);
+        const proibido = foiProibido(excecao);
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          semPermissao: proibido,
+          erro: proibido
+            ? null
+            : excecao instanceof Error
+              ? excecao.message
+              : "Falha ao carregar cooperativas.",
+        }));
       });
 
     return () => controle.abort();
   }, [chaveRecarga]);
 
-  return { dados, carregando, erro };
+  return estado;
+}
+
+/** De onde a unidade envia o resíduo, o centro do mapa; nulo enquanto carrega ou sem coordenadas. */
+export function useOrigemDoMapa(): Coordenadas | null {
+  const [origem, setOrigem] = useState<Coordenadas | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    void obterOrigemDoMapa().then((ponto) => {
+      if (ativo) setOrigem(ponto);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  return origem;
 }
 
 interface ResultadoCooperativa {

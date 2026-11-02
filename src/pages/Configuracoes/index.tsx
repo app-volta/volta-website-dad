@@ -1,16 +1,19 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
 import { Icone } from "../../components/Icone";
+import { ModalSenha } from "../../components/ModalSenha";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
+import type { AlteracoesUsuario } from "../../context/AuthContext";
+import { useAcoesDeSenha } from "../../hooks/useAcoesDeSenha";
 import {
   useConfiguracoes,
   useRecuperadoNoMesKg,
 } from "../../hooks/useConfiguracoes";
+import { rotuloDoPapel } from "../../utils/pessoa";
 import { CartaoMeta } from "./CartaoMeta";
 import {
   CartaoInsights,
@@ -27,18 +30,14 @@ interface Aviso {
 }
 
 export default function Configuracoes(): ReactNode {
-  const navegar = useNavigate();
-  const { usuario, sair, atualizarUsuario } = useAuth();
+  const { usuario, pedirSaida, atualizarUsuario } = useAuth();
   const { dados, carregando, erro, atualizar, limparErro } = useConfiguracoes();
   const recuperadoNoMesKg = useRecuperadoNoMesKg();
 
   const [editandoPerfil, setEditandoPerfil] = useState<boolean>(false);
+  const [trocandoSenha, setTrocandoSenha] = useState<boolean>(false);
+  const senha = useAcoesDeSenha();
   const [aviso, setAviso] = useState<Aviso | null>(null);
-
-  function sairDoPainel(): void {
-    sair();
-    navegar("/login", { replace: true });
-  }
 
   async function salvarMeta(metaKg: number): Promise<boolean> {
     const salvou = await atualizar({ metaRecuperacaoKg: metaKg });
@@ -51,14 +50,25 @@ export default function Configuracoes(): ReactNode {
     return salvou;
   }
 
-  async function salvarPerfil(nome: string): Promise<void> {
-    await atualizarUsuario({ nome });
+  async function salvarPerfil(alteracoes: AlteracoesUsuario): Promise<void> {
+    await atualizarUsuario(alteracoes);
     setEditandoPerfil(false);
-    setAviso({ titulo: "Perfil atualizado", descricao: `Agora você aparece como ${nome}.` });
+    setAviso({
+      titulo: "Perfil atualizado",
+      descricao: `Agora você aparece como ${alteracoes.nome}.`,
+    });
   }
 
-  const papel =
-    usuario?.papel === "responsavel_pgrs" ? "Gestor · Responsável PGRS" : "Operador";
+  async function salvarSenha(atual: string, nova: string): Promise<void> {
+    await senha.trocar(atual, nova);
+    setTrocandoSenha(false);
+    setAviso({
+      titulo: "Senha alterada",
+      descricao: "Use a senha nova no próximo acesso.",
+    });
+  }
+
+  const papel = usuario ? rotuloDoPapel(usuario.papel) : "Operador";
 
   return (
     <section className="cfg" aria-label="Configurações">
@@ -85,6 +95,7 @@ export default function Configuracoes(): ReactNode {
               nome={usuario?.nome ?? "Usuário"}
               papel={papel}
               aoEditar={() => setEditandoPerfil(true)}
+              aoAlterarSenha={() => setTrocandoSenha(true)}
             />
             <CartaoUnidade unidade={dados.unidade} />
             <CartaoMeta
@@ -103,7 +114,7 @@ export default function Configuracoes(): ReactNode {
               ativo={dados.insights}
               aoAlterar={(ativo) => void atualizar({ insights: ativo })}
             />
-            <button type="button" className="cfg__sair" onClick={sairDoPainel}>
+            <button type="button" className="cfg__sair" onClick={pedirSaida}>
               <Icone nome="sair" tamanho={14} />
               Sair do painel
             </button>
@@ -114,9 +125,17 @@ export default function Configuracoes(): ReactNode {
       {editandoPerfil && usuario ? (
         <ModalPerfil
           nomeAtual={usuario.nome}
+          cargoAtual={usuario.cargo ?? ""}
           email={usuario.email}
           aoSalvar={salvarPerfil}
           aoFechar={() => setEditandoPerfil(false)}
+        />
+      ) : null}
+
+      {trocandoSenha ? (
+        <ModalSenha
+          aoSalvar={salvarSenha}
+          aoFechar={() => setTrocandoSenha(false)}
         />
       ) : null}
 

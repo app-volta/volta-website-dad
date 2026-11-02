@@ -190,11 +190,6 @@
   line-height: 1.2;
 }
 
-.login-tela__cadastro a {
-  color: #0e7c48;
-  font-weight: 700;
-}
-
 @media (max-width: 900px) {
   .login-tela {
     grid-template-columns: 1fr;
@@ -208,4 +203,10 @@
   .login-tela__rodape {
     grid-column: 1;
   }
+}
+
+/* O <main> fica dentro do cartão, abaixo do <header> com a logo; o layout em coluna é o mesmo de antes. */
+.login-tela__form-principal {
+  display: flex;
+  flex-direction: column;
 }

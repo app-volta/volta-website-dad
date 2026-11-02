@@ -10,6 +10,7 @@ import type { ProblemaApi } from "../types/api";
 import {
   MENSAGEM_SEM_CONEXAO,
   MENSAGEM_TEMPO_ESGOTADO,
+  ocorrenciaDesatualizada,
   traduzirErro,
 } from "./mensagensApi";
 
@@ -46,15 +47,19 @@ const TEMPO_LIMITE_MS = 20_000;
 export class ErroHttp extends Error {
   readonly status: number;
   readonly campos: Readonly<Record<string, string>>;
+  /** Outra pessoa já decidiu a ocorrência: a ação não foi aplicada. */
+  readonly desatualizada: boolean;
 
   constructor(
     mensagem: string,
     status: number,
     campos: Readonly<Record<string, string>> = {},
+    desatualizada = false,
   ) {
     super(mensagem);
     this.status = status;
     this.campos = campos;
+    this.desatualizada = desatualizada;
     this.name = "ErroHttp";
   }
 }
@@ -140,6 +145,7 @@ async function erroDaResposta(
       : traduzirErro(resposta.status, problema, autenticada),
     resposta.status,
     problema?.errors ?? {},
+    ocorrenciaDesatualizada(resposta.status, problema),
   );
 }
 
@@ -206,6 +212,30 @@ export async function requisitar<Resposta>(
       resposta.status,
     );
   }
+}
+
+/**
+ * Espera uma promessa que outras telas também usam (como o catálogo de áreas e
+ * tipos, buscado uma vez por sessão), mas solta quem esperava assim que o
+ * `sinal` for cancelado. A busca em si segue, porque é compartilhada.
+ */
+export function esperarAte<Resposta>(
+  promessa: Promise<Resposta>,
+  sinal?: AbortSignal,
+): Promise<Resposta> {
+  if (!sinal) return promessa;
+  return new Promise<Resposta>((resolver, rejeitar) => {
+    const cancelar = (): void =>
+      rejeitar(new DOMException("Requisição cancelada", "AbortError"));
+    if (sinal.aborted) {
+      cancelar();
+      return;
+    }
+    sinal.addEventListener("abort", cancelar, { once: true });
+    promessa
+      .then(resolver, rejeitar)
+      .finally(() => sinal.removeEventListener("abort", cancelar));
+  });
 }
 
 /**

@@ -6,3 +6,13 @@ export function iniciais(nome: string): string {
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : "";
   return `${primeira}${ultima}`.toUpperCase();
 }
+
+const ROTULO_DO_PAPEL = {
+  responsavel_pgrs: "Gestor · Responsável PGRS",
+  operador: "Operador",
+} as const;
+
+/** Papel como aparece no Meu perfil e nas Configurações. */
+export function rotuloDoPapel(papel: keyof typeof ROTULO_DO_PAPEL): string {
+  return ROTULO_DO_PAPEL[papel];
+}

@@ -7,12 +7,14 @@ import type {
   HistoricoColetaApi,
   IncidenteApi,
   NotasDasCooperativasApi,
+  NotificacaoApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
   RespostaChatApi,
   RiscoApi,
   StatusColetaApi,
+  StatusIncidenteApi,
   TipoResiduoApi,
   UsuarioApi,
 } from "../types/api";
@@ -25,7 +27,6 @@ import type {
   Cooperativa,
   IndicacaoDeCooperativas,
   MaterialAceito,
-  PosicaoMapa,
 } from "../types/cooperativa";
 import type { MembroEquipe, PapelEquipe } from "../types/equipe";
 import type { Material } from "../types/material";
@@ -35,12 +36,14 @@ import type {
   Ocorrencia,
   PrioridadeOcorrencia,
   StatusOcorrencia,
+  TipoEvento,
 } from "../types/ocorrencia";
 import type { AcaoMensagem } from "../types/assistente";
-import type { Trecho } from "../types/notificacao";
+import type { Notificacao, TipoNotificacao, Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
 import { instanteUtc } from "../utils/datas";
 import { mascararCnpj } from "../utils/formatacao";
+import { tempoRelativo } from "../utils/painel";
 import type { VolumeDaCooperativa } from "../utils/volumeCooperativas";
 
 /**
@@ -110,6 +113,28 @@ const PRIORIDADE_DA_API: Readonly<Record<PrioridadeApi, PrioridadeOcorrencia>> =
     CRITICAL: "alta",
   };
 
+/** Palavras que o chatbot grava no lugar do enum da API (BAIXA, MEDIA, ALTA). */
+const PRIORIDADE_EM_PORTUGUES: Readonly<Record<string, PrioridadeOcorrencia>> = {
+  BAIXA: "baixa",
+  MEDIA: "media",
+  ALTA: "alta",
+  CRITICA: "alta",
+};
+
+/**
+ * Prioridade como a volta-api (LOW, MEDIUM, HIGH, CRITICAL) ou o chatbot (baixa,
+ * média, alta) gravam. Ocorrência criada pelo chatbot não pode virar "média" só
+ * porque a palavra veio em português.
+ */
+function prioridadeDaApi(valor: string | null | undefined): PrioridadeOcorrencia {
+  const chave = normalizar(valor ?? "").toUpperCase();
+  return (
+    PRIORIDADE_DA_API[chave as PrioridadeApi] ??
+    PRIORIDADE_EM_PORTUGUES[chave] ??
+    "media"
+  );
+}
+
 export const PRIORIDADE_PARA_API: Readonly<
   Record<PrioridadeOcorrencia, PrioridadeApi>
 > = {
@@ -123,6 +148,29 @@ const CONTAMINACAO_DA_API: Readonly<Record<RiscoApi, NivelContaminacao>> = {
   MEDIUM: "media",
   HIGH: "alta",
 };
+
+/**
+ * Contaminação como a volta-api (LOW, MEDIUM, HIGH) ou o chatbot (BAIXO, MEDIO,
+ * ALTO) gravam. Qualquer outro valor ("N/A", vazio) fica sem nível.
+ */
+function contaminacaoDaApi(valor: string | null | undefined): NivelContaminacao | undefined {
+  switch (normalizar(valor ?? "").toUpperCase()) {
+    case "LOW":
+    case "BAIXO":
+    case "BAIXA":
+      return "baixa";
+    case "MEDIUM":
+    case "MEDIO":
+    case "MEDIA":
+      return "media";
+    case "HIGH":
+    case "ALTO":
+    case "ALTA":
+      return "alta";
+    default:
+      return undefined;
+  }
+}
 
 /** Nível de contaminação da tela no risco que a volta-api guarda. */
 export const RISCO_DA_CONTAMINACAO: Readonly<Record<NivelContaminacao, RiscoApi>> = {
@@ -205,12 +253,11 @@ export function analiseInconclusiva(analise: AnaliseResiduoApi): boolean {
   );
 }
 
-/** Análise da foto no formato que as telas leem. A IA não informa a confiança. */
+/** Análise da foto no formato que as telas leem. */
 export function classificacaoDaAnalise(analise: AnaliseResiduoApi): ClassificacaoIA {
   const risco = riscoDaAnalise(analise);
   return {
     material: materialDoTexto(analise.detected_waste_type),
-    confianca: null,
     contaminacao: risco ? CONTAMINACAO_DA_API[risco] : undefined,
     recomendacao: analise.recommendations,
     relatorio: analise.report_text,
@@ -276,10 +323,7 @@ function classificacaoDoIncidente(
   if (dto.contaminationLevel === null && dto.estimatedQuantity === null) return null;
   return {
     material,
-    confianca: null,
-    contaminacao: dto.contaminationLevel
-      ? CONTAMINACAO_DA_API[dto.contaminationLevel]
-      : undefined,
+    contaminacao: contaminacaoDaApi(dto.contaminationLevel),
     recomendacao: "",
     pesoEstimadoKg: dto.estimatedQuantity,
     analisadaEm,
@@ -292,10 +336,7 @@ export function classificacaoDoRelatorio(
 ): ClassificacaoIA {
   return {
     material: materialDoTexto(relatorio.detectedWasteType) ?? materialDaOcorrencia,
-    confianca: null,
-    contaminacao: relatorio.aiContaminationLevel
-      ? CONTAMINACAO_DA_API[relatorio.aiContaminationLevel]
-      : undefined,
+    contaminacao: contaminacaoDaApi(relatorio.aiContaminationLevel),
     recomendacao: relatorio.recommendations ?? relatorio.reportText ?? "",
     relatorio: relatorio.reportText ?? undefined,
     analisadaEm: instanteUtc(relatorio.generatedAt),
@@ -472,49 +513,14 @@ function cnpjParaExibir(cnpj: string): string {
   return /^\d{14}$/.test(cnpj) ? mascararCnpj(cnpj) : cnpj;
 }
 
-const MARGEM_MAPA_X = { min: 12, max: 88 } as const;
-const MARGEM_MAPA_Y = { min: 18, max: 82 } as const;
-
-function escalar(
-  valor: number,
-  menor: number,
-  maior: number,
-  margem: { readonly min: number; readonly max: number },
-): number {
-  if (maior === menor) return (margem.min + margem.max) / 2;
-  return margem.min + ((valor - menor) / (maior - menor)) * (margem.max - margem.min);
-}
-
 /**
- * Posição ilustrativa no mapa: as coordenadas reais, proporcionais entre si e
- * ajustadas ao quadro (norte em cima). Não é um mapa de verdade.
- */
-export function posicoesNoMapa(
-  lista: readonly CooperativaApi[],
-): ReadonlyMap<string, PosicaoMapa> {
-  const latitudes = lista.map((c) => c.latitude);
-  const longitudes = lista.map((c) => c.longitude);
-  const [sul, norte] = [Math.min(...latitudes), Math.max(...latitudes)];
-  const [oeste, leste] = [Math.min(...longitudes), Math.max(...longitudes)];
-  return new Map(
-    lista.map((c) => [
-      c.id,
-      {
-        x: Number(escalar(c.longitude, oeste, leste, MARGEM_MAPA_X).toFixed(1)),
-        y: Number((MARGEM_MAPA_Y.min + MARGEM_MAPA_Y.max - escalar(c.latitude, sul, norte, MARGEM_MAPA_Y)).toFixed(1)),
-      },
-    ]),
-  );
-}
-
-/**
- * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
- * nota e as categorias aceitas; contato, capacidade e licença não existem lá e
- * ficam vazios. A distância só entra quando se sabe de onde a empresa envia.
+ * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede, nota,
+ * categorias aceitas e e-mail; nome do contato, telefone, capacidade e licença
+ * não existem lá e ficam vazios. A distância só entra quando se sabe de onde a
+ * empresa envia.
  */
 export function cooperativaDaApi(
   dto: CooperativaApi,
-  posicaoMapa: PosicaoMapa,
   volume: VolumeDaCooperativa,
   distanciaKm: number | null = null,
 ): Cooperativa {
@@ -527,7 +533,7 @@ export function cooperativaDaApi(
     materiaisAceitos: materiaisDasEspecialidades(dto.specialties),
     contato: null,
     telefone: null,
-    email: null,
+    email: dto.email?.trim() || null,
     distanciaKm,
     avaliacao: dto.averageRating,
     situacao: "ativa",
@@ -538,7 +544,8 @@ export function cooperativaDaApi(
     licencaValidaAte: null,
     licencaDocumento: null,
     volumeMensalKg: volume.volumeMensalKg,
-    posicaoMapa,
+    latitude: dto.latitude,
+    longitude: dto.longitude,
   };
 }
 
@@ -566,6 +573,103 @@ export function eventoDaColeta(
   };
 }
 
+/** Quem aparece como autor da decisão quando a API só devolve o id de quem a tomou. */
+const AUTOR_DA_DECISAO = "Gestor";
+
+/** A aprovação ou recusa como evento da linha do tempo, com a data que a API guardou. */
+export function eventoDaDecisao(
+  decisao: "aprovacao" | "recusa",
+  codigo: string,
+  em: string,
+  autor: string | null,
+  motivo: string | null = null,
+): EventoOcorrencia {
+  const texto =
+    decisao === "aprovacao"
+      ? "aprovou a ocorrência"
+      : motivo
+        ? `recusou a ocorrência · ${motivo}`
+        : "recusou a ocorrência";
+  return {
+    id: `${codigo}-decisao`,
+    tipo: decisao,
+    autor: autor ?? AUTOR_DA_DECISAO,
+    texto,
+    em,
+  };
+}
+
+const TIPOS_DE_DECISAO: ReadonlySet<TipoEvento> = new Set(["aprovacao", "recusa"]);
+
+/**
+ * Os eventos anotados só neste navegador, sem o que a API já conta. Quando ela
+ * guarda quem decidiu e quando, a aprovação ou recusa anotada aqui ficaria
+ * repetida na linha do tempo.
+ */
+export function eventosLocaisSemRepetir(
+  base: Ocorrencia,
+  locais: readonly EventoOcorrencia[],
+): readonly EventoOcorrencia[] {
+  const decisaoNaApi = base.historico.some((evento) => TIPOS_DE_DECISAO.has(evento.tipo));
+  return decisaoNaApi ? locais.filter((evento) => !TIPOS_DE_DECISAO.has(evento.tipo)) : locais;
+}
+
+/**
+ * A ocorrência da lista depois de aprovar ou recusar: o status e o motivo que a
+ * API devolveu e, se ela já guarda, quem decidiu e quando (com o evento na
+ * linha do tempo no lugar de qualquer decisão anterior).
+ */
+export function comDecisaoDaApi(
+  item: Ocorrencia,
+  resposta: IncidenteApi,
+  revisorNome: string | null,
+): Ocorrencia {
+  const recusada = resposta.status === "REJECTED";
+  const motivo = recusada ? (resposta.changeReason ?? null) : null;
+  const revisadaEm = resposta.reviewedAt ? instanteUtc(resposta.reviewedAt) : null;
+  const historico = revisadaEm
+    ? [
+        ...item.historico.filter((evento) => !TIPOS_DE_DECISAO.has(evento.tipo)),
+        eventoDaDecisao(recusada ? "recusa" : "aprovacao", item.codigo, revisadaEm, revisorNome, motivo),
+      ].sort((a, b) => a.em.localeCompare(b.em))
+    : item.historico;
+  return {
+    ...item,
+    status: statusDaApi(resposta.status),
+    motivoRecusa: motivo,
+    revisadaPor: resposta.reviewedBy ?? null,
+    revisadaPorNome: revisorNome,
+    revisadaEm,
+    historico,
+  };
+}
+
+/** O tipo de cada notificação da API; o ícone e a cor dependem dele. */
+const TIPO_DA_NOTIFICACAO: Readonly<
+  Record<NotificacaoApi["type"], TipoNotificacao>
+> = {
+  INCIDENT: "ocorrencia",
+  COLLECTION: "coleta",
+};
+
+/**
+ * Notificação da API no formato do sino. A API não diz de qual ocorrência é, então
+ * o clique leva à lista; a mensagem já traz a frase pronta, sem precisar do título.
+ */
+export function notificacaoDaApi(
+  dto: NotificacaoApi,
+  agora: number = Date.now(),
+): Notificacao {
+  return {
+    id: dto.id,
+    tipo: TIPO_DA_NOTIFICACAO[dto.type] ?? "ocorrencia",
+    trechos: [{ texto: dto.message }],
+    quando: tempoRelativo(instanteUtc(dto.createdAt), agora),
+    destino: "/ocorrencias",
+    lida: dto.read,
+  };
+}
+
 /** Resposta da API de ranking no formato das telas. */
 export function indicacaoDaApi(
   resposta: NotasDasCooperativasApi,
@@ -581,11 +685,49 @@ export function indicacaoDaApi(
   };
 }
 
+const STATUS_DA_API: Readonly<Record<StatusIncidenteApi, StatusOcorrencia>> = {
+  PENDING: "classificada",
+  APPROVED: "aprovada",
+  REJECTED: "recusada",
+  CLOSED: "finalizada",
+};
+
+export function statusDaApi(status: StatusIncidenteApi): StatusOcorrencia {
+  return STATUS_DA_API[status] ?? "classificada";
+}
+
+const GRAVIDADE_DO_RISCO: Readonly<Record<RiscoApi, number>> = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+};
+
+/**
+ * A ocorrência pode ter vários tipos de resíduo, mas as telas mostram um só: o
+ * mais perigoso e, no empate, o de menor id (a API devolve a lista sem ordem fixa).
+ */
+function tipoPrincipal(
+  tipos: readonly TipoResiduoApi[],
+): TipoResiduoApi | undefined {
+  const peso = (tipo: TipoResiduoApi): number =>
+    (tipo.wasteClass === "CLASSE_I" ? 10 : 0) +
+    (GRAVIDADE_DO_RISCO[tipo.defaultRiskLevel] ?? 0);
+  return [...tipos]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .reduce<TipoResiduoApi | undefined>(
+      (melhor, tipo) =>
+        melhor === undefined || peso(tipo) > peso(melhor) ? tipo : melhor,
+      undefined,
+    );
+}
+
 export interface ExtrasOcorrencia {
   readonly relatorio?: RelatorioIaApi | null;
   readonly coleta?: readonly EventoOcorrencia[];
   readonly classificacao?: ClassificacaoIA | null;
   readonly autorNome?: string;
+  /** Nome de quem decidiu; a API só devolve o id, então só se sabe o da pessoa logada. */
+  readonly revisorNome?: string;
 }
 
 export function ocorrenciaDaApi(
@@ -593,20 +735,23 @@ export function ocorrenciaDaApi(
   catalogo: CatalogoApi,
   extras: ExtrasOcorrencia = {},
 ): Ocorrencia {
-  const tipo = catalogo.tipos.get(dto.wasteTypeId);
+  const tipos = dto.wasteTypeIds.flatMap((id) => catalogo.tipos.get(id) ?? []);
+  const tipo = tipoPrincipal(tipos);
   const area = catalogo.areas.get(dto.areaId);
   const material = tipo ? (MATERIAL_POR_CATEGORIA[tipo.category] ?? null) : null;
-  const titulo = material
+  const rotuloDoTipo = material
     ? METADADOS_MATERIAL[material].rotulo
     : tipo
       ? (ROTULO_CATEGORIA[tipo.category] ?? "Resíduo")
       : "Resíduo";
+  // Com mais de um tipo, o título avisa quantos vêm junto: "Plástico +1".
+  const titulo =
+    tipos.length > 1 ? `${rotuloDoTipo} +${tipos.length - 1}` : rotuloDoTipo;
 
   const criadaEm = instanteUtc(dto.registeredAt);
   const codigo = codigoDaOcorrencia(dto.id);
   const autor = extras.autorNome ?? "Colaborador";
-  const status: StatusOcorrencia =
-    dto.status === "CLOSED" ? "aprovada" : "classificada";
+  const status = statusDaApi(dto.status);
 
   const classificacao =
     extras.classificacao ??
@@ -635,6 +780,20 @@ export function ocorrenciaDaApi(
     });
   }
 
+  const revisadaEm = dto.reviewedAt ? instanteUtc(dto.reviewedAt) : null;
+  const revisorNome = extras.revisorNome ?? null;
+  if (revisadaEm && dto.status !== "PENDING") {
+    historico.push(
+      eventoDaDecisao(
+        dto.status === "REJECTED" ? "recusa" : "aprovacao",
+        codigo,
+        revisadaEm,
+        revisorNome,
+        dto.status === "REJECTED" ? (dto.changeReason ?? null) : null,
+      ),
+    );
+  }
+
   // A coleta acontece depois do registro: mantém a linha do tempo em ordem.
   historico.push(...(extras.coleta ?? []));
   historico.sort((a, b) => a.em.localeCompare(b.em));
@@ -645,7 +804,7 @@ export function ocorrenciaDaApi(
     titulo,
     descricao: dto.employeeDescription,
     pesoKg: dto.estimatedQuantity ?? 0,
-    prioridade: PRIORIDADE_DA_API[dto.priority] ?? "media",
+    prioridade: prioridadeDaApi(dto.priority),
     fotoUrl: dto.photoUrl ?? semFoto,
     localizacao: {
       setor: area?.sectorName ?? "Setor não informado",
@@ -661,9 +820,13 @@ export function ocorrenciaDaApi(
     criadaPorNome: autor,
     qualidade: "A",
     perigoso:
-      tipo?.wasteClass === "CLASSE_I" || dto.contaminationLevel === "HIGH",
+      tipos.some((item) => item.wasteClass === "CLASSE_I") ||
+      contaminacaoDaApi(dto.contaminationLevel) === "alta",
     setorDestino: null,
-    motivoRecusa: null,
+    motivoRecusa: dto.status === "REJECTED" ? (dto.changeReason ?? null) : null,
+    revisadaPor: dto.reviewedBy ?? null,
+    revisadaPorNome: revisorNome,
+    revisadaEm,
     ultimaAlteracao: null,
     historico,
   };

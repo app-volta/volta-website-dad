@@ -1,14 +1,15 @@
 import type { ClassificacaoIA } from "../../types/classificacao";
+import { lerPeso, validarPeso } from "../../utils/validadores";
 
 export type Etapa = "detalhes" | "analise" | "sucesso";
 
 export type Prioridade = "baixa" | "media" | "alta";
 
-/** O que a pessoa pode corrigir no que a IA encontrou antes de registrar. */
+/** O que a pessoa pode corrigir no que a IA encontrou antes de registrar (o peso tem campo próprio). */
 export type AjusteDaAnalise = Partial<
   Pick<
     ClassificacaoIA,
-    "tipoResiduoId" | "tipoDetectado" | "material" | "contaminacao" | "pesoEstimadoKg"
+    "tipoResiduoId" | "tipoDetectado" | "material" | "contaminacao"
   >
 >;
 
@@ -18,6 +19,8 @@ export interface EstadoRegistrar {
   readonly descricao: string;
   readonly setor: string;
   readonly prioridade: Prioridade;
+  /** Peso aproximado em kg como a pessoa digitou; vazio quando ela não informou. */
+  readonly pesoInformado: string;
   readonly avisarResponsavel: boolean;
   readonly erroCampo: Readonly<Record<string, string>>;
   readonly erroEnvio: string | null;
@@ -30,6 +33,14 @@ export interface EstadoRegistrar {
   readonly codigoGerado: string | null;
   /** A foto chegou ao serviço de imagens (ou não precisava chegar, como no mock). */
   readonly fotoGuardada: boolean;
+  /** A foto escolhida não serve: não é imagem, passa do limite ou não abriu. */
+  readonly fotoRecusada: boolean;
+  /** A IA não respondeu: a foto continua aqui e a pessoa tenta de novo ou preenche sem a IA. */
+  readonly analiseFalhou: boolean;
+  /** Os dados do resíduo foram preenchidos à mão, sem a análise da IA. */
+  readonly semIA: boolean;
+  /** O envio ficou sem resposta: a ocorrência pode ou não ter sido registrada. */
+  readonly envioIncerto: boolean;
 }
 
 export type AcaoRegistrar =
@@ -37,6 +48,7 @@ export type AcaoRegistrar =
   | { readonly tipo: "definir_descricao"; readonly descricao: string }
   | { readonly tipo: "definir_setor"; readonly setor: string }
   | { readonly tipo: "definir_prioridade"; readonly prioridade: Prioridade }
+  | { readonly tipo: "definir_peso"; readonly peso: string }
   | { readonly tipo: "alternar_avisar" }
   | {
       readonly tipo: "definir_erros";
@@ -44,13 +56,26 @@ export type AcaoRegistrar =
     }
   | { readonly tipo: "iniciar_analise" }
   | { readonly tipo: "analise_pronta"; readonly classificacao: ClassificacaoIA }
-  | { readonly tipo: "analise_erro"; readonly mensagem: string }
+  | {
+      readonly tipo: "analise_erro";
+      readonly mensagem: string;
+      /** O serviço não respondeu (rede, tempo esgotado, 5xx): vale tentar de novo. */
+      readonly semResposta: boolean;
+    }
+  | { readonly tipo: "foto_recusada" }
+  | { readonly tipo: "preencher_sem_ia"; readonly classificacao: ClassificacaoIA }
   | { readonly tipo: "alternar_edicao" }
   | { readonly tipo: "ajustar_analise"; readonly ajuste: AjusteDaAnalise }
   | { readonly tipo: "voltar_aos_detalhes" }
   | { readonly tipo: "voltar_a_analise" }
   | { readonly tipo: "iniciar_registro" }
-  | { readonly tipo: "registro_erro"; readonly mensagem: string }
+  | {
+      readonly tipo: "registro_erro";
+      readonly mensagem: string;
+      /** Sem resposta (rede caiu, tempo esgotado): não dá para saber se chegou. */
+      readonly incerto: boolean;
+    }
+  | { readonly tipo: "fechar_envio_incerto" }
   | {
       readonly tipo: "registro_ok";
       readonly codigo: string;
@@ -65,6 +90,7 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     descricao: "",
     setor: setorPadrao,
     prioridade: "media",
+    pesoInformado: "",
     avisarResponsavel: true,
     erroCampo: {},
     erroEnvio: null,
@@ -73,6 +99,10 @@ export function estadoInicial(setorPadrao: string): EstadoRegistrar {
     registrando: false,
     codigoGerado: null,
     fotoGuardada: true,
+    fotoRecusada: false,
+    analiseFalhou: false,
+    semIA: false,
+    envioIncerto: false,
   };
 }
 
@@ -86,6 +116,20 @@ export function redutor(
       return {
         ...estado,
         fotoBase64: acao.foto,
+        fotoRecusada: false,
+        analiseFalhou: false,
+        semIA: false,
+        classificacao: null,
+        editando: false,
+        erroCampo: {},
+      };
+    case "foto_recusada":
+      return {
+        ...estado,
+        fotoBase64: null,
+        fotoRecusada: true,
+        analiseFalhou: false,
+        semIA: false,
         classificacao: null,
         editando: false,
         erroCampo: {},
@@ -96,6 +140,8 @@ export function redutor(
       return { ...estado, setor: acao.setor, erroCampo: {} };
     case "definir_prioridade":
       return { ...estado, prioridade: acao.prioridade };
+    case "definir_peso":
+      return { ...estado, pesoInformado: acao.peso, erroCampo: {} };
     case "alternar_avisar":
       return { ...estado, avisarResponsavel: !estado.avisarResponsavel };
     case "definir_erros":
@@ -105,17 +151,39 @@ export function redutor(
         ...estado,
         etapa: "analise",
         classificacao: null,
+        analiseFalhou: false,
+        semIA: false,
         editando: false,
         erroEnvio: null,
       };
     case "analise_pronta":
       return { ...estado, classificacao: acao.classificacao, erroEnvio: null };
     case "analise_erro":
+      // Sem resposta, fica na análise com a foto à vista: tentar de novo ou preencher
+      // sem a IA. Um erro de regra (foto inconclusiva, perfil sem permissão) volta aos detalhes.
+      return acao.semResposta
+        ? {
+            ...estado,
+            etapa: "analise",
+            classificacao: null,
+            analiseFalhou: true,
+            erroEnvio: acao.mensagem,
+          }
+        : {
+            ...estado,
+            etapa: "detalhes",
+            classificacao: null,
+            analiseFalhou: false,
+            erroEnvio: acao.mensagem,
+          };
+    case "preencher_sem_ia":
       return {
         ...estado,
-        etapa: "detalhes",
-        classificacao: null,
-        erroEnvio: acao.mensagem,
+        classificacao: acao.classificacao,
+        analiseFalhou: false,
+        semIA: true,
+        editando: true,
+        erroEnvio: null,
       };
     case "alternar_edicao":
       return { ...estado, editando: !estado.editando };
@@ -124,15 +192,28 @@ export function redutor(
         ? { ...estado, classificacao: { ...estado.classificacao, ...acao.ajuste } }
         : estado;
     case "voltar_aos_detalhes":
-      return { ...estado, etapa: "detalhes", editando: false, erroEnvio: null };
+      return {
+        ...estado,
+        etapa: "detalhes",
+        editando: false,
+        analiseFalhou: false,
+        erroEnvio: null,
+      };
     case "voltar_a_analise":
       return estado.classificacao
         ? { ...estado, etapa: "analise", erroEnvio: null }
         : estado;
     case "iniciar_registro":
-      return { ...estado, registrando: true, erroEnvio: null };
+      return { ...estado, registrando: true, erroEnvio: null, envioIncerto: false };
     case "registro_erro":
-      return { ...estado, registrando: false, erroEnvio: acao.mensagem };
+      return {
+        ...estado,
+        registrando: false,
+        erroEnvio: acao.mensagem,
+        envioIncerto: acao.incerto,
+      };
+    case "fechar_envio_incerto":
+      return { ...estado, envioIncerto: false };
     case "registro_ok":
       return {
         ...estado,
@@ -144,4 +225,30 @@ export function redutor(
     case "reiniciar":
       return estadoInicial(acao.setor);
   }
+}
+
+/** De onde vem o peso que vai para a ocorrência. */
+export type OrigemDoPeso = "informado" | "ia" | "nenhum";
+
+export interface PesoDaOcorrencia {
+  readonly kg: number | null;
+  readonly origem: OrigemDoPeso;
+}
+
+/**
+ * O peso que vai para a ocorrência: o que a pessoa informou; se ela deixou em
+ * branco, a estimativa da IA, quando existir; sem as duas, nenhum. O peso nunca
+ * é inventado a partir da foto.
+ */
+export function pesoDaOcorrencia(
+  estado: Pick<EstadoRegistrar, "pesoInformado" | "classificacao">,
+): PesoDaOcorrencia {
+  const digitado = estado.pesoInformado.trim() !== "";
+  if (digitado && validarPeso(estado.pesoInformado) === null) {
+    return { kg: lerPeso(estado.pesoInformado), origem: "informado" };
+  }
+  const daIa = estado.classificacao?.pesoEstimadoKg ?? null;
+  return daIa !== null && daIa > 0
+    ? { kg: daIa, origem: "ia" }
+    : { kg: null, origem: "nenhum" };
 }

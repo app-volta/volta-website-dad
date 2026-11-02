@@ -5,7 +5,7 @@ import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { METADADOS_MATERIAL } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { contaminacao, recomendacaoDaIa } from "../../utils/analiseOcorrencia";
-import { formatarConfianca, formatarPeso } from "../../utils/formatacao";
+import { descreverPeso } from "../../utils/formatacao";
 import {
   ROTULO_CATEGORIA,
   ROTULO_PRIORIDADE,
@@ -19,6 +19,8 @@ interface GavetaOcorrenciaProps {
   readonly ocorrencia: Ocorrencia | null;
   readonly aprovando: boolean;
   readonly podeAprovar: boolean;
+  /** Sem internet a aprovação fica parada até a rede voltar. */
+  readonly semRede?: boolean;
   readonly aoFechar: () => void;
   readonly aoAprovar: (id: string) => void;
   readonly aoAbrirCompleta: (id: string) => void;
@@ -37,6 +39,7 @@ export function GavetaOcorrencia({
   ocorrencia,
   aprovando,
   podeAprovar: perfilPodeAprovar,
+  semRede = false,
   aoFechar,
   aoAprovar,
   aoAbrirCompleta,
@@ -78,7 +81,6 @@ export function GavetaOcorrencia({
     }
   }
 
-  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -138,12 +140,6 @@ export function GavetaOcorrencia({
               src={ocorrencia.fotoUrl}
               alt={`Foto da ocorrência ${ocorrencia.titulo}`}
             />
-            {confianca === null ? null : (
-              <span className="gaveta__selo">
-                <Icone nome="brilho" tamanho={12} />
-                Confiança da IA {formatarConfianca(confianca)}
-              </span>
-            )}
           </div>
 
           <div className="gaveta__selos">
@@ -166,8 +162,8 @@ export function GavetaOcorrencia({
               <strong>{contaminacao(ocorrencia.classificacao)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--quantidade">
-              <p>Quantidade</p>
-              <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
+              <p>Peso aproximado</p>
+              <strong>{descreverPeso(ocorrencia.pesoKg)}</strong>
             </div>
             <div className="gaveta__card gaveta__card--autor">
               <p>Registrada por</p>
@@ -206,7 +202,7 @@ export function GavetaOcorrencia({
                 type="button"
                 className="gaveta__botao gaveta__botao--primario"
                 onClick={() => aoAprovar(ocorrencia.id)}
-                disabled={aprovando}
+                disabled={aprovando || semRede}
               >
                 <Icone nome="check" tamanho={14} />
                 {aprovando ? "Aprovando…" : "Aprovar"}

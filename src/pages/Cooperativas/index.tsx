@@ -3,14 +3,18 @@ import type { ReactNode } from "react";
 
 import { Alerta } from "../../components/Alerta";
 import { CartoesResumo } from "../../components/CartoesResumo";
+import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
+import { EstadoSemAcesso } from "../../components/EstadoSemAcesso";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import {
   useAcoesCooperativas,
   useCooperativas,
+  useOrigemDoMapa,
 } from "../../hooks/useCooperativas";
 import { useAuth } from "../../context/AuthContext";
+import { foiConflito } from "../../utils/erros";
 import { useDadosReais } from "../../hooks/useModo";
 import type { NovaCooperativa } from "../../types/cooperativa";
 import { resumirCooperativas } from "../../utils/cooperativas";
@@ -36,8 +40,9 @@ interface Aviso {
 
 export default function Cooperativas(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
-  const { dados, carregando, erro } = useCooperativas(chaveRecarga);
+  const { dados, carregando, erro, semPermissao } = useCooperativas(chaveRecarga);
   const acoes = useAcoesCooperativas();
+  const origem = useOrigemDoMapa();
   const dadosReais = useDadosReais();
   const { usuario } = useAuth();
   // Só o ADMIN cadastra na volta-api; quem tem outro perfil só consulta.
@@ -48,6 +53,8 @@ export default function Cooperativas(): ReactNode {
   const [adicionando, setAdicionando] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroCadastro, setErroCadastro] = useState<string | null>(null);
+  /** CNPJ que a API recusou por já estar cadastrado; o campo avisa enquanto ele não mudar. */
+  const [cnpjRecusado, setCnpjRecusado] = useState<string | null>(null);
   const [verDocumentos, setVerDocumentos] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
@@ -62,6 +69,7 @@ export default function Cooperativas(): ReactNode {
 
   function abrirCadastro(): void {
     setErroCadastro(null);
+    setCnpjRecusado(null);
     setAdicionando(true);
   }
 
@@ -86,6 +94,10 @@ export default function Cooperativas(): ReactNode {
             },
       );
     } catch (excecao: unknown) {
+      if (foiConflito(excecao)) {
+        setCnpjRecusado(novos.cnpj);
+        return;
+      }
       setErroCadastro(
         excecao instanceof Error ? excecao.message : "Falha ao cadastrar.",
       );
@@ -96,7 +108,11 @@ export default function Cooperativas(): ReactNode {
 
   return (
     <section className="coops" aria-label="Cooperativas parceiras">
-      {erro ? (
+      {semPermissao ? <EstadoSemAcesso /> : null}
+      {erro && !dados ? (
+        <EstadoForaDoAr aoTentarDeNovo={() => setChaveRecarga((v) => v + 1)} />
+      ) : null}
+      {erro && dados ? (
         <Alerta variante="erro" titulo="Não foi possível carregar">
           {erro}
         </Alerta>
@@ -150,7 +166,7 @@ export default function Cooperativas(): ReactNode {
               selecionada={selecionada}
               aoSelecionar={setSelecionadaId}
               aoAbrirDocumentos={() => setVerDocumentos(true)}
-              dadosReais={dadosReais}
+              origem={origem}
             />
           </div>
         </>
@@ -161,6 +177,7 @@ export default function Cooperativas(): ReactNode {
           cadastroNaApi={dadosReais}
           salvando={salvando}
           erro={erroCadastro}
+          cnpjRecusado={cnpjRecusado}
           aoConfirmar={(novos) => void cadastrar(novos)}
           aoFechar={() => setAdicionando(false)}
         />

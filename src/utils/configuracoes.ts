@@ -14,6 +14,16 @@ export function mesclarConfiguracoes(
   return {
     ...atual,
     metaRecuperacaoKg: parcial.metaRecuperacaoKg ?? atual.metaRecuperacaoKg,
+    metaDoDia: parcial.metaDoDia ?? atual.metaDoDia,
+    diasDeOperacao:
+      parcial.diasDeOperacao === undefined
+        ? atual.diasDeOperacao
+        : parcial.diasDeOperacao,
+    metaPorMaterial:
+      parcial.metaPorMaterial === undefined
+        ? atual.metaPorMaterial
+        : parcial.metaPorMaterial,
+    avisosDaMeta: { ...atual.avisosDaMeta, ...parcial.avisosDaMeta },
     insights: parcial.insights ?? atual.insights,
     notificacoes: { ...atual.notificacoes, ...parcial.notificacoes },
   };

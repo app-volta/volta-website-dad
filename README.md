@@ -13,7 +13,9 @@ cooperativa parceira e finaliza a ocorrência.
 - [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vitejs.dev/) para dev server e build
 - [React Router v7](https://reactrouter.com/) para navegação
+- [Recharts](https://recharts.org/) para os gráficos de barras de Relatórios
 - [oxlint](https://oxc.rs/) para linting rápido
+- [Vitest](https://vitest.dev/) para os testes unitários
 - Deploy configurado para Vercel (SPA rewrites via `vercel.json`)
 
 ## Rodando localmente
@@ -38,6 +40,10 @@ npm run preview
 
 # linter
 npm run lint
+
+# testes unitários (uma vez) ou em modo observação
+npm test
+npm run test:watch
 ```
 
 ## Variáveis de ambiente
@@ -56,7 +62,6 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_CLOUDINARY_CLOUD_NAME` | Conta do Cloudinary onde ficam as fotos das ocorrências. Não é segredo. |
 | `VITE_CLOUDINARY_PRESET_OCORRENCIA` | Configuração de envio (sem assinatura) das fotos: `AI-Analysis`, que guarda em `Ocorrencia/Assets/Images`. Não é segredo. |
 | `VITE_CLOUDINARY_API_URL` | Opcional: troca a base do envio (por padrão `https://api.cloudinary.com/v1_1`), útil em testes. |
-| `VITE_CLASSIFICACAO_API_KEY` | Chave (opcional) do serviço de classificação. |
 
 ### Integração com a volta-api
 
@@ -77,24 +82,29 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 
 | Tela | Endpoints |
 |------|-----------|
-| Login | `POST /auth/login`, `GET /users/me` |
+| Login e senha | `POST /auth/login` (devolve `firstLogin`) e `GET /users/me`; esqueci minha senha: `POST /auth/forgot-password`, `POST /auth/verify-code` e `POST /auth/reset-password`; trocar a senha: `PUT /users/me/password` |
 | Ocorrências (lista, detalhe) | `GET /incidents`, `GET /incidents/{id}`, `GET /incidents/{id}/ai-report` e, no histórico, `GET /collections` e `GET /collections/{id}/history` (ADMIN ou MANAGER) |
-| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfil EMPLOYEE) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
-| Aprovar | `PATCH /incidents/{id}/close` (perfil ADMIN ou MANAGER) |
+| Registrar | `GET /areas/mine`, `GET /waste-types`, `POST /incidents` (perfis EMPLOYEE e MANAGER; o tipo vai em `wasteTypeIds`) e, para a análise da foto, volta-chatbot `POST /v1/occurrences/predict`. A foto vai ao Cloudinary e a API guarda o endereço em `photoUrl` |
+| Aprovar e recusar | `PATCH /incidents/{id}/approve` e `PATCH /incidents/{id}/reject` com `reason`, máximo de 200 caracteres (perfil ADMIN ou MANAGER). A API grava quem decidiu e quando (`reviewedBy` e `reviewedAt`, devolvidos também em `GET /incidents`): o detalhe mostra "Aprovada por você em …" e a decisão entra no histórico. A API só devolve o id de quem decidiu, então o painel só sabe o nome da própria pessoa logada; para as outras mostra só a data. Encerrar (`/close`) vem depois da coleta e não é feito pelo painel |
 | Assistente VOLTA | volta-chatbot: `POST /v1/sessions` e `POST /v1/chat` (mesmo token da volta-api) |
 | Início | números calculados das ocorrências já carregadas; "VOLTA notou" em `GET /v1/occurrences/reports/ai_summary` e a dica do mascote em `GET /v1/occurrences/areas/{id}/predict_capacity` (volta-chatbot) |
-| Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
-| Perfil e Configurações | `PUT /users/me` (nome e cargo); cartão da unidade em `GET /companies/{id}` (ADMIN) e `GET /areas/mine` |
-| Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER) |
-| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
+| Notificações | `GET /notifications` (ocorrência registrada, aprovada ou recusada e mudanças da coleta), `PATCH /notifications/{id}/read` e `PATCH /notifications/read-all`, para os três perfis. O sino busca a lista ao abrir e a cada minuto e mostra as 20 mais recentes; a API não diz de qual ocorrência é cada uma, então o clique leva à lista. Se a rota não existir ou não responder, o sino monta a lista das ocorrências (últimos registros e fila). O aviso da meta do mês e os de Metas são sempre montados no painel |
+| Perfil e Configurações | `PUT /users/me` (nome e cargo); "Revisadas por você" e "Tempo médio de revisão" (ADMIN e MANAGER) saem de `reviewedBy` e `reviewedAt`; meta mensal em `GET /goals` e `PUT /goals` (ADMIN e MANAGER gravam); cartão da unidade em `GET /companies/me` (ADMIN e MANAGER) e `GET /areas/mine` |
+| Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER); o gráfico "Ocorrências por setor" conta as próprias ocorrências, sem endpoint extra |
+| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN) ou `GET /cooperatives/scoring-data` (demais perfis), mais `GET /collections` para o volume mensal. As duas listas trazem o `email` da cooperativa, que alimenta o botão "Enviar e-mail"; o cadastro exige o e-mail (a API recusa sem ele). O mapa (Leaflet, com os mapas do OpenStreetMap, liberados na CSP do `vercel.json`) centraliza na unidade com `GET /companies/me` |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 
 **Registro de ocorrência.** A IA analisa a foto, mas nada é gravado até a pessoa
 tocar em "Confirmar e registrar". Antes disso, "Editar dados" deixa corrigir o
-tipo, a contaminação e a quantidade, e o que foi corrigido é o que vai para a API.
+tipo, a contaminação e o peso, e o que foi corrigido é o que vai para a API.
+O peso aproximado (em kg) tem um campo opcional já na primeira etapa: se a
+pessoa informar, esse valor vai para `estimatedQuantity`; se deixar em branco,
+vai a estimativa da IA, quando ela existir; sem as duas, vai `null`. O peso
+nunca é inventado a partir da foto, e a tela sempre o mostra como aproximado
+("≈ 12 kg") e diz de onde ele veio.
 Ao registrar, a foto é enviada ao Cloudinary; se o envio falhar, a ocorrência é
-registrada sem foto e a tela avisa. Contaminação, quantidade e foto ficam na
+registrada sem foto e a tela avisa. Contaminação, peso e foto ficam na
 própria ocorrência. A recomendação e o relatório da IA, porém, a volta-api só
 devolve se alguém gravar o laudo (`ai_report`), e hoje nada no front consegue
 fazer isso: por enquanto eles ficam guardados neste navegador, por usuário, e
@@ -105,6 +115,25 @@ esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
 calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
 usuário ADMIN.
 
+## Relatório PGRS em PDF
+
+O botão **Gerar PGRS** (Relatórios) abre `/relatorios/pgrs`, o documento do PGRS em duas
+páginas A4: capa com a unidade, indicadores do período comparados com o anterior, meta
+do mês, recuperado por material e por setor, destinação final por cooperativa (com a
+licença ambiental), amostra das ocorrências aprovadas, recomendações do VOLTA e a
+declaração do responsável. **Salvar como PDF** abre a impressão do navegador: em
+Destino, escolha "Salvar como PDF". O CSS de impressão (`@page` A4, sem margem, cores
+exatas) leva só o documento, e o título da página já vira o nome do arquivo
+(`pgrs-outubro-2026.pdf`). Não há biblioteca de PDF: é o próprio navegador que gera.
+
+- O conteúdo sai de `src/utils/documentoPgrs.ts` (função pura, com testes) e é
+  desenhado por `src/pages/RelatorioPgrs/DocumentoPgrs`. O que a API não informa (CNPJ
+  e endereço para quem não é ADMIN ou MANAGER, licença e distância das cooperativas,
+  comparação com o período anterior sem ocorrências nele) aparece como traço ou some;
+  nada é inventado. As recomendações vêm só dos dados do período.
+- As fontes do documento são Inter e Poppins (`@fontsource`), carregadas só nesta rota.
+- Testado no Chrome. O botão **CSV** do cartão baixa o mesmo PGRS em planilha.
+
 Alguns números não têm endpoint e são calculados no app: o Início e os
 Relatórios contam as ocorrências por data de registro (a API não informa a data
 da aprovação), o desvio do aterro usa as métricas ESG quando existem e, sem
@@ -114,8 +143,8 @@ devolve as pessoas de todas as empresas; a tela filtra pela empresa de quem
 está logado.
 
 O que a volta-api não guarda aparece como "—" ou "Não informada": cidade,
-contato, distância, capacidade e licença das cooperativas, setor das pessoas e
-confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
+contato, distância, capacidade e licença das cooperativas e o setor das pessoas.
+Cadastrar cooperativa pede latitude e longitude e não envia a
 licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
 porque não há convite por e-mail.
 
@@ -148,16 +177,25 @@ Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
 src/
 ├─ components/<Nome>/index.tsx     # cada componente na sua pasta
 ├─ pages/<Nome>/index.tsx          # cada página na sua pasta
+├─ pages/<Nome>/<Parte>/index.tsx  # parte que só aquela página usa (modal, tabela), também na sua pasta
 ├─ services/<recurso>.ts           # ÚNICA camada que chama APIs externas
 ├─ types/<dominio>.ts              # interfaces por domínio, zero `any`
 ├─ context/<Nome>/index.tsx        # Contextos + Providers
 ├─ hooks/use<Nome>.ts              # hooks customizados (data-fetching)
 ├─ utils/                          # validadores, storage, formatação
+├─ testes/                         # testes unitários (Vitest), uma pasta por camada
+│  ├─ utils/<arquivo>.test.ts
+│  ├─ services/<arquivo>.test.ts
+│  └─ fabricas.ts                  # dados de exemplo (ocorrência, cooperativa) para os testes
 └─ App.tsx                         # roteamento + lazy loading
 ```
 
 Regras estritas:
 
+- **Todo componente fica em pasta própria, com `index.tsx`.** O que várias
+  telas usam vai para `src/components/`; o que só uma página usa fica dentro
+  da pasta dela, também em pasta própria (por exemplo
+  `src/pages/Cooperativas/ModalAdicionar/index.tsx`).
 - **Zero `any` em `src/`.** Todas as entidades e props têm interfaces em
   `src/types/`.
 - **Nenhum `fetch` fora de `src/services/`.** Páginas e componentes chamam
@@ -167,19 +205,48 @@ Regras estritas:
 - **`localStorage` com envelope `{ _versao, dados }`** — versão diferente
   descarta com segurança em vez de quebrar a aplicação.
 
+## Testes unitários
+
+Os testes cobrem a lógica pura, que é onde mora a regra de negócio: `src/utils/`
+(metas e avisos da meta, validadores, senha, painel, formatação, licenças das
+cooperativas, CSV e documento do relatório PGRS, distâncias) e `src/services/` (os
+adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
+Vitest em ambiente `node`, sem navegador e sem rede.
+
+- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/` e
+  `services/`), com o nome do arquivo testado e `.test.ts`
+  (`src/utils/metas.ts` → `src/testes/utils/metas.test.ts`). A exceção é
+  `pessoas.test.ts`, que cobre `datas.ts`, `equipe.ts` e `pessoa.ts` juntos.
+- Datas: monte com `new Date(ano, mês, dia, hora)` (horário local) e passe o
+  "agora" como argumento, em vez de depender do relógio. Assim o teste dá o mesmo
+  resultado em qualquer fuso, inclusive na pipeline (UTC).
+- Dados de exemplo: `criarOcorrencia`, `criarCooperativa` e `criarConfiguracoes`,
+  em `src/testes/fabricas.ts`; cada teste muda só o campo que importa.
+- Quem importa `services/http` (o `USAR_MOCKS`) troca o módulo com
+  `vi.mock("../../services/http", ...)`, para escolher entre os mocks e a API.
+
+A pipeline (`.github/workflows/ci.yaml`) roda, nesta ordem: lint, verificação de
+tipos, `npm test` e build; se qualquer uma falhar, o check `build-test` da PR
+fica vermelho.
+
 ## Rotas
 
 | Caminho | Página | Acesso |
 |---------|--------|--------|
 | `/login` | Login | Público |
-| `/cadastro` | Cadastro | Público |
+| `/recuperar-senha` | Recuperar a senha (e-mail, código de 4 dígitos e senha nova) | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |
+| `/relatorios` | Relatórios PGRS: indicadores do período, gráficos e exportação em CSV | Privado |
+| `/relatorios/metas` | Metas do mês e do dia (ADMIN e MANAGER) | Privado |
+| `/relatorios/pgrs` | Documento do PGRS em duas páginas A4, que a pessoa salva em PDF pelo navegador (`?periodo=mes`, `trimestre` ou `ano`) | Privado |
+| `/equipe` | Equipe e convites (ADMIN) | Privado |
+| `/configuracoes` | Meta, unidade, notificações e senha | Privado |
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |
 | `/perfil` | Dados do usuário logado | Privado |
-| `*` | Página 404 com botão de retorno | Pública |
+| `*` | Página 404: dentro do painel para quem está logado (com "Voltar ao início" e "Ver ocorrências") e sozinha, com logo e rodapé, para quem não está | Pública |
 
 Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 (nenhuma página checa autenticação diretamente).
@@ -214,6 +281,14 @@ importar o repo na Vercel, os padrões do Vite (`npm run build` / pasta
 Variables `VITE_API_BASE_URL=/api` e `VITE_USAR_MOCKS=false`; o `rewrite` de
 `/api` no `vercel.json` aponta para a API de QA.
 
+O `vercel.json` também manda os cabeçalhos de segurança: `Content-Security-Policy`
+(o navegador só carrega script, imagem e conexão da própria aplicação e do
+Cloudinary), `X-Frame-Options: DENY` (o site não abre dentro de outro),
+`Permissions-Policy` (só a câmera é liberada), `nosniff` e `Referrer-Policy`. Se
+o app passar a usar um serviço externo (outra CDN de imagens, outra API), o
+domínio dele precisa entrar no `connect-src` ou no `img-src` da CSP; sem isso o
+navegador bloqueia a chamada e o console mostra qual domínio faltou.
+
 ## Padrão de commits
 
 Este projeto segue [Conventional Commits](https://www.conventionalcommits.org/).
@@ -236,3 +311,20 @@ O trabalho é dividido nas branches de ticket do SCRUM, todas nascidas de
 | `feat/SCRUM-1872` | Conventional Commits |
 | `feat/SCRUM-1873` | Context API + hooks customizados |
 | `feat/SCRUM-1874` | Zero `any` no TypeScript |
+
+## Histórico de desenvolvimento
+
+- **Aplicação publicada:** https://volta-website-dad.vercel.app
+- **Primeiro commit do projeto:** feito em 15/09/2026 na branch
+  [`feat/SCRUM-1934`](https://github.com/app-volta/volta-website-dad/tree/feat/SCRUM-1934)
+  (card "Criar base do projeto com vite"). Ela entrou na `develop` pela
+  [PR #17](https://github.com/app-volta/volta-website-dad/pull/17) em
+  25/09/2026. O repositório já existia desde 27/06/2026, só com o commit
+  automático "Initial commit" do GitHub.
+- **Histórico completo de commits:**
+  [`develop`](https://github.com/app-volta/volta-website-dad/commits/develop).
+  A `main` só recebe a junção (squash) da `develop`, por Pull Request com
+  aprovação, e por isso tem poucos commits; o dia a dia está na `develop`.
+- **Período:** do primeiro commit (15/09/2026) até o fim de outubro de 2026.
+  Cada tarefa nasce de um card do Jira (projeto SCRUM), vira uma branch
+  `feat|fix|chore/SCRUM-N` e entra na `develop` por Pull Request.

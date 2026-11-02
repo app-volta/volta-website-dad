@@ -54,7 +54,11 @@
   --raio-forte: 16px;
   --sombra-card: 0 1px 2px rgba(14, 59, 46, 0.04), 0 2px 8px rgba(14, 59, 46, 0.06);
   --sombra-hover: 0 4px 16px rgba(14, 59, 46, 0.10);
-  --foco: 0 0 0 3px rgba(47, 178, 90, 0.35);
+  /* Anel de foco: verde sólido (4,5:1 sobre branco; o mínimo da WCAG 1.4.11 é 3:1)
+     com uma folga branca, para continuar visível em cima de botões verdes. */
+  --foco-cor: #15874C;
+  --foco: 0 0 0 2px var(--superficie), 0 0 0 4px var(--foco-cor);
+  --foco-interno: inset 0 0 0 3px var(--foco-cor);
 
   --sidebar-largura: 264px;
   --topbar-altura: 92px;
@@ -127,8 +131,10 @@ a:hover {
 }
 
 :focus-visible {
-  outline: none;
-  box-shadow: var(--foco);
+  /* `outline` e não `box-shadow`: botões com sombra própria (como o "Entrar")
+     cobririam o anel, e o outline ainda é mantido no modo de alto contraste. */
+  outline: 3px solid var(--foco-cor);
+  outline-offset: 2px;
   border-radius: 8px;
 }
 

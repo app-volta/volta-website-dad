@@ -20,16 +20,10 @@ export interface CredenciaisLogin {
   readonly senha: string;
 }
 
-export interface DadosCadastro {
-  readonly nome: string;
-  readonly email: string;
-  readonly senha: string;
-  readonly papel: PapelUsuario;
-  readonly unidade: string;
-}
-
 export interface SessaoAutenticada {
   readonly usuario: Usuario;
   readonly token: string;
   readonly expiraEm: string;
+  /** O login pediu a troca da senha provisória: o painel só libera depois dela. */
+  readonly primeiroAcesso?: boolean;
 }

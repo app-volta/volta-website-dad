@@ -3,11 +3,12 @@ import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { GavetaOcorrencia } from "../../components/GavetaOcorrencia";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
-import { SkeletonList } from "../../components/SkeletonList";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useConexao } from "../../hooks/useConexao";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useDadosReais } from "../../hooks/useModo";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
@@ -18,7 +19,6 @@ import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { baixarCsv, montarCsv } from "../../utils/exportarCsv";
 import {
-  formatarConfianca,
   formatarPeso,
   formatarRegistro,
 } from "../../utils/formatacao";
@@ -28,6 +28,9 @@ import {
   categoriaDe,
 } from "../../utils/statusOcorrencia";
 import type { CategoriaStatus } from "../../utils/statusOcorrencia";
+import { EsqueletoDaTabela } from "./EsqueletoDaTabela";
+import { ModalAprovacaoParcial } from "./ModalAprovacaoParcial";
+import type { FalhaMostrada } from "./ModalAprovacaoParcial";
 import "./styles.css";
 
 type Filtro = "todas" | CategoriaStatus;
@@ -53,6 +56,12 @@ function textoBuscavel(o: Ocorrencia): string {
     .toLowerCase();
 }
 
+interface ResultadoParcial {
+  readonly aprovadas: number;
+  readonly total: number;
+  readonly falhas: readonly FalhaMostrada[];
+}
+
 export default function Ocorrencias(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -63,6 +72,7 @@ export default function Ocorrencias(): ReactNode {
   );
   const [aprovando, setAprovando] = useState<boolean>(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [parcial, setParcial] = useState<ResultadoParcial | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [gavetaId, setGavetaId] = useState<string | null>(null);
   const navegar = useNavigate();
@@ -71,6 +81,7 @@ export default function Ocorrencias(): ReactNode {
   const podeRevisar =
     !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const acoes = useAcoesOcorrencia();
+  const semRede = !useConexao().online;
   const { dados, carregando, erro } = useOcorrencias(chaveRecarga);
   const ocorrenciaGaveta = dados?.find((o) => o.id === gavetaId) ?? null;
 
@@ -127,13 +138,35 @@ export default function Ocorrencias(): ReactNode {
     setAviso(null);
     setErroAcao(null);
     try {
-      const aprovadas = await acoes.aprovarVarias(ids, usuario?.nome ?? "Equipe");
+      const { aprovadas, falhas } = await acoes.aprovarVarias(
+        ids,
+        usuario?.nome ?? "Equipe",
+      );
+      // As que ficaram de fora continuam selecionadas, para tentar de novo.
+      const ficaram = new Set(falhas.map((falha) => falha.id));
       setSelecionadas((atual) => {
         const novo = new Set(atual);
-        for (const id of ids) novo.delete(id);
+        for (const id of ids) if (!ficaram.has(id)) novo.delete(id);
         return novo;
       });
       setChaveRecarga((v) => v + 1);
+      if (falhas.length > 0) {
+        setParcial({
+          aprovadas,
+          total: aprovadas + falhas.length,
+          falhas: falhas.map((falha) => {
+            const ocorrencia = dados?.find((o) => o.id === falha.id);
+            return {
+              id: falha.id,
+              rotulo: ocorrencia
+                ? ocorrencia.codigo + " · " + ocorrencia.titulo
+                : "Ocorrência",
+              motivo: falha.motivo,
+            };
+          }),
+        });
+        return;
+      }
       setAviso(
         aprovadas === 0
           ? "Nenhuma das ocorrências selecionadas estava aguardando aprovação."
@@ -157,7 +190,6 @@ export default function Ocorrencias(): ReactNode {
         "Ocorrência",
         "Setor",
         "Peso (kg)",
-        "Confiança IA",
         "Prioridade",
         "Status",
         "Registrada por",
@@ -168,7 +200,6 @@ export default function Ocorrencias(): ReactNode {
         o.titulo,
         o.localizacao.setor,
         o.pesoKg,
-        formatarConfianca(o.classificacao?.confianca ?? null),
         ROTULO_PRIORIDADE[o.prioridade],
         ROTULO_CATEGORIA[categoriaDe(o.status)],
         o.criadaPorNome,
@@ -214,7 +245,9 @@ export default function Ocorrencias(): ReactNode {
             }}
           >
             {op.rotulo}
-            <span className="ocorrencias__contagem">{contagens[op.valor]}</span>
+            <span className="ocorrencias__contagem">
+              {carregando && !dados ? "–" : contagens[op.valor]}
+            </span>
           </button>
         ))}
       </div>
@@ -224,7 +257,7 @@ export default function Ocorrencias(): ReactNode {
           type="button"
           className="ocorrencias__exportar"
           onClick={exportar}
-          disabled={filtradas.length === 0}
+          disabled={filtradas.length === 0 || semRede}
         >
           <Icone nome="download" tamanho={14} />
           Exportar
@@ -243,7 +276,7 @@ export default function Ocorrencias(): ReactNode {
         </Alerta>
       ) : null}
 
-      {erro ? (
+      {erro && dados ? (
         <Alerta
           variante="erro"
           titulo="Não foi possível carregar"
@@ -261,8 +294,8 @@ export default function Ocorrencias(): ReactNode {
         </Alerta>
       ) : null}
 
-      {carregando ? (
-        <SkeletonList quantidade={6} rotulo="Carregando ocorrências" />
+      {carregando && !dados ? (
+        <EsqueletoDaTabela comSelecao={podeRevisar} />
       ) : (
         <div className="ocorrencias__tabela-card">
           <div className="ocorrencias__rolagem">
@@ -290,8 +323,9 @@ export default function Ocorrencias(): ReactNode {
                   ) : null}
                   <th scope="col" className="ocorrencias__col-ocorrencia">Ocorrência</th>
                   <th scope="col" className="ocorrencias__col-setor">Setor</th>
-                  <th scope="col" className="ocorrencias__col-peso">Peso</th>
-                  <th scope="col" className="ocorrencias__col-confianca">Confiança IA</th>
+                  <th scope="col" className="ocorrencias__col-peso">
+                    Peso<span className="sr-only"> aproximado</span>
+                  </th>
                   <th scope="col" className="ocorrencias__col-prioridade">Prioridade</th>
                   <th scope="col" className="ocorrencias__col-status">Status</th>
                   <th scope="col" className="ocorrencias__col-registrada">Registrada</th>
@@ -304,12 +338,56 @@ export default function Ocorrencias(): ReactNode {
                 {visiveis.length === 0 ? (
                   <tr>
                     <td colSpan={podeRevisar ? 9 : 8} className="ocorrencias__vazio">
-                      Nenhuma ocorrência encontrada.
+                      {erro && !dados ? (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="preocupado"
+                          tom="erro"
+                          tag="Algo deu errado"
+                          titulo="Não conseguimos carregar as ocorrências"
+                          texto="Pode ser a conexão ou uma instabilidade nossa. Nenhum dado foi perdido."
+                        >
+                          <AcaoDoEstado aoClicar={() => setChaveRecarga((v) => v + 1)}>
+                            Tentar de novo
+                          </AcaoDoEstado>
+                          <AcaoDoEstado para="/" variante="secundaria">
+                            Voltar ao início
+                          </AcaoDoEstado>
+                        </EstadoPainel>
+                      ) : (dados?.length ?? 0) === 0 ? (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="dormindo"
+                          tom="ok"
+                          tag="Tudo em dia"
+                          titulo="Nenhuma ocorrência por aqui"
+                          texto="Quando alguém da unidade registrar um resíduo, ele aparece nesta lista."
+                        >
+                          <AcaoDoEstado para="/registrar">Registrar ocorrência</AcaoDoEstado>
+                        </EstadoPainel>
+                      ) : (
+                        <EstadoPainel
+                          contexto="cartao"
+                          pose="pergunta"
+                          tag="Sem resultado"
+                          titulo="Nada com essa busca e esses filtros"
+                          texto="Tente outra palavra ou limpe a busca e os filtros."
+                        >
+                          <AcaoDoEstado
+                            aoClicar={() => {
+                              setBusca("");
+                              setFiltro("todas");
+                              voltarAoInicio();
+                            }}
+                          >
+                            Limpar busca e filtros
+                          </AcaoDoEstado>
+                        </EstadoPainel>
+                      )}
                     </td>
                   </tr>
                 ) : (
                   visiveis.map((o) => {
-                    const confianca = o.classificacao?.confianca ?? null;
                     return (
                       <tr
                         key={o.id}
@@ -367,17 +445,6 @@ export default function Ocorrencias(): ReactNode {
                         <td>{o.localizacao.setor}</td>
                         <td>
                           <strong>{formatarPeso(o.pesoKg, true)}</strong>
-                        </td>
-                        <td>
-                          <span className="ocorrencias__confianca">
-                            <span
-                              className="ocorrencias__barra"
-                              aria-hidden="true"
-                            >
-                              <span style={{ width: `${(confianca ?? 0) * 100}%` }} />
-                            </span>
-                            <strong>{formatarConfianca(confianca)}</strong>
-                          </span>
                         </td>
                         <td>
                           <span
@@ -448,37 +515,48 @@ export default function Ocorrencias(): ReactNode {
         </div>
       )}
 
-      {podeRevisar ? <div
-        className="ocorrencias__lote"
-        role="region"
-        aria-label="Ações em lote"
-      >
-        <span className="ocorrencias__lote-contagem" aria-live="polite">
-          {selecionadas.size}{" "}
-          {selecionadas.size === 1 ? "selecionada" : "selecionadas"}
-        </span>
-        <button
-          type="button"
-          className="ocorrencias__lote-limpar"
-          onClick={() => setSelecionadas(new Set())}
-          disabled={selecionadas.size === 0}
-        >
-          Limpar
-        </button>
-        <button
-          type="button"
-          className="ocorrencias__lote-aprovar"
-          onClick={() => aprovar([...selecionadas])}
-          disabled={selecionadas.size === 0 || aprovando}
-        >
-          <Icone nome="check" tamanho={14} />
-          {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
-        </button>
-      </div> : null}
+      {podeRevisar && selecionadas.size > 0 ? (
+        <div className="ocorrencias__lote" role="region" aria-label="Ações em lote">
+          <span className="ocorrencias__lote-contagem" aria-live="polite">
+            {selecionadas.size}{" "}
+            {selecionadas.size === 1 ? "selecionada" : "selecionadas"}
+          </span>
+          <button
+            type="button"
+            className="ocorrencias__lote-limpar"
+            onClick={() => setSelecionadas(new Set())}
+          >
+            Limpar
+          </button>
+          <button
+            type="button"
+            className="ocorrencias__lote-aprovar"
+            onClick={() => aprovar([...selecionadas])}
+            disabled={aprovando || semRede}
+          >
+            <Icone nome="check" tamanho={14} />
+            {aprovando ? "Aprovando…" : "Aprovar selecionadas"}
+          </button>
+        </div>
+      ) : null}
+
+      <ModalAprovacaoParcial
+        aberto={parcial !== null}
+        aprovadas={parcial?.aprovadas ?? 0}
+        total={parcial?.total ?? 0}
+        falhas={parcial?.falhas ?? []}
+        aoTentarDeNovo={() => {
+          const ids = parcial?.falhas.map((falha) => falha.id) ?? [];
+          setParcial(null);
+          void aprovar(ids);
+        }}
+        aoFechar={() => setParcial(null)}
+      />
 
       <GavetaOcorrencia
         ocorrencia={ocorrenciaGaveta}
         aprovando={aprovando}
+        semRede={semRede}
         podeAprovar={podeRevisar}
         aoFechar={() => setGavetaId(null)}
         aoAprovar={(id) => aprovar([id])}

@@ -1,5 +1,6 @@
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 import { useAuth } from "../../context/AuthContext";
 import { useAguardandoAprovacao } from "../../hooks/useAguardandoAprovacao";
@@ -7,6 +8,8 @@ import { Icone } from "../Icone";
 import type { NomeIcone } from "../Icone";
 import { LogoVolta } from "../LogoVolta";
 import { Mascote } from "../Mascote";
+import { MenuDaConta } from "./MenuDaConta";
+import type { PosicaoDoMenu } from "./MenuDaConta";
 import "./styles.css";
 
 interface ItemNav {
@@ -119,8 +122,22 @@ export function Sidebar({
   assistenteAberto = false,
   idAssistente,
 }: SidebarProps): ReactNode {
-  const { usuario } = useAuth();
+  const { usuario, pedirSaida } = useAuth();
   const aguardando = useAguardandoAprovacao();
+  const [posicaoDoMenu, setPosicaoDoMenu] = useState<PosicaoDoMenu | null>(null);
+  const cartaoDaPessoa = useRef<HTMLButtonElement | null>(null);
+
+  function alternarMenu(botao: HTMLButtonElement): void {
+    if (posicaoDoMenu) {
+      setPosicaoDoMenu(null);
+      return;
+    }
+    const caixa = botao.getBoundingClientRect();
+    setPosicaoDoMenu({
+      esquerda: caixa.left,
+      base: window.innerHeight - caixa.top + 8,
+    });
+  }
   const papelChip = usuario ? CHIP_PAPEL[usuario.papel] : "GESTOR";
 
   return (
@@ -195,7 +212,15 @@ export function Sidebar({
         </div>
 
         {usuario ? (
-          <Link to="/perfil" className="sidebar__usuario" aria-label="Abrir perfil">
+          <button
+            ref={cartaoDaPessoa}
+            type="button"
+            className="sidebar__usuario"
+            aria-label="Menu da conta"
+            aria-haspopup="menu"
+            aria-expanded={posicaoDoMenu !== null}
+            onClick={(evento) => alternarMenu(evento.currentTarget)}
+          >
             <span className="sidebar__avatar" aria-hidden="true">
               {iniciais(usuario.nome)}
             </span>
@@ -208,7 +233,19 @@ export function Sidebar({
             <span className="sidebar__usuario-seta" aria-hidden="true">
               <Icone nome="seta-baixo" tamanho={14} />
             </span>
-          </Link>
+          </button>
+        ) : null}
+
+        {usuario && posicaoDoMenu ? (
+          <MenuDaConta
+            nome={usuario.nome}
+            email={usuario.email}
+            iniciais={iniciais(usuario.nome)}
+            posicao={posicaoDoMenu}
+            ancora={cartaoDaPessoa}
+            aoFechar={() => setPosicaoDoMenu(null)}
+            aoSair={pedirSaida}
+          />
         ) : null}
       </aside>
     </>

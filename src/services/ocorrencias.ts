@@ -3,6 +3,7 @@ import type {
   NovaClassificacao,
   NovaOcorrencia,
   Ocorrencia,
+  ResultadoDaAprovacao,
 } from "../types/ocorrencia";
 import { USAR_MOCKS } from "./http";
 import * as api from "./ocorrencias.api";
@@ -18,7 +19,7 @@ export interface ServicoOcorrencias {
   readonly lerOcorrencias: () => readonly Ocorrencia[];
   readonly semelhantesNaSemana: (ocorrencia: Ocorrencia) => number;
   readonly garantirCarregado: () => void;
-  readonly listarSetores: () => Promise<readonly string[]>;
+  readonly listarSetores: (sinal?: AbortSignal) => Promise<readonly string[]>;
   readonly listarOcorrencias: (
     sinal?: AbortSignal,
   ) => Promise<readonly Ocorrencia[]>;
@@ -30,7 +31,9 @@ export interface ServicoOcorrencias {
     fotoBase64: string,
     sinal?: AbortSignal,
   ) => Promise<ClassificacaoIA>;
-  readonly listarOpcoesDeTipo: () => Promise<readonly OpcaoTipoResiduo[]>;
+  readonly listarOpcoesDeTipo: (
+    sinal?: AbortSignal,
+  ) => Promise<readonly OpcaoTipoResiduo[]>;
   readonly criarOcorrencia: (
     entrada: NovaOcorrencia,
     sinal?: AbortSignal,
@@ -39,7 +42,7 @@ export interface ServicoOcorrencias {
     ids: readonly string[],
     autor: string,
     sinal?: AbortSignal,
-  ) => Promise<number>;
+  ) => Promise<ResultadoDaAprovacao>;
   readonly aprovarOcorrencia: (
     id: string,
     autor: string,

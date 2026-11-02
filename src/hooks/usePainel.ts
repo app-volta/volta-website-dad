@@ -1,13 +1,34 @@
 import { useMemo } from "react";
 
-import { metaRecuperacaoAtual } from "../services/configuracoes";
+import { useMetaRecuperacao } from "./useMeta";
 import {
   PAINEL_COM_DADOS_REAIS,
   contarRegistradasPor,
   montarPainel,
 } from "../services/painel";
 import type { Ocorrencia } from "../types/ocorrencia";
-import type { PainelInicio } from "../types/painel";
+import type { AtividadeEquipe, PainelInicio } from "../types/painel";
+import {
+  atividadesDaPessoa,
+  duracaoEmTexto,
+  revisadasPor,
+  tempoMedioDeRevisaoMs,
+} from "../utils/painel";
+
+/** Quantas ocorrências a pessoa aprovou ou recusou e quanto demorou, em média, depois do registro. */
+export function useRevisoesDe(
+  ocorrencias: readonly Ocorrencia[] | null,
+  usuarioId: string,
+): { readonly quantidade: number; readonly tempoMedio: string | null } {
+  return useMemo(() => {
+    const revisadas = revisadasPor(ocorrencias ?? [], usuarioId);
+    const media = tempoMedioDeRevisaoMs(revisadas);
+    return {
+      quantidade: revisadas.length,
+      tempoMedio: media === null ? null : duracaoEmTexto(media),
+    };
+  }, [ocorrencias, usuarioId]);
+}
 
 /** Quantas ocorrências a pessoa registrou. */
 export function useRegistradasPor(
@@ -17,6 +38,17 @@ export function useRegistradasPor(
   return useMemo(
     () => contarRegistradasPor(ocorrencias ?? [], usuarioId),
     [ocorrencias, usuarioId],
+  );
+}
+
+/** O que a pessoa fez nas ocorrências, da mais recente para a mais antiga. */
+export function useMinhasAtividades(
+  ocorrencias: readonly Ocorrencia[] | null,
+  nome: string,
+): readonly AtividadeEquipe[] {
+  return useMemo(
+    () => atividadesDaPessoa(ocorrencias ?? [], nome),
+    [ocorrencias, nome],
   );
 }
 
@@ -30,8 +62,8 @@ interface EstadoPainel {
 export function usePainel(
   ocorrencias: readonly Ocorrencia[] | null,
 ): EstadoPainel {
-  // Lida a cada render: a meta mora no navegador e pode mudar em Configurações.
-  const metaKg = metaRecuperacaoAtual();
+  // A meta pode mudar em Configurações e chega da API depois da primeira tela.
+  const metaKg = useMetaRecuperacao();
   const painel = useMemo(
     () => montarPainel(ocorrencias ?? [], metaKg),
     [ocorrencias, metaKg],

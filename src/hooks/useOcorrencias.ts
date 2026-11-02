@@ -6,41 +6,43 @@ import type { Ocorrencia } from "../types/ocorrencia";
 
 /**
  * Busca a lista de ocorrências e devolve estado tipado com loading/erro.
+ * Os três valores ficam num único estado, para nunca ficarem fora de sincronia.
  * Cancela a requisição no cleanup para não atualizar estado em componente
  * já desmontado — evita warnings de React 18 StrictMode e memory leaks.
  */
 export function useOcorrencias(
   chaveRecarga = 0,
 ): EstadoRequisicao<readonly Ocorrencia[]> {
-  const [dados, setDados] = useState<readonly Ocorrencia[] | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoRequisicao<readonly Ocorrencia[]>>({
+    dados: null,
+    carregando: true,
+    erro: null,
+  });
 
   useEffect(() => {
     const controle = new AbortController();
-    setCarregando(true);
-    setErro(null);
+    setEstado((atual) => ({ ...atual, carregando: true, erro: null }));
 
     listarOcorrencias(controle.signal)
       .then((lista) => {
         if (!controle.signal.aborted) {
-          setDados(lista);
+          setEstado({ dados: lista, carregando: false, erro: null });
         }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Não foi possível carregar ocorrências.",
-        );
-      })
-      .finally(() => {
-        if (!controle.signal.aborted) setCarregando(false);
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            excecao instanceof Error
+              ? excecao.message
+              : "Não foi possível carregar ocorrências.",
+        }));
       });
 
     return () => controle.abort();
   }, [chaveRecarga]);
 
-  return { dados, carregando, erro };
+  return estado;
 }

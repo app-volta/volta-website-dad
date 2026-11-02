@@ -1,13 +1,17 @@
 import { lazy, Suspense } from "react";
 import type { ReactNode } from "react";
-import { Route, Routes, useParams } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "./components/AppLayout";
+import { ModalPrimeiroAcesso } from "./components/ModalPrimeiroAcesso";
+import { ModalSair } from "./components/ModalSair";
+import { ModalSessaoExpirada } from "./components/ModalSessaoExpirada";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Spinner } from "./components/Spinner";
+import { useAuth } from "./context/AuthContext";
 
 const Login = lazy(() => import("./pages/Login"));
-const Cadastro = lazy(() => import("./pages/Cadastro"));
+const RecuperarSenha = lazy(() => import("./pages/RecuperarSenha"));
 const Home = lazy(() => import("./pages/Home"));
 const Registrar = lazy(() => import("./pages/Registrar"));
 const Ocorrencias = lazy(() => import("./pages/Ocorrencias"));
@@ -15,6 +19,8 @@ const OcorrenciaDetalhe = lazy(() => import("./pages/OcorrenciaDetalhe"));
 const Cooperativas = lazy(() => import("./pages/Cooperativas"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const RelatoriosMetas = lazy(() => import("./pages/RelatoriosMetas"));
+const RelatorioPgrs = lazy(() => import("./pages/RelatorioPgrs"));
 const Equipe = lazy(() => import("./pages/Equipe"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -48,11 +54,24 @@ function RotaPrivada({
   );
 }
 
-function RotaDetalheOcorrencia(): ReactNode {
-  const { id } = useParams();
+/** Endereço que não existe: dentro do painel para quem está logado, sozinho para quem não está. */
+function RotaNaoEncontrada(): ReactNode {
+  const { sessao } = useAuth();
+  if (!sessao) return <NotFound />;
   return (
     <RotaPrivada
-      titulo={`Ocorrência #${(id ?? "").replace(/\D/g, "")}`}
+      titulo="Página não encontrada"
+      subtitulo="O endereço não leva a nenhuma tela do painel"
+    >
+      <NotFound dentroDoPainel />
+    </RotaPrivada>
+  );
+}
+
+function RotaDetalheOcorrencia(): ReactNode {
+  return (
+    <RotaPrivada
+      titulo="Ocorrência"
       subtitulo="Revisão e ações do responsável"
     >
       <OcorrenciaDetalhe />
@@ -65,7 +84,9 @@ export default function App(): ReactNode {
     <Suspense fallback={<Spinner rotulo="Carregando página…" />}>
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/cadastro" element={<Cadastro />} />
+        {/* O cadastro pela web saiu: quem cria acesso é o administrador, em Equipe. */}
+        <Route path="/cadastro" element={<Navigate to="/login" replace />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
         <Route
           path="/"
@@ -121,6 +142,26 @@ export default function App(): ReactNode {
           }
         />
         <Route
+          path="/relatorios/metas"
+          element={
+            <RotaPrivada
+              titulo="Metas do mês e do dia"
+              subtitulo="Relatórios PGRS · quanto a unidade quer recuperar"
+            >
+              <RelatoriosMetas />
+            </RotaPrivada>
+          }
+        />
+        {/* O documento do PGRS fica fora do painel: a impressão leva só as duas páginas A4. */}
+        <Route
+          path="/relatorios/pgrs"
+          element={
+            <PrivateRoute>
+              <RelatorioPgrs />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/equipe"
           element={
             <RotaPrivada
@@ -145,19 +186,17 @@ export default function App(): ReactNode {
         <Route
           path="/perfil"
           element={
-            <RotaPrivada
-              titulo="Perfil"
-              subtitulo="Seus dados e unidade"
-              comCta={false}
-              comBusca={false}
-            >
+            <RotaPrivada titulo="Meu perfil" subtitulo="Seus dados e sua atividade">
               <Perfil />
             </RotaPrivada>
           }
         />
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<RotaNaoEncontrada />} />
       </Routes>
+      <ModalPrimeiroAcesso />
+      <ModalSessaoExpirada />
+      <ModalSair />
     </Suspense>
   );
 }

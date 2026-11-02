@@ -1,4 +1,5 @@
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import type { Coordenadas } from "../utils/geo";
 import * as api from "./cooperativas.api";
 import * as mock from "./cooperativas.mock";
 import { USAR_MOCKS } from "./http";
@@ -19,9 +20,14 @@ interface ServicoCooperativas {
     dados: NovaCooperativa,
     sinal?: AbortSignal,
   ) => Promise<Cooperativa>;
+  readonly obterOrigemDoMapa: () => Promise<Coordenadas | null>;
 }
 
 const servico: ServicoCooperativas = USAR_MOCKS ? mock : api;
 
-export const { listarCooperativas, obterCooperativa, adicionarCooperativa } =
-  servico;
+export const {
+  listarCooperativas,
+  obterCooperativa,
+  adicionarCooperativa,
+  obterOrigemDoMapa,
+} = servico;

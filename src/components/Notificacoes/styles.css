@@ -78,7 +78,7 @@
 }
 
 .notif__item:focus-visible {
-  box-shadow: inset var(--foco);
+  box-shadow: var(--foco-interno);
 }
 
 .notif__icone {
@@ -109,6 +109,11 @@
 .notif__icone--roxo {
   background: #efeafb;
   color: #7250d9;
+}
+
+.notif__icone--azul {
+  background: #e4efff;
+  color: #0b60ec;
 }
 
 .notif__textos {

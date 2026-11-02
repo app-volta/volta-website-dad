@@ -8,19 +8,22 @@ auditoria quanto como referência para revisores de PR.
 
 ### 1.1.1 Conteúdo não textual
 - `<img>` sempre com `alt` descritivo. Exemplos:
-  [`OcorrenciaCard/index.tsx`](../src/components/OcorrenciaCard/index.tsx),
+  [`LogoVolta/index.tsx`](../src/components/LogoVolta/index.tsx),
   [`OcorrenciaDetalhe/index.tsx`](../src/pages/OcorrenciaDetalhe/index.tsx).
 - Emoji e ícones puramente decorativos escondidos com `aria-hidden="true"`
-  (badges de material, logo da Sidebar, ícone da 404, mascote do cartão de
-  ajuda). Botões só com ícone, como o assistente e o sino da barra superior,
+  (badges de material, logo da Sidebar, mascote dos estados como a 404 e o
+  "sem resultado", mascote do cartão de ajuda). Botões só com ícone, como o assistente e o sino da barra superior,
   têm `aria-label`.
 
 ### 1.3.1 Informações e relações
 - Landmarks do shell V2: `<aside aria-label="Navegação principal">` com
   `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar),
   `<main id="conteudo">` e `<footer>` (componente `Rodape`, fora do `<main>`
-  para valer como landmark de informações do site). Login, cadastro e 404
-  também têm `<main>` e `<footer>`. Diálogos e gavetas usam
+  para valer como landmark de informações do site). Login e recuperação de senha também
+  têm `<header>` com a logo (fora do `<main>`, então vale como banner),
+  `<main>` e `<footer>`. A 404 aparece dentro do painel para quem está
+  logado e, para quem não está, sozinha com `<header>`, `<main>` e
+  `<footer>`. Diálogos e gavetas usam
   `<div role="dialog">` e não declaram `<header>`, `<footer>` nem `<aside>`,
   para não virarem um segundo banner, um segundo rodapé nem um complementar
   dentro de outro ponto de referência.
@@ -61,17 +64,25 @@ calculado no pior ponto do gradiente.
 ### 2.4.1 Pular blocos
 - Skip-link no topo da Sidebar (`Pular para o conteúdo principal`, visível
   apenas ao receber foco). Aponta para `#conteudo`, que é o `<main>` do shell
-  privado e também da página 404.
+  privado. Login, recuperação de senha e a 404 de quem não está logado têm o próprio
+  skip-link, com a mesma classe, como primeiro item da página.
 
 ### 2.4.3 Ordem de foco
 - Modal preserva a ordem natural do DOM e não usa `tabindex` positivo.
-- FiltroTabs adota o padrão WAI-ARIA APG: apenas a aba ativa fica no fluxo
-  do Tab; setas ←/→ movem entre abas.
 
 ### 2.4.7 Foco visível
-- `:focus-visible` global no `src/index.css` aplica um `box-shadow` verde.
-  Nenhum `outline: none` foi introduzido sem substituição por foco visível
-  equivalente.
+- `:focus-visible` global no `src/index.css` desenha um `outline` sólido de
+  3 px em `--foco-cor` (`#15874C`, 4,6:1 sobre branco; o mínimo da 1.4.11 é
+  3:1), com 2 px de folga para continuar visível sobre botões verdes. Usa
+  `outline` e não `box-shadow` para não ficar escondido embaixo da sombra
+  própria de botões como o "Entrar", e porque o `outline` é mantido no modo de
+  alto contraste do Windows. Na Sidebar verde o anel é branco.
+- Os campos de texto desenham o mesmo anel como `box-shadow` no contêiner
+  (`--foco`, com a folga branca) e, nas linhas de tabela, como
+  `--foco-interno`. Nenhum `outline: none` foi introduzido sem substituição
+  por foco visível equivalente.
+- Conferido: na tela de cada rota privada, todo elemento focável mostra o
+  anel quando recebe foco pelo teclado.
 
 ### 2.5.5 Tamanho do alvo (AAA — mas seguido aqui)
 - Botões têm `min-height: 44px` (declarado em
@@ -84,21 +95,18 @@ calculado no pior ponto do gradiente.
 - Todo `<input>` tem `<label htmlFor>` associado.
 - Mensagens de erro no DOM com `role="alert"` (via componente
   [`Alerta`](../src/components/Alerta/index.tsx) e via `<p role="alert">`
-  em [`Input`](../src/components/Input/index.tsx) e
-  [`TextArea`](../src/components/TextArea/index.tsx)).
+  em [`Input`](../src/components/Input/index.tsx)).
 - Ajuda contextual usa `aria-describedby` para vincular ao campo.
 
 ### 3.2.4 Identificação consistente
 - Componentes reutilizados em todas as páginas (Button, Input, Alerta,
-  FiltroTabs, Modal). Mesma variante gera mesmo comportamento.
+  Modal). Mesma variante gera mesmo comportamento.
 
 ## Robusto
 
 ### 4.1.2 Nome, função, valor
 - Modal: `role="dialog"`, `aria-modal`, `aria-labelledby` apontando para o
   título.
-- FiltroTabs: `role="tablist"` + `role="tab"` + `aria-selected` + `tabIndex`
-  controlado.
 - Sidebar: `<nav aria-label="Menu">` com `<ul>` de links; o item atual usa
   `aria-current="page"` (via `NavLink`). Recolhida em 72px, o rótulo some só
   visualmente e continua sendo lido; a contagem de ocorrências vira um ponto

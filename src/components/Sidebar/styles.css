@@ -1,5 +1,9 @@
 .sidebar {
   --sidebar-pad-x: 18px;
+  /* Sobre o verde escuro o anel verde some; aqui ele é branco. */
+  --foco-cor: #ffffff;
+  --foco: 0 0 0 2px #0a4a2d, 0 0 0 4px #ffffff;
+  --foco-interno: inset 0 0 0 3px #ffffff;
 
   width: var(--sidebar-largura);
   height: 100vh;
@@ -225,11 +229,17 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 0 10px;
   margin-top: 22px;
+  border: 0;
   border-radius: 12px;
+  background: transparent;
   color: var(--sidebar-fg-forte);
+  font: inherit;
+  text-align: left;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .sidebar__usuario:hover {

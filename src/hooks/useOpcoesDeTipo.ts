@@ -6,31 +6,33 @@ import type { EstadoRequisicao } from "../types/comum";
 
 /** Tipos de resíduo que a pessoa pode escolher ao corrigir a análise da IA. */
 export function useOpcoesDeTipo(): EstadoRequisicao<readonly OpcaoTipoResiduo[]> {
-  const [dados, setDados] = useState<readonly OpcaoTipoResiduo[] | null>(null);
-  const [carregando, setCarregando] = useState<boolean>(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<
+    EstadoRequisicao<readonly OpcaoTipoResiduo[]>
+  >({ dados: null, carregando: true, erro: null });
 
   useEffect(() => {
-    let ativo = true;
-    listarOpcoesDeTipo()
+    const controle = new AbortController();
+
+    listarOpcoesDeTipo(controle.signal)
       .then((opcoes) => {
-        if (ativo) setDados(opcoes);
+        if (!controle.signal.aborted) {
+          setEstado({ dados: opcoes, carregando: false, erro: null });
+        }
       })
       .catch((excecao: unknown) => {
-        if (!ativo) return;
-        setErro(
-          excecao instanceof Error
-            ? excecao.message
-            : "Não foi possível carregar os tipos de resíduo.",
-        );
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false);
+        if (controle.signal.aborted) return;
+        setEstado((atual) => ({
+          ...atual,
+          carregando: false,
+          erro:
+            excecao instanceof Error
+              ? excecao.message
+              : "Não foi possível carregar os tipos de resíduo.",
+        }));
       });
-    return () => {
-      ativo = false;
-    };
+
+    return () => controle.abort();
   }, []);
 
-  return { dados, carregando, erro };
+  return estado;
 }

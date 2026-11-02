@@ -16,6 +16,7 @@ import type {
   Ocorrencia,
   PrioridadeOcorrencia,
   QualidadeMaterial,
+  ResultadoDaAprovacao,
   StatusOcorrencia,
 } from "../types/ocorrencia";
 import { carregar, salvar } from "../utils/armazenamento";
@@ -26,7 +27,9 @@ import {
   analiseInconclusiva,
   categoriaDaApi,
   classificacaoDaAnalise,
+  comDecisaoDaApi,
   eventoDaColeta,
+  eventosLocaisSemRepetir,
   ocorrenciaDaApi,
   opcoesDeTipo,
   tipoDaAnalise,
@@ -39,20 +42,23 @@ import { ENVIO_DE_FOTOS_CONFIGURADO, enviarFotoDaOcorrencia } from "./imagens";
 import {
   ErroHttp,
   aoEncerrarSessao,
+  esperarAte,
   obterUsuarioAtual,
   requisitar,
 } from "./http";
 
 /**
- * Ocorrências na volta-api (GET/POST /incidents, PATCH /incidents/{id}/close,
- * GET /incidents/{id}/ai-report). Mantém as mesmas assinaturas do mock.
+ * Ocorrências na volta-api (GET/POST /incidents, PATCH /incidents/{id}/approve e
+ * /reject, GET /incidents/{id}/ai-report). Mantém as mesmas assinaturas do mock.
  *
- * A API ainda não tem recusar, encaminhar, observação nem reclassificação, e o
- * status dela é só PENDING ou CLOSED. Essas quatro ações ficam registradas
- * neste navegador (localStorage, por usuário) e são aplicadas por cima do que a
- * API devolve. O mesmo vale para a análise da IA (recomendação e relatório): a
- * volta-api só a devolve se alguém gravar o laudo, então ela fica guardada neste
- * navegador, por usuário. Quando o backend ganhar os endpoints, só este arquivo muda.
+ * A API ainda não tem encaminhar, observação nem reclassificação pelo painel.
+ * Essas três ações ficam registradas neste navegador (localStorage, por usuário)
+ * e são aplicadas por cima do que a API devolve. Aprovar e recusar gravam no
+ * servidor, que passa a ser quem decide o status.
+ *
+ * O mesmo vale para a análise da IA (recomendação e relatório): a volta-api só a
+ * devolve se alguém gravar o laudo, então ela fica guardada neste navegador, por
+ * usuário. Quando o backend ganhar os endpoints, só este arquivo muda.
  */
 
 const CHAVE_LOCAIS = "volta:ocorrencias-locais";
@@ -69,7 +75,6 @@ interface AlteracaoLocal {
   readonly prioridade?: PrioridadeOcorrencia;
   readonly perigoso?: boolean;
   readonly setorDestino?: string | null;
-  readonly motivoRecusa?: string | null;
   readonly ultimaAlteracao?: string | null;
   readonly atualizadaEm?: string;
   readonly eventos?: readonly EventoOcorrencia[];
@@ -131,20 +136,19 @@ function usar<T>(local: T | undefined, base: T): T {
 function aplicarAlteracoes(base: Ocorrencia): Ocorrencia {
   const alteracao = lerLocais()[base.id];
   if (!alteracao) return base;
-  // Se a API já encerrou a ocorrência, o servidor decide.
-  const encerrada = base.status === "aprovada";
+  // Depois que o servidor aprova, recusa ou encerra, é ele quem decide o status.
+  const decididaNoServidor = base.status !== "classificada";
   return {
     ...base,
-    status: encerrada ? base.status : usar(alteracao.status, base.status),
+    status: decididaNoServidor ? base.status : usar(alteracao.status, base.status),
     material: usar(alteracao.material, base.material),
     qualidade: usar(alteracao.qualidade, base.qualidade),
     prioridade: usar(alteracao.prioridade, base.prioridade),
     perigoso: usar(alteracao.perigoso, base.perigoso),
     setorDestino: usar(alteracao.setorDestino, base.setorDestino),
-    motivoRecusa: usar(alteracao.motivoRecusa, base.motivoRecusa),
     ultimaAlteracao: usar(alteracao.ultimaAlteracao, base.ultimaAlteracao),
     atualizadaEm: usar(alteracao.atualizadaEm, base.atualizadaEm),
-    historico: [...base.historico, ...(alteracao.eventos ?? [])],
+    historico: [...base.historico, ...eventosLocaisSemRepetir(base, alteracao.eventos ?? [])],
   };
 }
 
@@ -224,8 +228,10 @@ export async function listarAreas(): Promise<readonly AreaApi[]> {
 }
 
 /** Setores da empresa da pessoa logada (GET /areas/mine). */
-export async function listarSetores(): Promise<readonly string[]> {
-  const cat = await carregarCatalogo();
+export async function listarSetores(
+  sinal?: AbortSignal,
+): Promise<readonly string[]> {
+  const cat = await esperarAte(carregarCatalogo(), sinal);
   return [...cat.areas.values()]
     .map((area) => area.sectorName)
     .sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -242,6 +248,7 @@ function daApi(dto: IncidenteApi, cat: CatalogoApi): Ocorrencia {
     classificacao: classificacoes.get(dto.id) ?? lerAnalises()[dto.id] ?? null,
     coleta: eventosDeColeta.get(dto.id),
     autorNome: nomeDoAutor(dto.userId),
+    revisorNome: dto.reviewedBy ? nomeDoAutor(dto.reviewedBy) : undefined,
   });
 }
 
@@ -328,7 +335,7 @@ export async function obterOcorrencia(
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
   if (!FORMATO_UUID.test(id)) {
-    throw new Error("Ocorrência não encontrada.");
+    throw new ErroHttp("Ocorrência não encontrada.", 404);
   }
   const [incidente, cat, relatorio, coleta] = await Promise.all([
     requisitar<IncidenteApi>(`/incidents/${id}`, { sinal }),
@@ -357,20 +364,23 @@ function localizar(id: string): Ocorrencia {
 
 const NOME_DO_PERFIL: Readonly<Record<string, string>> = {
   ADMIN: "administrador",
-  MANAGER: "gestor",
   OPERATOR: "operador",
 };
 
-/** A volta-api só deixa o perfil EMPLOYEE criar ocorrência; avisar antes poupa a análise da IA. */
+/** A volta-api só deixa os perfis EMPLOYEE e MANAGER criar ocorrência; avisar antes poupa a análise da IA. */
 function mensagemSePerfilNaoRegistra(): string | null {
   const perfil = obterUsuarioAtual()?.perfil;
-  if (perfil === undefined || perfil === "EMPLOYEE") return null;
-  return `Só colaboradores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador.`;
+  if (perfil === undefined || perfil === "EMPLOYEE" || perfil === "MANAGER") {
+    return null;
+  }
+  return `Só colaboradores e gestores registram ocorrências, e você entrou como ${NOME_DO_PERFIL[perfil] ?? "outro perfil"}. Saia e entre com um usuário colaborador ou gestor.`;
 }
 
 /** Tipos de resíduo que a pessoa pode escolher ao conferir a análise (um por categoria). */
-export async function listarOpcoesDeTipo(): Promise<readonly OpcaoTipoResiduo[]> {
-  return opcoesDeTipo(await carregarCatalogo());
+export async function listarOpcoesDeTipo(
+  sinal?: AbortSignal,
+): Promise<readonly OpcaoTipoResiduo[]> {
+  return opcoesDeTipo(await esperarAte(carregarCatalogo(), sinal));
 }
 
 /**
@@ -444,7 +454,7 @@ export async function criarOcorrencia(
   const peso = classificacao.pesoEstimadoKg ?? null;
   const corpo: NovoIncidenteApi = {
     areaId: area.id,
-    wasteTypeId: tipo.id,
+    wasteTypeIds: [tipo.id],
     photoUrl: endereco,
     employeeDescription: entrada.descricao,
     contaminationLevel: classificacao.contaminacao
@@ -462,7 +472,7 @@ export async function criarOcorrencia(
     // Sessão antiga, sem o perfil guardado: a API recusa e a mensagem explica o motivo.
     if (excecao instanceof ErroHttp && excecao.status === 403) {
       throw new Error(
-        "Só colaboradores registram ocorrências. Saia e entre com um usuário colaborador.",
+        "Só colaboradores e gestores registram ocorrências. Saia e entre com um usuário colaborador ou gestor.",
       );
     }
     throw excecao;
@@ -509,10 +519,26 @@ function registrarLocal(
   return localizar(id);
 }
 
-async function encerrarNaApi(id: string, sinal?: AbortSignal): Promise<void> {
-  await requisitar<void>(`/incidents/${id}/close`, { metodo: "PATCH", sinal });
+/** Maior motivo de recusa que a volta-api aceita. */
+const MOTIVO_MAXIMO = 200;
+
+/**
+ * Aprova (PENDING → APPROVED) ou recusa (PENDING → REJECTED) no servidor e
+ * guarda na lista o que ele devolveu.
+ */
+async function decidirNaApi(
+  id: string,
+  decisao: "approve" | "reject",
+  corpo?: { readonly reason: string },
+  sinal?: AbortSignal,
+): Promise<void> {
+  const resposta = await requisitar<IncidenteApi>(
+    `/incidents/${id}/${decisao}`,
+    { metodo: "PATCH", corpo, sinal },
+  );
+  const revisorNome = resposta.reviewedBy ? (nomeDoAutor(resposta.reviewedBy) ?? null) : null;
   bases = bases.map((item) =>
-    item.id === id ? { ...item, status: "aprovada" } : item,
+    item.id === id ? comDecisaoDaApi(item, resposta, revisorNome) : item,
   );
 }
 
@@ -521,10 +547,10 @@ export async function aprovarOcorrencia(
   autor: string,
   sinal?: AbortSignal,
 ): Promise<Ocorrencia> {
-  await encerrarNaApi(id, sinal);
+  await decidirNaApi(id, "approve", undefined, sinal);
   return registrarLocal(
     id,
-    { status: "aprovada" },
+    {},
     { tipo: "aprovacao", autor, texto: "aprovou a ocorrência" },
   );
 }
@@ -533,7 +559,7 @@ export async function aprovarOcorrencias(
   ids: readonly string[],
   autor: string,
   sinal?: AbortSignal,
-): Promise<number> {
+): Promise<ResultadoDaAprovacao> {
   const elegiveis = ids.filter((id) => {
     const item = cache.find((ocorrencia) => ocorrencia.id === id);
     return item !== undefined && aguardaAprovacao(item.status);
@@ -541,11 +567,24 @@ export async function aprovarOcorrencias(
   const resultados = await Promise.allSettled(
     elegiveis.map((id) => aprovarOcorrencia(id, autor, sinal)),
   );
-  const aprovadas = resultados.filter((r) => r.status === "fulfilled").length;
-  const falha = resultados.find((r) => r.status === "rejected");
-  // Se nenhuma foi aprovada, mostra o motivo; se algumas foram, devolve a contagem.
-  if (aprovadas === 0 && falha) throw falha.reason;
-  return aprovadas;
+  const falhas = resultados.flatMap((resultado, indice) =>
+    resultado.status === "rejected"
+      ? [
+          {
+            id: elegiveis[indice],
+            motivo:
+              resultado.reason instanceof Error
+                ? resultado.reason.message
+                : "Não foi possível aprovar.",
+          },
+        ]
+      : [],
+  );
+  const aprovadas = resultados.length - falhas.length;
+  // Se nenhuma foi aprovada, mostra o motivo; se algumas foram, devolve o resultado.
+  const primeira = resultados.find((r) => r.status === "rejected");
+  if (aprovadas === 0 && primeira) throw primeira.reason;
+  return { aprovadas, falhas };
 }
 
 export async function recusarOcorrencia(
@@ -553,9 +592,10 @@ export async function recusarOcorrencia(
   motivo: string,
   autor: string,
 ): Promise<Ocorrencia> {
+  await decidirNaApi(id, "reject", { reason: motivo.trim().slice(0, MOTIVO_MAXIMO) });
   return registrarLocal(
     id,
-    { status: "recusada", motivoRecusa: motivo },
+    {},
     { tipo: "recusa", autor, texto: `recusou a ocorrência · ${motivo}` },
   );
 }

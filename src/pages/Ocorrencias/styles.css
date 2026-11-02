@@ -127,6 +127,7 @@
 .ocorrencias__rolagem {
   position: relative;
   overflow-x: auto;
+  container-type: inline-size;
 }
 
 .ocorrencias__tabela {
@@ -162,25 +163,22 @@
   width: 4.6%;
 }
 .ocorrencias__tabela .ocorrencias__col-ocorrencia {
-  width: 21.6%;
+  width: 26.6%;
 }
 .ocorrencias__tabela .ocorrencias__col-setor {
-  width: 11%;
+  width: 13%;
 }
 .ocorrencias__tabela .ocorrencias__col-peso {
   width: 7.4%;
-}
-.ocorrencias__tabela .ocorrencias__col-confianca {
-  width: 11.8%;
 }
 .ocorrencias__tabela .ocorrencias__col-prioridade {
   width: 9.8%;
 }
 .ocorrencias__tabela .ocorrencias__col-status {
-  width: 18.8%;
+  width: 21.2%;
 }
 .ocorrencias__tabela .ocorrencias__col-registrada {
-  width: 10.8%;
+  width: 13.2%;
 }
 .ocorrencias__tabela .ocorrencias__col-abrir {
   width: 4.2%;
@@ -251,31 +249,6 @@
   line-height: 15px;
 }
 
-.ocorrencias__confianca {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ocorrencias__confianca strong {
-  font-size: 12.5px;
-}
-
-.ocorrencias__barra {
-  width: 61px;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #edf2ee;
-}
-
-.ocorrencias__barra span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
-}
-
 .ocorrencias__pill {
   display: inline-flex;
   align-items: center;
@@ -341,6 +314,25 @@
   padding: 48px 16px;
   color: var(--oc-mudo);
   text-align: center;
+}
+
+/* O estado ocupa a célula inteira e já tem a margem dele. */
+.ocorrencias__vazio:has(.estado-painel) {
+  padding: 0;
+}
+
+/* A tabela rola na horizontal em tela estreita; o estado fica preso à parte visível (100cqw). */
+.ocorrencias__vazio .estado-painel {
+  position: sticky;
+  left: 0;
+  width: 100cqw;
+  margin-inline: 0;
+  padding-inline: 16px;
+  box-sizing: border-box;
+}
+
+.ocorrencias__vazio .estado-painel__texto {
+  max-width: 520px;
 }
 
 .ocorrencias__rodape {
@@ -503,4 +495,102 @@
   height: 2px;
   border-radius: 1px;
   background: #fff;
+}
+
+/* Tabela enquanto a lista carrega */
+.ocorrencias__tabela tbody tr.ocorrencias__esqueleto-linha {
+  cursor: default;
+}
+
+.ocorrencias__tabela tbody tr.ocorrencias__esqueleto-linha:hover {
+  background: transparent;
+}
+
+.ocorrencias__esqueleto {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf2ee 0%, #e0e7e2 50%, #edf2ee 100%);
+  background-size: 200% 100%;
+  animation: ocorrencias-brilho 1.6s linear infinite;
+}
+
+.ocorrencias__esqueleto--caixa {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+}
+
+.ocorrencias__esqueleto--icone {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.ocorrencias__esqueleto--longa {
+  width: 150px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--curta {
+  width: 54px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--media {
+  width: 92px;
+  max-width: 100%;
+}
+
+.ocorrencias__esqueleto--pilula {
+  width: 48px;
+  height: 22px;
+}
+
+.ocorrencias__esqueleto--pilula-larga {
+  width: 110px;
+  height: 22px;
+}
+
+.ocorrencias__esqueleto-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ocorrencias__esqueleto-linhas {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@keyframes ocorrencias-brilho {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ocorrencias__esqueleto {
+    animation: none;
+  }
+}
+
+/* Motivos das que ficaram de fora da aprovação em massa */
+.aprovacao-parcial__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f6f9f7;
+  color: var(--texto);
+  font-size: 12.5px;
+  list-style: none;
 }

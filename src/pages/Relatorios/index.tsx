@@ -1,35 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { CartoesResumo } from "../../components/CartoesResumo";
 import type { CartaoResumo } from "../../components/CartoesResumo";
+import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
 import { Icone } from "../../components/Icone";
 import { SkeletonList } from "../../components/SkeletonList";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
-import { useAcoesRelatorio, useRelatorio } from "../../hooks/useRelatorio";
+import { useMetaRecuperacao, usePreferenciasDaMeta } from "../../hooks/useMeta";
+import { useDadosReais } from "../../hooks/useModo";
+import { useRelatorio } from "../../hooks/useRelatorio";
+import type { MetasSalvas } from "../../types/configuracao";
 import { PERIODOS_RELATORIO } from "../../types/relatorio";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../../types/relatorio";
 import { baixarCsv } from "../../utils/exportarCsv";
+import { diasDeOperacaoDoMes, metaDoDiaKg } from "../../utils/metas";
 import {
   montarCsvRelatorio,
   ROTULOS_PERIODO,
   TEXTO_PERIODO,
 } from "../../utils/relatorio";
+import type { MetasDoRelatorio } from "../../utils/relatorio";
 import { CartaoPgrs } from "./CartaoPgrs";
 import { GraficoMateriais } from "./GraficoMateriais";
+import { OcorrenciasPorSetor } from "./OcorrenciasPorSetor";
 import { DestinacaoCooperativas, RankingSetores } from "./Rankings";
 import "./styles.css";
-
-interface ArquivoGerado {
-  readonly nome: string;
-  readonly conteudo: string;
-}
 
 interface Aviso {
   readonly titulo: string;
   readonly descricao: string;
+}
+
+/** A tela de metas volta para cá com o que gravou; vira o aviso "Metas salvas". */
+function avisoDasMetas(estado: unknown): Aviso | null {
+  const metas = (estado as { metasSalvas?: MetasSalvas } | null)?.metasSalvas;
+  if (!metas) return null;
+  return {
+    titulo: "Metas salvas",
+    descricao: `${metas.mesKg.toLocaleString("pt-BR")} kg no mês · ${metas.diaKg.toLocaleString("pt-BR")} kg por dia`,
+  };
 }
 
 function montarCartoes(relatorio: RelatorioPgrs): readonly CartaoResumo[] {
@@ -66,64 +79,85 @@ function montarCartoes(relatorio: RelatorioPgrs): readonly CartaoResumo[] {
 
 export default function Relatorios(): ReactNode {
   const { usuario } = useAuth();
+  const dadosReais = useDadosReais();
+  const localizacao = useLocation();
+  const navegar = useNavigate();
+  const metaDoMesKg = useMetaRecuperacao();
+  const preferenciasDaMeta = usePreferenciasDaMeta();
+  const podeDefinirMetas =
+    !dadosReais || usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const [periodo, setPeriodo] = useState<PeriodoRelatorio>("mes");
-  const { dados, carregando, erro } = useRelatorio(periodo);
-  const acoes = useAcoesRelatorio();
+  const [chaveRecarga, setChaveRecarga] = useState<number>(0);
+  const { dados, carregando, erro } = useRelatorio(periodo, chaveRecarga);
 
-  const [gerando, setGerando] = useState<boolean>(false);
-  const [ultimo, setUltimo] = useState<ArquivoGerado | null>(null);
-  const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [erroGeracao, setErroGeracao] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<Aviso | null>(() =>
+    avisoDasMetas(localizacao.state),
+  );
+
+  // O aviso já foi lido: limpa o estado da navegação para ele não voltar ao recarregar.
+  useEffect(() => {
+    if (avisoDasMetas(localizacao.state)) {
+      navegar(localizacao.pathname, { replace: true, state: null });
+    }
+  }, [localizacao.pathname, localizacao.state, navegar]);
+
+  /** As metas só entram no relatório do mês e se o aviso estiver ligado. */
+  function metasDoCsv(relatorio: RelatorioPgrs): MetasDoRelatorio | undefined {
+    if (
+      relatorio.periodo !== "mes" ||
+      metaDoMesKg <= 0 ||
+      !preferenciasDaMeta.avisosDaMeta.incluirNoPgrs
+    ) {
+      return undefined;
+    }
+    return {
+      metaMensalKg: metaDoMesKg,
+      metaDoDiaKg: metaDoDiaKg(
+        metaDoMesKg,
+        diasDeOperacaoDoMes(preferenciasDaMeta.diasDeOperacao, new Date()),
+        preferenciasDaMeta.metaDoDia,
+      ),
+      porMaterial: preferenciasDaMeta.metaPorMaterial,
+    };
+  }
 
   function exportarCsv(relatorio: RelatorioPgrs): void {
     baixarCsv(
       `relatorio-${relatorio.periodo}.csv`,
-      montarCsvRelatorio(relatorio),
+      montarCsvRelatorio(relatorio, undefined, metasDoCsv(relatorio)),
     );
   }
 
-  async function gerar(relatorio: RelatorioPgrs): Promise<void> {
-    setGerando(true);
-    setErroGeracao(null);
-    try {
-      const { geradoEm } = await acoes.gerarPgrs(relatorio.periodo);
-      const arquivo: ArquivoGerado = {
-        nome: `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`,
-        conteudo: montarCsvRelatorio(relatorio, {
-          unidade: usuario?.unidade ?? "Unidade",
-          geradoEm,
-        }),
-      };
-      baixarCsv(arquivo.nome, arquivo.conteudo);
-      setUltimo(arquivo);
-      setAviso({
-        titulo: "Relatório PGRS gerado",
-        descricao: `${arquivo.nome} foi baixado.`,
-      });
-    } catch {
-      setErroGeracao("Não foi possível gerar o PGRS. Tente de novo em instantes.");
-    } finally {
-      setGerando(false);
-    }
+  /** O documento do PGRS (a pessoa o salva em PDF pelo navegador). */
+  function abrirDocumento(relatorio: RelatorioPgrs): void {
+    navegar(`/relatorios/pgrs?periodo=${relatorio.periodo}`);
   }
 
-  function baixarUltimo(): void {
-    if (ultimo) baixarCsv(ultimo.nome, ultimo.conteudo);
+  /** O mesmo PGRS em planilha, com a unidade e a data de geração no começo. */
+  function baixarCsvDoPgrs(relatorio: RelatorioPgrs): void {
+    const geradoEm = new Date().toISOString();
+    const nome = `pgrs-${relatorio.periodo}-${geradoEm.slice(0, 10)}.csv`;
+    baixarCsv(
+      nome,
+      montarCsvRelatorio(
+        relatorio,
+        { unidade: usuario?.unidade ?? "Unidade", geradoEm },
+        metasDoCsv(relatorio),
+      ),
+    );
+    setAviso({ titulo: "CSV do PGRS baixado", descricao: `${nome} foi baixado.` });
+  }
+
+  if (erro && !dados) {
+    return (
+      <section className="rel" aria-label="Relatórios PGRS">
+        <EstadoForaDoAr aoTentarDeNovo={() => setChaveRecarga((v) => v + 1)} />
+      </section>
+    );
   }
 
   return (
     <section className="rel" aria-label="Relatórios PGRS">
-      {erro ? (
-        <Alerta variante="erro" titulo="Não foi possível carregar">
-          {erro}
-        </Alerta>
-      ) : null}
-      {erroGeracao ? (
-        <Alerta variante="erro" titulo="PGRS não gerado">
-          {erroGeracao}
-        </Alerta>
-      ) : null}
-
       <div className="rel__topo">
         <div className="rel__periodos" role="group" aria-label="Período do relatório">
           {PERIODOS_RELATORIO.map((item) => (
@@ -138,19 +172,36 @@ export default function Relatorios(): ReactNode {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="rel__exportar"
-          disabled={!dados}
-          onClick={() => dados && exportarCsv(dados)}
-        >
-          <Icone nome="download" tamanho={14} />
-          Exportar CSV
-        </button>
+        <div className="rel__acoes">
+          {podeDefinirMetas ? (
+            <Link to="/relatorios/metas" className="rel__exportar">
+              <Icone nome="alvo" tamanho={14} />
+              Definir metas
+            </Link>
+          ) : null}
+          <button
+            type="button"
+            className="rel__exportar"
+            disabled={!dados}
+            onClick={() => dados && exportarCsv(dados)}
+          >
+            <Icone nome="download" tamanho={14} />
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       {!dados && carregando ? (
         <SkeletonList quantidade={4} rotulo="Carregando relatório" />
+      ) : dados && dados.ocorrencias === 0 ? (
+        <EstadoPainel
+          pose="pergunta"
+          tag="Sem resultado"
+          titulo="Ainda não há dados neste período"
+          texto="Os números aparecem aqui quando as ocorrências forem registradas e coletadas. Experimente outro período."
+        >
+          <AcaoDoEstado para="/ocorrencias">Ver ocorrências</AcaoDoEstado>
+        </EstadoPainel>
       ) : dados ? (
         <div className="rel__conteudo" aria-busy={carregando}>
           <CartoesResumo rotulo="Indicadores do período" cartoes={montarCartoes(dados)} />
@@ -166,10 +217,8 @@ export default function Relatorios(): ReactNode {
               periodo={dados.periodo}
               scoreEsg={dados.scoreEsg ?? null}
               posicaoNoRanking={dados.posicaoNoRanking ?? null}
-              gerando={gerando}
-              temUltimo={ultimo !== null}
-              aoGerar={() => void gerar(dados)}
-              aoBaixarUltimo={baixarUltimo}
+              aoGerar={() => abrirDocumento(dados)}
+              aoBaixarCsv={() => baixarCsvDoPgrs(dados)}
             />
           </div>
 
@@ -195,6 +244,11 @@ export default function Relatorios(): ReactNode {
               )}
             </section>
           </div>
+
+          <OcorrenciasPorSetor
+            periodo={dados.periodo}
+            setores={dados.ocorrenciasPorSetor}
+          />
         </div>
       ) : null}
 

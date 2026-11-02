@@ -35,11 +35,14 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      - name: Lint (ESLint)
+      - name: Lint (oxlint)
         run: npm run lint
 
       - name: Verificação de tipos
         run: npx tsc --noEmit
+
+      - name: Testes unitários (vitest)
+        run: npm test
 
       - name: Build de produção
         env:

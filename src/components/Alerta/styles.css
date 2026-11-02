@@ -1,36 +1,50 @@
 .alerta {
   display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   border-radius: var(--raio);
   margin: 0 0 1rem;
-  border-left: 4px solid transparent;
+}
+
+.alerta__icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.6px solid currentColor;
+  border-radius: 50%;
 }
 
 .alerta__conteudo {
   flex: 1;
+  min-width: 0;
 }
 
 .alerta__titulo {
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.125rem;
+}
+
+/* O título leva a cor do alerta; a descrição, a cor de texto, como no Figma. */
+.alerta__conteudo > div {
+  color: var(--texto);
+  font-size: 0.875rem;
 }
 
 .alerta--erro {
   background: var(--erro-bg);
   color: var(--erro-fg);
-  border-left-color: var(--erro-fg);
 }
 
 .alerta--sucesso {
   background: var(--sucesso-bg);
   color: var(--sucesso-fg);
-  border-left-color: var(--sucesso-fg);
 }
 
 .alerta--info {
   background: var(--info-bg);
   color: var(--info-fg);
-  border-left-color: var(--info-fg);
 }

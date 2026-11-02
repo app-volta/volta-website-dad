@@ -7,13 +7,15 @@ import {
   listarEquipe,
   reenviarConvite,
 } from "../services/equipe";
-import type { EstadoRequisicao } from "../types/comum";
+import type { EstadoLista } from "../types/comum";
 import type { MembroEquipe } from "../types/equipe";
+import { foiProibido } from "../utils/erros";
 
 interface Resultado {
   readonly chave: number;
   readonly dados: readonly MembroEquipe[] | null;
   readonly erro: string | null;
+  readonly semPermissao: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ interface Resultado {
  */
 export function useEquipe(
   chaveRecarga = 0,
-): EstadoRequisicao<readonly MembroEquipe[]> {
+): EstadoLista<readonly MembroEquipe[]> {
   const [resultado, setResultado] = useState<Resultado | null>(null);
 
   useEffect(() => {
@@ -31,16 +33,19 @@ export function useEquipe(
     listarEquipe(controle.signal)
       .then((dados) => {
         if (!controle.signal.aborted) {
-          setResultado({ chave: chaveRecarga, dados, erro: null });
+          setResultado({ chave: chaveRecarga, dados, erro: null, semPermissao: false });
         }
       })
       .catch((excecao: unknown) => {
         if (controle.signal.aborted) return;
+        const proibido = foiProibido(excecao);
         setResultado({
           chave: chaveRecarga,
           dados: null,
-          erro:
-            excecao instanceof Error
+          semPermissao: proibido,
+          erro: proibido
+            ? null
+            : excecao instanceof Error
               ? excecao.message
               : "Falha ao carregar a equipe.",
         });
@@ -54,6 +59,7 @@ export function useEquipe(
     dados: resultado?.dados ?? null,
     carregando: !atual,
     erro: atual ? (resultado?.erro ?? null) : null,
+    semPermissao: atual ? (resultado?.semPermissao ?? false) : false,
   };
 }
 

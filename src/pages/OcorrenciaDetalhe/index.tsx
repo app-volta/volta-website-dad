@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { Alerta } from "../../components/Alerta";
+import { AcaoDoEstado, EstadoPainel } from "../../components/EstadoPainel";
 import { Icone } from "../../components/Icone";
 import type { NomeIcone } from "../../components/Icone";
 import { Spinner } from "../../components/Spinner";
 import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
+import { useConexao } from "../../hooks/useConexao";
 import { useDadosReais } from "../../hooks/useModo";
 import { useCooperativasIndicadas } from "../../hooks/useCooperativasIndicadas";
 import {
@@ -27,12 +29,11 @@ import {
   recomendacaoVolta,
   relatorioAutomatico,
 } from "../../utils/analiseOcorrencia";
-import { DETECCOES, rotuloDeteccao } from "../../utils/deteccoes";
+import { foiOcorrenciaDesatualizada, foiSemResposta } from "../../utils/erros";
 import {
-  formatarConfianca,
   formatarKm,
   formatarNotaDaCooperativa,
-  formatarPeso,
+  descreverPeso,
   formatarRegistro,
 } from "../../utils/formatacao";
 import {
@@ -40,9 +41,11 @@ import {
   ROTULO_PRIORIDADE,
   aguardaAprovacao,
   categoriaDe,
+  descreverRevisao,
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
 import { ModalClassificar } from "./modais/ModalClassificar";
+import { ModalDesatualizada } from "./modais/ModalDesatualizada";
 import { ModalEncaminhar } from "./modais/ModalEncaminhar";
 import { ModalObservacao } from "./modais/ModalObservacao";
 import { ModalRecusar } from "./modais/ModalRecusar";
@@ -56,6 +59,7 @@ type ModalAtivo =
   | "classificar"
   | "encaminhar"
   | "observacao"
+  | "desatualizada"
   | null;
 
 interface Aviso {
@@ -110,16 +114,22 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const podeRevisar =
     usuario?.perfil === "ADMIN" || usuario?.perfil === "MANAGER";
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
-  const { dados, carregando, erro } = useOcorrencia(id, chaveRecarga);
+  const { dados, carregando, erro, naoEncontrada } = useOcorrencia(
+    id,
+    chaveRecarga,
+  );
   const acoes = useAcoesOcorrencia();
+  const semRede = !useConexao().online;
   const semelhantes = useSemelhantesNaSemana(dados);
   const { indicacao, aviso: avisoIndicacao } = useCooperativasIndicadas(
     dados?.id ?? null,
     dados ? aguardaAprovacao(dados.status) : false,
   );
   const [modal, setModal] = useState<ModalAtivo>(null);
+  const navegar = useNavigate();
   const [salvando, setSalvando] = useState<boolean>(false);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [erroSemResposta, setErroSemResposta] = useState<boolean>(false);
   const [aviso, setAviso] = useState<Aviso | null>(null);
 
   useEffect(() => {
@@ -136,6 +146,19 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   if (carregando && !dados) return <Spinner rotulo="Carregando ocorrência…" />;
 
+  if (naoEncontrada) {
+    return (
+      <EstadoPainel
+        pose="pergunta"
+        tag="Não encontrado"
+        titulo="Não encontramos essa ocorrência"
+        texto="Ela pode ter sido removida, ou o link é de outra unidade."
+      >
+        <AcaoDoEstado para="/ocorrencias">Ver ocorrências</AcaoDoEstado>
+      </EstadoPainel>
+    );
+  }
+
   if (erro || !dados) {
     return (
       <Alerta variante="erro" titulo="Não conseguimos abrir">
@@ -146,7 +169,6 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   const ocorrencia = dados;
   const categoria = categoriaDe(ocorrencia.status);
-  const confianca = ocorrencia.classificacao?.confianca ?? null;
   const material = ocorrencia.material
     ? METADADOS_MATERIAL[ocorrencia.material].rotulo
     : null;
@@ -154,6 +176,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const decidida = !aguardaAprovacao(ocorrencia.status);
   const numero = ocorrencia.codigo.replace(/\D/g, "");
   const autor = usuario?.nome ?? "Equipe";
+  const revisao = descreverRevisao(ocorrencia, usuario?.id);
 
   async function executar(
     acao: () => Promise<unknown>,
@@ -162,12 +185,18 @@ export default function OcorrenciaDetalhe(): ReactNode {
   ): Promise<void> {
     setSalvando(true);
     setErroAcao(null);
+    setErroSemResposta(false);
     try {
       await acao();
       setChaveRecarga((v) => v + 1);
       aoConcluir();
     } catch (excecao) {
+      if (foiOcorrenciaDesatualizada(excecao)) {
+        setModal("desatualizada");
+        return;
+      }
       setErroAcao(excecao instanceof Error ? excecao.message : mensagemPadrao);
+      setErroSemResposta(foiSemResposta(excecao));
     } finally {
       setSalvando(false);
     }
@@ -175,6 +204,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
 
   function abrir(destino: Exclude<ModalAtivo, null>): void {
     setErroAcao(null);
+    setErroSemResposta(false);
     setModal(destino);
   }
 
@@ -309,36 +339,11 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   <Icone nome="brilho" tamanho={12} />
                   Análise concluída
                 </span>
-                {(confianca === null ? [] : DETECCOES).map((d) => (
-                  <span
-                    key={`${d.esquerda}-${d.topo}`}
-                    className="detalhe__deteccao"
-                    aria-hidden="true"
-                    style={{
-                      left: `${d.esquerda}%`,
-                      top: `${d.topo}%`,
-                      width: `${d.largura}%`,
-                      height: `${d.altura}%`,
-                    }}
-                  >
-                    <span className="detalhe__deteccao-rotulo">
-                      {rotuloDeteccao(
-                        d,
-                        material ?? ocorrencia.titulo,
-                        Math.round((confianca ?? 0) * 100),
-                      )}
-                    </span>
-                  </span>
-                ))}
               </div>
               <div className="detalhe__fatos">
                 <div className="detalhe__fato">
                   <p>Local</p>
                   <strong>{ocorrencia.localizacao.setor}</strong>
-                </div>
-                <div className="detalhe__fato">
-                  <p>Confiança da IA</p>
-                  <strong>{formatarConfianca(confianca)}</strong>
                 </div>
               </div>
             </div>
@@ -355,8 +360,8 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   <strong>{contaminacao(ocorrencia.classificacao)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--quantidade">
-                  <p>Quantidade</p>
-                  <strong>{formatarPeso(ocorrencia.pesoKg)}</strong>
+                  <p>Peso aproximado</p>
+                  <strong>{descreverPeso(ocorrencia.pesoKg)}</strong>
                 </div>
                 <div className="detalhe__card detalhe__card--prioridade">
                   <p>Prioridade</p>
@@ -423,6 +428,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("classificar")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--ambar" aria-hidden="true">
@@ -442,6 +448,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("encaminhar")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--azul" aria-hidden="true">
@@ -461,6 +468,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                     type="button"
                     className="detalhe__acao"
                     aria-haspopup="dialog"
+                    disabled={semRede}
                     onClick={() => abrir("observacao")}
                   >
                     <span className="detalhe__acao-icone detalhe__tom--roxo" aria-hidden="true">
@@ -476,25 +484,28 @@ export default function OcorrenciaDetalhe(): ReactNode {
             ) : null}
 
             {decidida ? (
-              <p className={`detalhe__decisao detalhe__decisao--${categoria}`}>
-                {categoria === "aprovadas" ? (
-                  <>
-                    <Icone nome="check" tamanho={15} /> Aprovada e no PGRS do mês
-                  </>
-                ) : categoria === "encaminhadas" ? (
-                  <>
-                    <Icone nome="seta-direita" tamanho={15} /> Encaminhada para{" "}
-                    {ocorrencia.setorDestino ?? "outro setor"}
-                  </>
-                ) : (
-                  <>
-                    <Icone nome="fechar" tamanho={15} /> Recusada
-                    {ocorrencia.motivoRecusa
-                      ? ` · ${ocorrencia.motivoRecusa}`
-                      : ""}
-                  </>
-                )}
-              </p>
+              <>
+                <p className={`detalhe__decisao detalhe__decisao--${categoria}`}>
+                  {categoria === "aprovadas" ? (
+                    <>
+                      <Icone nome="check" tamanho={15} /> Aprovada e no PGRS do mês
+                    </>
+                  ) : categoria === "encaminhadas" ? (
+                    <>
+                      <Icone nome="seta-direita" tamanho={15} /> Encaminhada para{" "}
+                      {ocorrencia.setorDestino ?? "outro setor"}
+                    </>
+                  ) : (
+                    <>
+                      <Icone nome="fechar" tamanho={15} /> Recusada
+                      {ocorrencia.motivoRecusa
+                        ? ` · ${ocorrencia.motivoRecusa}`
+                        : ""}
+                    </>
+                  )}
+                </p>
+                {revisao ? <p className="detalhe__revisao">{revisao}</p> : null}
+              </>
             ) : dadosReais ? (
               podeRevisar ? (
                 <>
@@ -503,14 +514,25 @@ export default function OcorrenciaDetalhe(): ReactNode {
                       type="button"
                       className="detalhe__aprovar"
                       aria-haspopup="dialog"
+                      disabled={semRede}
                       onClick={() => abrir("aprovar")}
                     >
                       <Icone nome="check" tamanho={16} />
                       Aprovar ocorrência
                     </button>
+                    <button
+                      type="button"
+                      className="detalhe__recusar"
+                      aria-haspopup="dialog"
+                      disabled={semRede}
+                      onClick={() => abrir("recusar")}
+                    >
+                      <Icone nome="fechar" tamanho={15} />
+                      Recusar
+                    </button>
                   </div>
                   <Alerta variante="info" titulo="Outras ações indisponíveis">
-                    A API ainda não salva reclassificação, recusa, encaminhamento ou observações.
+                    A API ainda não salva reclassificação, encaminhamento ou observações.
                   </Alerta>
                 </>
               ) : (
@@ -524,6 +546,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   type="button"
                   className="detalhe__aprovar"
                   aria-haspopup="dialog"
+                  disabled={semRede}
                   onClick={() => abrir("aprovar")}
                 >
                   <Icone nome="check" tamanho={16} />
@@ -533,6 +556,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
                   type="button"
                   className="detalhe__recusar"
                   aria-haspopup="dialog"
+                  disabled={semRede}
                   onClick={() => abrir("recusar")}
                 >
                   <Icone nome="fechar" tamanho={15} />
@@ -597,6 +621,14 @@ export default function OcorrenciaDetalhe(): ReactNode {
         aoConfirmar={aprovar}
         aoFechar={() => setModal(null)}
       />
+      <ModalDesatualizada
+        aberto={modal === "desatualizada"}
+        aoVerAgora={() => {
+          setModal(null);
+          setChaveRecarga((v) => v + 1);
+        }}
+        aoVoltarParaLista={() => navegar("/ocorrencias")}
+      />
       <ModalSucesso
         aberto={modal === "sucesso"}
         numero={numero}
@@ -613,6 +645,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
           ocorrencia={ocorrencia}
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={classificar}
           aoFechar={() => setModal(null)}
         />
@@ -637,6 +670,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
         <ModalRecusar
           salvando={salvando}
           erro={erroAcao}
+          semResposta={erroSemResposta}
           aoConfirmar={recusar}
           aoFechar={() => setModal(null)}
         />

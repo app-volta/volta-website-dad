@@ -22,6 +22,28 @@ export function distanciaEmKm(origem: Coordenadas, destino: Coordenadas): number
   return Math.round(km * 10) / 10;
 }
 
+/**
+ * Ponto a `distanciaKm` de `origem`, na direção `rumoGraus` (0 é norte, 90 é leste).
+ * Aproximação plana, boa para algumas dezenas de quilômetros.
+ */
+export function pontoA(
+  origem: Coordenadas,
+  distanciaKm: number,
+  rumoGraus: number,
+): Coordenadas {
+  const rumo = emRadianos(rumoGraus);
+  const kmPorGrau = (Math.PI * RAIO_DA_TERRA_KM) / 180;
+  return {
+    latitude: Number((origem.latitude + (distanciaKm * Math.cos(rumo)) / kmPorGrau).toFixed(6)),
+    longitude: Number(
+      (
+        origem.longitude +
+        (distanciaKm * Math.sin(rumo)) / (kmPorGrau * Math.cos(emRadianos(origem.latitude)))
+      ).toFixed(6),
+    ),
+  };
+}
+
 interface ComDistancia {
   readonly nome: string;
   readonly distanciaKm: number | null;

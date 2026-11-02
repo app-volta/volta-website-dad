@@ -29,12 +29,6 @@ export const ROTULOS_MATERIAL_ACEITO: Readonly<Record<MaterialAceito, string>> =
 
 export type SituacaoCooperativa = "ativa" | "em_homologacao";
 
-/** Posição ilustrativa no mapa, em % da largura e da altura. */
-export interface PosicaoMapa {
-  readonly x: number;
-  readonly y: number;
-}
-
 export interface Cooperativa {
   readonly id: string;
   readonly nome: string;
@@ -65,8 +59,9 @@ export interface Cooperativa {
   readonly licencaDocumento: string | null;
   /** Volume destinado nos últimos cinco meses, do mais antigo ao mais recente. */
   readonly volumeMensalKg: readonly number[];
-  /** Ilustrativo: a API real deve devolver latitude e longitude. */
-  readonly posicaoMapa: PosicaoMapa;
+  /** Coordenadas da sede, para o mapa; nulas quando a fonte não as informa. */
+  readonly latitude: number | null;
+  readonly longitude: number | null;
   readonly logoUrl?: string;
 }
 
@@ -86,11 +81,24 @@ export interface IndicacaoDeCooperativas {
   readonly cooperativas: readonly CooperativaIndicada[];
 }
 
+/** Campos do formulário de cadastro, como a pessoa digita (coordenadas ainda em texto). */
+export interface FormularioCooperativa {
+  readonly nome: string;
+  readonly cnpj: string;
+  readonly materiais: readonly MaterialAceito[];
+  readonly arquivo: File | null;
+  readonly email: string;
+  readonly latitude: string;
+  readonly longitude: string;
+}
+
 export interface NovaCooperativa {
   readonly nome: string;
   readonly cnpj: string;
   readonly materiais: readonly MaterialAceito[];
   readonly licenca: File | null;
+  /** E-mail de contato, exigido pela volta-api. */
+  readonly email: string;
   /** Localização da sede, exigida pela volta-api. */
   readonly latitude?: number;
   readonly longitude?: number;

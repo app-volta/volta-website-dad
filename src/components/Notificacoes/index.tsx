@@ -14,6 +14,8 @@ const ICONE: Readonly<Record<TipoNotificacao, NomeIcone>> = {
   licenca: "alerta",
   fila: "bandeira",
   meta: "alvo",
+  ocorrencia: "bandeira",
+  coleta: "caminhao",
 };
 
 const TOM: Readonly<Record<TipoNotificacao, string>> = {
@@ -21,6 +23,8 @@ const TOM: Readonly<Record<TipoNotificacao, string>> = {
   licenca: "laranja",
   fila: "ambar",
   meta: "roxo",
+  ocorrencia: "ambar",
+  coleta: "azul",
 };
 
 interface NotificacoesProps {

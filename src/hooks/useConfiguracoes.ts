@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  metaRecuperacaoAtual,
   obterConfiguracoes,
   salvarConfiguracoes,
 } from "../services/configuracoes";
@@ -67,11 +66,6 @@ export function useConfiguracoes(): EstadoConfiguracoes {
   const limparErro = useCallback(() => setErro(null), []);
 
   return { dados, carregando: dados === null && erro === null, erro, atualizar, limparErro };
-}
-
-/** Meta de recuperação do mês em kg, a que o responsável definiu em Configurações. */
-export function useMetaRecuperacao(): number {
-  return metaRecuperacaoAtual();
 }
 
 /** Quanto a unidade já recuperou no mês, em kg: o mesmo número do Início. */

@@ -8,8 +8,10 @@ import { Icone } from "../../components/Icone";
 import { Input } from "../../components/Input";
 import { LogoVolta } from "../../components/LogoVolta";
 import { PainelAcesso } from "../../components/PainelAcesso";
+import { TEXTOS_DE_ENTRADA } from "../../components/PainelAcesso/textos";
 import { Rodape } from "../../components/Rodape";
 import { useAuth } from "../../context/AuthContext";
+import { foiNaoAutorizado } from "../../utils/erros";
 import { combinar, validarEmail, validarSenha } from "../../utils/validadores";
 import "./styles.css";
 
@@ -37,6 +39,8 @@ export default function Login(): ReactNode {
   );
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
   const [manterConectado, setManterConectado] = useState<boolean>(true);
+  const [credenciaisIncorretas, setCredenciaisIncorretas] =
+    useState<boolean>(false);
 
   useEffect(() => {
     if (sessao) navegar(estadoDe ?? "/", { replace: true });
@@ -45,6 +49,7 @@ export default function Login(): ReactNode {
   async function tratarSubmit(evento: FormEvent<HTMLFormElement>): Promise<void> {
     evento.preventDefault();
     limparErro();
+    setCredenciaisIncorretas(false);
     const validacao = combinar({
       email: validarEmail(formulario.email),
       senha: validarSenha(formulario.senha),
@@ -53,104 +58,109 @@ export default function Login(): ReactNode {
     if (!validacao.valido) return;
     try {
       await entrar({ email: formulario.email, senha: formulario.senha });
-    } catch {
-      /* erro tratado no contexto */
+    } catch (excecao) {
+      // E-mail ou senha errados (401): a senha digitada é apagada, o e-mail fica.
+      if (foiNaoAutorizado(excecao)) {
+        setCredenciaisIncorretas(true);
+        setFormulario((atual) => ({ ...atual, senha: "" }));
+        setErrosCampo({
+          senha: "A senha foi apagada por segurança. Digite de novo.",
+        });
+      }
+      // Os demais erros aparecem pelo contexto.
     }
   }
 
   return (
     <div className="login-tela">
-      <PainelAcesso
-        titulo={["Cuidar do descarte", "ficou simples."]}
-        texto="Aprove ocorrências, acompanhe metas e gerencie as cooperativas parceiras da sua unidade num lugar só."
-        destaques={[
-          "Aprovação de ocorrências em um clique",
-          "Relatório PGRS gerado automaticamente",
-          "Cooperativas homologadas e com licença em dia",
-        ]}
-      />
+      <a href="#conteudo" className="skip-link">
+        Pular para o conteúdo principal
+      </a>
+      <PainelAcesso {...TEXTOS_DE_ENTRADA} />
 
-      <main
-        id="conteudo"
-        className="login-tela__form-lado login-tela__form-lado--entrar"
-        tabIndex={-1}
-      >
+      <div className="login-tela__form-lado login-tela__form-lado--entrar">
         <div className="login-tela__form-card">
-          <div className="login-tela__form-logo">
+          <header className="login-tela__form-logo">
             <LogoVolta altura={42} />
-          </div>
-          <h1 className="login-tela__titulo">Bem-vindo de volta</h1>
-          <p className="login-tela__descricao">
-            Entre com o e-mail da sua unidade.
-          </p>
+          </header>
+          <main id="conteudo" className="login-tela__form-principal" tabIndex={-1}>
+            <h1 className="login-tela__titulo">Bem-vindo de volta</h1>
+            <p className="login-tela__descricao">
+              Entre com o e-mail da sua unidade.
+            </p>
 
-          {erro ? (
-            <Alerta variante="erro" titulo="Não foi possível entrar">
-              {erro}
-            </Alerta>
-          ) : null}
+            {credenciaisIncorretas ? (
+              <Alerta variante="erro" titulo="E-mail ou senha incorretos">
+                Confira os dados e tente de novo.
+              </Alerta>
+            ) : erro ? (
+              <Alerta variante="erro" titulo="Não foi possível entrar">
+                {erro}
+              </Alerta>
+            ) : null}
 
-          <form onSubmit={tratarSubmit} noValidate>
-            <Input
-              rotulo="E-mail"
-              type="email"
-              autoComplete="email"
-              required
-              placeholder="nome@empresa.com.br"
-              value={formulario.email}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, email: valor }))
-              }
-              erro={errosCampo.email}
-              iconeEsquerdo="mensagem"
-            />
-            <Input
-              rotulo="Senha"
-              type={mostrarSenha ? "text" : "password"}
-              autoComplete="current-password"
-              required
-              value={formulario.senha}
-              onChange={(valor) =>
-                setFormulario((atual) => ({ ...atual, senha: valor }))
-              }
-              erro={errosCampo.senha}
-              iconeEsquerdo="cadeado"
-              acaoDireita={{
-                icone: mostrarSenha ? "olho" : "olho-riscado",
-                rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
-                aoClicar: () => setMostrarSenha((v) => !v),
-              }}
-            />
+            <form onSubmit={tratarSubmit} noValidate>
+              <Input
+                rotulo="E-mail"
+                type="email"
+                autoComplete="email"
+                required
+                placeholder="nome@empresa.com.br"
+                value={formulario.email}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, email: valor }))
+                }
+                erro={errosCampo.email}
+                iconeEsquerdo="mensagem"
+              />
+              <Input
+                rotulo="Senha"
+                type={mostrarSenha ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={formulario.senha}
+                onChange={(valor) =>
+                  setFormulario((atual) => ({ ...atual, senha: valor }))
+                }
+                erro={errosCampo.senha}
+                iconeEsquerdo="cadeado"
+                acaoDireita={{
+                  icone: mostrarSenha ? "olho" : "olho-riscado",
+                  rotulo: mostrarSenha ? "Ocultar senha" : "Mostrar senha",
+                  aoClicar: () => setMostrarSenha((v) => !v),
+                }}
+              />
 
-            <div className="login-tela__linha">
-              <label className="login-tela__manter">
-                <input
-                  type="checkbox"
-                  className="login-tela__manter-input"
-                  checked={manterConectado}
-                  onChange={(evento) => setManterConectado(evento.target.checked)}
-                />
-                <span className="login-tela__manter-caixa" aria-hidden="true">
-                  <Icone nome="check" tamanho={12} />
-                </span>
-                <span>Manter conectado</span>
-              </label>
-              <Link to="/cadastro" className="login-tela__esqueci">
-                Esqueci minha senha
-              </Link>
-            </div>
+              <div className="login-tela__linha">
+                <label className="login-tela__manter">
+                  <input
+                    type="checkbox"
+                    className="login-tela__manter-input"
+                    checked={manterConectado}
+                    onChange={(evento) => setManterConectado(evento.target.checked)}
+                  />
+                  <span className="login-tela__manter-caixa" aria-hidden="true">
+                    <Icone nome="check" tamanho={12} />
+                  </span>
+                  <span>Manter conectado</span>
+                </label>
+                <Link to="/recuperar-senha" className="login-tela__esqueci">
+                  Esqueci minha senha
+                </Link>
+              </div>
 
-            <Button type="submit" larguraTotal carregando={carregando}>
-              Entrar no painel
-              <Icone nome="seta-direita" tamanho={16} />
-            </Button>
-          </form>
+              <Button type="submit" larguraTotal carregando={carregando}>
+                Entrar no painel
+                <Icone nome="seta-direita" tamanho={16} />
+              </Button>
+            </form>
 
-          <p className="login-tela__cadastro">
-            Novo por aqui? <Link to="/cadastro">Criar conta</Link>
-          </p>
+            <p className="login-tela__cadastro">
+              Ainda não tem acesso? Peça ao administrador da sua unidade.
+            </p>
+          </main>
         </div>
-      </main>
+      </div>
       <Rodape className="login-tela__rodape" />
     </div>
   );

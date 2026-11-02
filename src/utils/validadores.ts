@@ -29,6 +29,18 @@ export function validarObrigatorio(
   return null;
 }
 
+const NOME_MINIMO = 3;
+
+/** Nome de pessoa: obrigatório, até 80 caracteres e pelo menos 3 letras. */
+export function validarNome(valor: string): string | null {
+  const obrigatorio = validarObrigatorio(valor, "o nome", 80);
+  if (obrigatorio) return obrigatorio;
+  if (valor.trim().length < NOME_MINIMO) {
+    return `O nome precisa de pelo menos ${NOME_MINIMO} letras.`;
+  }
+  return null;
+}
+
 export function validarDescricao(valor: string): string | null {
   const limpo = valor.trim();
   if (!limpo) return "Descreva o resíduo encontrado.";
@@ -38,7 +50,26 @@ export function validarDescricao(valor: string): string | null {
 }
 
 export function validarFoto(valor: string | null): string | null {
-  if (!valor) return "Anexe uma foto do resíduo.";
+  if (!valor) return "Adicione uma foto do resíduo.";
+  return null;
+}
+
+/** Maior peso aceito em uma ocorrência, em kg. */
+export const PESO_MAXIMO_KG = 100_000;
+
+/** Lê o peso digitado com vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
+export function lerPeso(texto: string): number {
+  const limpo = texto.trim().replace(",", ".");
+  return limpo === "" ? Number.NaN : Number(limpo);
+}
+
+/** O peso é opcional: vazio vale; preenchido precisa ser maior que 0 e ir até 100.000 kg. */
+export function validarPeso(texto: string): string | null {
+  if (texto.trim() === "") return null;
+  const kg = lerPeso(texto);
+  if (!Number.isFinite(kg) || kg <= 0 || kg > PESO_MAXIMO_KG) {
+    return "Informe um peso maior que 0 e até 100.000 kg, ou deixe em branco.";
+  }
   return null;
 }
 

@@ -8,13 +8,12 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
-import { autenticar, cadastrar } from "../../services/auth";
+import { autenticar } from "../../services/auth";
 import { configurarSessaoHttp, encerrarSessaoHttp } from "../../services/http";
 import { atualizarPerfil } from "../../services/perfil";
 import type { AlteracoesPerfil } from "../../services/perfil";
 import type {
   CredenciaisLogin,
-  DadosCadastro,
   SessaoAutenticada,
   Usuario,
 } from "../../types/usuario";
@@ -33,7 +32,6 @@ import { carregar, remover, salvar } from "../../utils/armazenamento";
 const CHAVE_STORAGE = "volta:sessao";
 const VERSAO_STORAGE = 1;
 const LIMITE_TEMPORIZADOR_MS = 2_147_483_000;
-const MENSAGEM_SESSAO_EXPIRADA = "Sua sessão expirou. Entre novamente.";
 
 /**
  * A camada HTTP precisa do token a cada requisição, e os services não conhecem
@@ -68,9 +66,18 @@ interface ValorAuthContext {
   readonly usuario: Usuario | null;
   readonly carregando: boolean;
   readonly erro: string | null;
+  /** A sessão acabou, mas a tela continua visível até a pessoa escolher "Entrar de novo". */
+  readonly sessaoExpirada: boolean;
   readonly entrar: (credenciais: CredenciaisLogin) => Promise<void>;
-  readonly cadastrarNovo: (dados: DadosCadastro) => Promise<void>;
   readonly sair: () => void;
+  /** Encerra a sessão vencida; a rota privada leva ao login e, depois dele, de volta a esta página. */
+  readonly entrarDeNovo: () => void;
+  /** "Sair do painel?" está aberto: só `sair` encerra a sessão, `cancelarSaida` desiste. */
+  readonly confirmandoSaida: boolean;
+  readonly pedirSaida: () => void;
+  readonly cancelarSaida: () => void;
+  /** A senha provisória foi trocada: libera o painel (a API já guardou `firstLogin = false`). */
+  readonly concluirPrimeiroAcesso: () => void;
   /** Grava o perfil (PUT /users/me) e só então atualiza a sessão; rejeita se a gravação falhar. */
   readonly atualizarUsuario: (alteracoes: AlteracoesUsuario) => Promise<void>;
   readonly limparErro: () => void;
@@ -93,23 +100,24 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
   });
   const [carregando, setCarregando] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [sessaoExpirada, setSessaoExpirada] = useState<boolean>(false);
+  const [confirmandoSaida, setConfirmandoSaida] = useState<boolean>(false);
 
   /** Troca a sessão e manda os services esquecerem o que era da pessoa anterior. */
   const aplicarSessao = useCallback((nova: SessaoAutenticada | null) => {
     sessaoAtual = nova;
     encerrarSessaoHttp();
+    setSessaoExpirada(false);
+    setConfirmandoSaida(false);
     setSessao(nova);
   }, []);
 
   useEffect(() => {
-    aoSessaoExpirar = () => {
-      aplicarSessao(null);
-      setErro(MENSAGEM_SESSAO_EXPIRADA);
-    };
+    aoSessaoExpirar = () => setSessaoExpirada(true);
     return () => {
       aoSessaoExpirar = null;
     };
-  }, [aplicarSessao]);
+  }, []);
 
   useEffect(() => {
     if (!sessao) return undefined;
@@ -150,27 +158,6 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     [aplicarSessao],
   );
 
-  const cadastrarNovo = useCallback(
-    async (dados: DadosCadastro) => {
-      setCarregando(true);
-      setErro(null);
-      try {
-        const nova = await cadastrar(dados);
-        aplicarSessao(nova);
-      } catch (excecao) {
-        const mensagem =
-          excecao instanceof Error
-            ? excecao.message
-            : "Não foi possível concluir o cadastro.";
-        setErro(mensagem);
-        throw excecao;
-      } finally {
-        setCarregando(false);
-      }
-    },
-    [aplicarSessao],
-  );
-
   const sair = useCallback(() => {
     aplicarSessao(null);
     setErro(null);
@@ -195,6 +182,18 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     [],
   );
 
+  const concluirPrimeiroAcesso = useCallback(() => {
+    setSessao((corrente) => {
+      if (!corrente) return corrente;
+      const proxima = { ...corrente, primeiroAcesso: false };
+      sessaoAtual = proxima;
+      return proxima;
+    });
+  }, []);
+
+  const pedirSaida = useCallback(() => setConfirmandoSaida(true), []);
+  const cancelarSaida = useCallback(() => setConfirmandoSaida(false), []);
+
   const limparErro = useCallback(() => setErro(null), []);
 
   const valor = useMemo<ValorAuthContext>(
@@ -203,9 +202,14 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       usuario: sessao?.usuario ?? null,
       carregando,
       erro,
+      sessaoExpirada,
       entrar,
-      cadastrarNovo,
       sair,
+      entrarDeNovo: sair,
+      confirmandoSaida,
+      pedirSaida,
+      cancelarSaida,
+      concluirPrimeiroAcesso,
       atualizarUsuario,
       limparErro,
     }),
@@ -213,9 +217,13 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       sessao,
       carregando,
       erro,
+      sessaoExpirada,
       entrar,
-      cadastrarNovo,
       sair,
+      confirmandoSaida,
+      pedirSaida,
+      cancelarSaida,
+      concluirPrimeiroAcesso,
       atualizarUsuario,
       limparErro,
     ],

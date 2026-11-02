@@ -60,6 +60,12 @@ export interface Ocorrencia {
   readonly perigoso: boolean;
   readonly setorDestino: string | null;
   readonly motivoRecusa: string | null;
+  /** Id de quem aprovou ou recusou; nulo enquanto aguarda e nas decididas antes de a API guardar isso. */
+  readonly revisadaPor: string | null;
+  /** Nome de quem decidiu; nulo quando a API só devolve o id e a pessoa não é quem está logada. */
+  readonly revisadaPorNome: string | null;
+  /** Quando foi aprovada ou recusada; nulo como `revisadaPor`. */
+  readonly revisadaEm: string | null;
   readonly ultimaAlteracao: string | null;
   readonly historico: readonly EventoOcorrencia[];
 }
@@ -95,4 +101,16 @@ export interface NovaClassificacao {
   readonly qualidade: QualidadeMaterial;
   readonly prioridade: PrioridadeOcorrencia;
   readonly perigoso: boolean;
+}
+
+/** Uma ocorrência que a aprovação em massa não conseguiu aprovar, e o motivo. */
+export interface FalhaDeAprovacao {
+  readonly id: string;
+  readonly motivo: string;
+}
+
+/** O que a aprovação em massa fez: quantas aprovou e quais ficaram de fora. */
+export interface ResultadoDaAprovacao {
+  readonly aprovadas: number;
+  readonly falhas: readonly FalhaDeAprovacao[];
 }
