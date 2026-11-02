@@ -17,7 +17,6 @@ export interface ServicoOcorrencias {
   readonly assinarMudancas: (ouvinte: () => void) => () => void;
   readonly quantidadeAguardando: () => number;
   readonly lerOcorrencias: () => readonly Ocorrencia[];
-  readonly semelhantesNaSemana: (ocorrencia: Ocorrencia) => number;
   readonly garantirCarregado: () => void;
   readonly listarSetores: (sinal?: AbortSignal) => Promise<readonly string[]>;
   readonly listarOcorrencias: (
@@ -81,7 +80,6 @@ export const {
   assinarMudancas,
   quantidadeAguardando,
   lerOcorrencias,
-  semelhantesNaSemana,
   garantirCarregado,
   listarSetores,
   listarOcorrencias,
