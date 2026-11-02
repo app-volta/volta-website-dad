@@ -190,11 +190,6 @@
   line-height: 1.2;
 }
 
-.login-tela__cadastro a {
-  color: #0e7c48;
-  font-weight: 700;
-}
-
 @media (max-width: 900px) {
   .login-tela {
     grid-template-columns: 1fr;

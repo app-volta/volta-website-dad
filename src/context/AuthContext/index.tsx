@@ -8,13 +8,12 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
-import { autenticar, cadastrar } from "../../services/auth";
+import { autenticar } from "../../services/auth";
 import { configurarSessaoHttp, encerrarSessaoHttp } from "../../services/http";
 import { atualizarPerfil } from "../../services/perfil";
 import type { AlteracoesPerfil } from "../../services/perfil";
 import type {
   CredenciaisLogin,
-  DadosCadastro,
   SessaoAutenticada,
   Usuario,
 } from "../../types/usuario";
@@ -70,7 +69,6 @@ interface ValorAuthContext {
   /** A sessão acabou, mas a tela continua visível até a pessoa escolher "Entrar de novo". */
   readonly sessaoExpirada: boolean;
   readonly entrar: (credenciais: CredenciaisLogin) => Promise<void>;
-  readonly cadastrarNovo: (dados: DadosCadastro) => Promise<void>;
   readonly sair: () => void;
   /** Encerra a sessão vencida; a rota privada leva ao login e, depois dele, de volta a esta página. */
   readonly entrarDeNovo: () => void;
@@ -160,27 +158,6 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
     [aplicarSessao],
   );
 
-  const cadastrarNovo = useCallback(
-    async (dados: DadosCadastro) => {
-      setCarregando(true);
-      setErro(null);
-      try {
-        const nova = await cadastrar(dados);
-        aplicarSessao(nova);
-      } catch (excecao) {
-        const mensagem =
-          excecao instanceof Error
-            ? excecao.message
-            : "Não foi possível concluir o cadastro.";
-        setErro(mensagem);
-        throw excecao;
-      } finally {
-        setCarregando(false);
-      }
-    },
-    [aplicarSessao],
-  );
-
   const sair = useCallback(() => {
     aplicarSessao(null);
     setErro(null);
@@ -227,7 +204,6 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       erro,
       sessaoExpirada,
       entrar,
-      cadastrarNovo,
       sair,
       entrarDeNovo: sair,
       confirmandoSaida,
@@ -243,7 +219,6 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
       erro,
       sessaoExpirada,
       entrar,
-      cadastrarNovo,
       sair,
       confirmandoSaida,
       pedirSaida,

@@ -18,7 +18,7 @@ const BALAO_PADRAO: readonly string[] = [
   "Bora deixar a unidade em dia?",
 ];
 
-/** Painel decorativo das telas de login e cadastro (`aria-hidden`), com título, texto e destaques. */
+/** Painel decorativo das telas de entrada: login e recuperação de senha (`aria-hidden`), com título, texto e destaques. */
 export function PainelAcesso({
   titulo,
   texto,

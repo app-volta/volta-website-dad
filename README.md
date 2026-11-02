@@ -234,7 +234,6 @@ fica vermelho.
 | Caminho | Página | Acesso |
 |---------|--------|--------|
 | `/login` | Login | Público |
-| `/cadastro` | Cadastro | Público |
 | `/recuperar-senha` | Recuperar a senha (e-mail, código de 4 dígitos e senha nova) | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |

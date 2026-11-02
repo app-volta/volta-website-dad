@@ -19,7 +19,7 @@ auditoria quanto como referência para revisores de PR.
 - Landmarks do shell V2: `<aside aria-label="Navegação principal">` com
   `<nav aria-label="Menu">` (Sidebar), `<header role="banner">` (Topbar),
   `<main id="conteudo">` e `<footer>` (componente `Rodape`, fora do `<main>`
-  para valer como landmark de informações do site). Login e cadastro também
+  para valer como landmark de informações do site). Login e recuperação de senha também
   têm `<header>` com a logo (fora do `<main>`, então vale como banner),
   `<main>` e `<footer>`. A 404 aparece dentro do painel para quem está
   logado e, para quem não está, sozinha com `<header>`, `<main>` e
@@ -64,7 +64,7 @@ calculado no pior ponto do gradiente.
 ### 2.4.1 Pular blocos
 - Skip-link no topo da Sidebar (`Pular para o conteúdo principal`, visível
   apenas ao receber foco). Aponta para `#conteudo`, que é o `<main>` do shell
-  privado. Login, cadastro e a 404 de quem não está logado têm o próprio
+  privado. Login, recuperação de senha e a 404 de quem não está logado têm o próprio
   skip-link, com a mesma classe, como primeiro item da página.
 
 ### 2.4.3 Ordem de foco
