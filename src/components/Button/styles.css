@@ -16,6 +16,14 @@
   line-height: 1;
 }
 
+/* Texto e ícone numa linha só, centralizados e com espaço: sem isso o ícone fica na linha de base do texto. */
+.botao__conteudo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 .botao--primario {
   background: var(--verde-primario);
   color: #fff;
