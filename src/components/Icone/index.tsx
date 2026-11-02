@@ -51,7 +51,9 @@ export type NomeIcone =
   | "reticencias"
   | "lixeira"
   | "lista"
-  | "expandir";
+  | "expandir"
+  | "copiar"
+  | "externo";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -267,6 +269,13 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
     </>
   ),
   expandir: <path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15" />,
+  copiar: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15 V6 a2 2 0 0 1 2 -2 H15" />
+    </>
+  ),
+  externo: <path d="M7 17 L17 7 M9 7 H17 V15" />,
 };
 
 /**

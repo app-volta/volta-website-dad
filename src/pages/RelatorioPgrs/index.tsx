@@ -4,7 +4,6 @@ import { Link, useSearchParams } from "react-router-dom";
 
 import { EstadoForaDoAr } from "../../components/EstadoForaDoAr";
 import { Icone } from "../../components/Icone";
-import { Spinner } from "../../components/Spinner";
 import { useAuth } from "../../context/AuthContext";
 import { useConfiguracoes } from "../../hooks/useConfiguracoes";
 import { useCooperativas } from "../../hooks/useCooperativas";
@@ -15,6 +14,8 @@ import type { PeriodoRelatorio } from "../../types/relatorio";
 import { montarDocumentoPgrs } from "../../utils/documentoPgrs";
 import { rotuloDoPapel } from "../../utils/pessoa";
 import { DocumentoPgrs } from "./DocumentoPgrs";
+import { PreparandoRelatorio } from "./PreparandoRelatorio";
+import type { EtapaDoRelatorio } from "./PreparandoRelatorio";
 import "./styles.css";
 
 /** O período vem do endereço (`?periodo=trimestre`); qualquer outro valor cai no mês. */
@@ -69,6 +70,23 @@ export default function RelatorioPgrsPagina(): ReactNode {
   }, [nomeDoArquivo]);
 
   const preparando = relatorio.carregando || configuracoes.carregando || cooperativas.carregando;
+  const etapas: readonly EtapaDoRelatorio[] = [
+    { rotulo: "Ocorrências e coletas do período", pronta: !relatorio.carregando },
+    { rotulo: "Dados da unidade e meta", pronta: !configuracoes.carregando },
+    { rotulo: "Cooperativas e licenças", pronta: !cooperativas.carregando },
+  ];
+
+  // As fontes do modelo carregam sob demanda: imprimir antes delas trocaria a letra do PDF.
+  const [aguardandoFontes, setAguardandoFontes] = useState<boolean>(false);
+  async function salvarComoPdf(): Promise<void> {
+    setAguardandoFontes(true);
+    try {
+      await document.fonts.ready;
+    } finally {
+      setAguardandoFontes(false);
+    }
+    window.print();
+  }
 
   if (relatorio.erro && !relatorio.dados) {
     return (
@@ -88,11 +106,11 @@ export default function RelatorioPgrsPagina(): ReactNode {
         <button
           type="button"
           className="pgrs-tela__salvar"
-          onClick={() => window.print()}
-          disabled={documento === null || preparando}
+          onClick={() => void salvarComoPdf()}
+          disabled={documento === null || preparando || aguardandoFontes}
         >
           <Icone nome="download" tamanho={14} />
-          Salvar como PDF
+          {aguardandoFontes ? "Preparando…" : "Salvar como PDF"}
         </button>
       </header>
       <p className="pgrs-tela__dica">
@@ -103,7 +121,7 @@ export default function RelatorioPgrsPagina(): ReactNode {
       {documento && !preparando ? (
         <DocumentoPgrs documento={documento} />
       ) : (
-        <Spinner rotulo="Montando o relatório…" />
+        <PreparandoRelatorio periodo={periodo} etapas={etapas} />
       )}
     </main>
   );

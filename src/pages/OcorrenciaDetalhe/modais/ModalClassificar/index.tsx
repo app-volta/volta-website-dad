@@ -130,11 +130,11 @@ export function ModalClassificar({
           aria-checked={perigoso}
           aria-labelledby="rotulo-perigoso"
           className={
-            perigoso ? "interruptor interruptor--ligado" : "interruptor"
+            perigoso ? "modal-interruptor modal-interruptor--ligado" : "modal-interruptor"
           }
           onClick={() => setPerigoso((v) => !v)}
         >
-          <span className="interruptor__bolinha" />
+          <span className="modal-interruptor__bolinha" />
         </button>
       </div>
 

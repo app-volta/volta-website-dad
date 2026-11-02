@@ -1,0 +1,171 @@
+/* Espera do documento: cartão com o andamento e o contorno das duas folhas. Só na tela. */
+.pgrs-preparando {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.pgrs-preparando__cartao {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 22px;
+  border: 0.8px solid #d5dfd8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(5, 43, 26, 0.08);
+}
+
+.pgrs-preparando__circulo {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 2px;
+  border: 3px solid #cfe0d6;
+  border-top-color: #0e7c48;
+  border-radius: 50%;
+  animation: pgrs-preparando-girar 0.8s linear infinite;
+}
+
+.pgrs-preparando__conteudo {
+  min-width: 0;
+}
+
+.pgrs-preparando__titulo {
+  margin: 0;
+  color: #16211b;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.pgrs-preparando__texto {
+  margin: 4px 0 0;
+  color: #4a574f;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.pgrs-preparando__etapas {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pgrs-preparando__etapa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5d6961;
+  font-size: 13.5px;
+}
+
+.pgrs-preparando__etapa--pronta {
+  color: #16211b;
+}
+
+.pgrs-preparando__marca {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cfe0d6;
+  border-top-color: #0e7c48;
+  border-radius: 50%;
+  animation: pgrs-preparando-girar 0.8s linear infinite;
+}
+
+.pgrs-preparando__etapa--pronta .pgrs-preparando__marca {
+  border-color: #0e7c48;
+  background: #0e7c48;
+  color: #fff;
+  animation: none;
+}
+
+.pgrs-preparando__aviso {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fdf3de;
+  color: #6b4a00;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Contorno das duas folhas, para a pessoa saber o que vem */
+.pgrs-preparando__folhas {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.pgrs-preparando__folha {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  aspect-ratio: 210 / 297;
+  padding: 14mm 16mm;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(5, 43, 26, 0.1);
+}
+
+.pgrs-preparando__linha,
+.pgrs-preparando__bloco {
+  display: block;
+  flex-shrink: 0;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #edf1ee 25%, #f7faf8 50%, #edf1ee 75%);
+  background-size: 200% 100%;
+  animation: pgrs-preparando-brilho 1.6s ease-in-out infinite;
+}
+
+.pgrs-preparando__linha--titulo {
+  width: 55%;
+  height: 20px;
+}
+
+.pgrs-preparando__linha--curta {
+  width: 40%;
+}
+
+.pgrs-preparando__bloco {
+  height: 22%;
+  border-radius: 10px;
+}
+
+@keyframes pgrs-preparando-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pgrs-preparando-brilho {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pgrs-preparando__circulo,
+  .pgrs-preparando__marca,
+  .pgrs-preparando__linha,
+  .pgrs-preparando__bloco {
+    animation: none;
+  }
+}
+
+@media print {
+  .pgrs-preparando {
+    display: none !important;
+  }
+}
