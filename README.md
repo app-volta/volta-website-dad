@@ -193,6 +193,7 @@ src/
 ├─ testes/                         # testes unitários (Vitest), uma pasta por camada
 │  ├─ utils/<arquivo>.test.ts
 │  ├─ services/<arquivo>.test.ts
+│  ├─ pages/<pagina>.test.ts       # lógica pura que mora na pasta de uma página (derivados do Registrar)
 │  └─ fabricas.ts                  # dados de exemplo (ocorrência, cooperativa) para os testes
 └─ App.tsx                         # roteamento + lazy loading
 ```
@@ -203,6 +204,11 @@ Regras estritas:
   telas usam vai para `src/components/`; o que só uma página usa fica dentro
   da pasta dela, também em pasta própria (por exemplo
   `src/pages/Cooperativas/ModalAdicionar/index.tsx`).
+- **Página grande vira partes pequenas.** O `Registrar` guarda só o estado (um
+  reducer) e as ações; cada parte da tela é um componente na própria pasta
+  (`FotoDaOcorrencia`, `PainelDetalhes`, `PainelAnalise`, `Sucesso`) que recebe o
+  estado e o `despachar` por props, e o que se calcula do estado fica em
+  `derivados.ts`, com testes. Nenhum arquivo da página passa de 320 linhas.
 - **Zero `any` em `src/`.** Todas as entidades e props têm interfaces em
   `src/types/`.
 - **Nenhum `fetch` fora de `src/services/`.** Páginas e componentes chamam
@@ -231,8 +237,8 @@ cooperativas, CSV e documento do relatório PGRS, distâncias) e `src/services/`
 adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
 Vitest em ambiente `node`, sem navegador e sem rede.
 
-- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/` e
-  `services/`), com o nome do arquivo testado e `.test.ts`
+- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/`,
+  `services/` e `pages/`), com o nome do arquivo testado e `.test.ts`
   (`src/utils/metas.ts` → `src/testes/utils/metas.test.ts`). A exceção é
   `pessoas.test.ts`, que cobre `datas.ts`, `equipe.ts` e `pessoa.ts` juntos.
 - Datas: monte com `new Date(ano, mês, dia, hora)` (horário local) e passe o

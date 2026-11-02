@@ -1,26 +1,18 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import type { ChangeEvent, DragEvent, ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Alerta } from "../../components/Alerta";
-import { Button } from "../../components/Button";
-import { Icone } from "../../components/Icone";
 import { ModalCamera } from "../../components/ModalCamera";
-import mascoteCompleto from "../../assets/mascote-completo.svg";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useDadosReais } from "../../hooks/useModo";
 import { useOpcoesDeTipo } from "../../hooks/useOpcoesDeTipo";
 import { useSetores } from "../../hooks/useSetores";
-import type {
-  NivelContaminacao,
-  OpcaoTipoResiduo,
-} from "../../types/classificacao";
-import { METADADOS_MATERIAL } from "../../types/material";
+import type { OpcaoTipoResiduo } from "../../types/classificacao";
+import { lerFoto } from "../../utils/arquivo";
 import { modoDaCamera } from "../../utils/camera";
-import { contaminacao } from "../../utils/analiseOcorrencia";
 import { foiResultadoIncerto, foiSemResposta } from "../../utils/erros";
-import { descreverPeso } from "../../utils/formatacao";
 import {
   combinar,
   validarDescricao,
@@ -28,65 +20,23 @@ import {
   validarObrigatorio,
   validarPeso,
 } from "../../utils/validadores";
-import {
-  estadoInicial,
-  pesoDaOcorrencia,
-  redutor,
-  type OrigemDoPeso,
-  type Prioridade,
-} from "./reducer";
+import { derivarDoRegistro } from "./derivados";
+import { FotoDaOcorrencia } from "./FotoDaOcorrencia";
 import { ModalEnvioIncerto } from "./ModalEnvioIncerto";
+import { PainelAnalise } from "./PainelAnalise";
+import { PainelDetalhes } from "./PainelDetalhes";
+import { estadoInicial, pesoDaOcorrencia, redutor } from "./reducer";
+import { Sucesso } from "./Sucesso";
 import "./styles.css";
-
-const PRIORIDADES: readonly {
-  readonly valor: Prioridade;
-  readonly rotulo: string;
-}[] = [
-  { valor: "alta", rotulo: "Alta" },
-  { valor: "media", rotulo: "Média" },
-  { valor: "baixa", rotulo: "Baixa" },
-];
 
 const SEM_SETORES: readonly string[] = [];
 const SEM_OPCOES: readonly OpcaoTipoResiduo[] = [];
 
-const NIVEIS_DE_CONTAMINACAO: readonly {
-  readonly valor: NivelContaminacao;
-  readonly rotulo: string;
-}[] = [
-  { valor: "baixa", rotulo: "Baixa" },
-  { valor: "media", rotulo: "Média" },
-  { valor: "alta", rotulo: "Alta" },
-];
-
-const DE_ONDE_VEM_O_PESO: Readonly<Record<OrigemDoPeso, string>> = {
-  informado: "Informado por você",
-  ia: "Estimado pela IA",
-  nenhum: "A IA não conseguiu estimar pela foto",
-};
-
-/** Maior foto aceita: o envio ao Cloudinary recusa imagens acima de 10 MB. */
-const TAMANHO_MAXIMO_FOTO = 10 * 1024 * 1024;
-
-/** Lê a foto; o que não é imagem, passa do limite ou não abre cai em `aoFalhar`. */
-function lerArquivo(
-  arquivo: File,
-  aoLer: (base64: string) => void,
-  aoFalhar: () => void,
-): void {
-  if (!arquivo.type.startsWith("image/") || arquivo.size > TAMANHO_MAXIMO_FOTO) {
-    aoFalhar();
-    return;
-  }
-  const leitor = new FileReader();
-  leitor.onload = () => {
-    if (typeof leitor.result === "string") aoLer(leitor.result);
-    else aoFalhar();
-  };
-  leitor.onerror = aoFalhar;
-  leitor.readAsDataURL(arquivo);
-}
-
+/**
+ * Registro de ocorrência em duas etapas: detalhes e análise da IA. A página guarda o
+ * estado (um reducer) e as ações; cada parte da tela é um componente que recebe o
+ * estado e o `despachar` por props.
+ */
 export default function Registrar(): ReactNode {
   const { usuario } = useAuth();
   const acoes = useAcoesOcorrencia();
@@ -112,33 +62,24 @@ export default function Registrar(): ReactNode {
       despachar({ tipo: "definir_setor", setor: setores[0] });
     }
   }, [setores, estado.setor]);
-  const [arrastando, setArrastando] = useState<boolean>(false);
   const [cameraAberta, setCameraAberta] = useState<boolean>(false);
   const [modoCamera] = useState(modoDaCamera);
   const inputArquivo = useRef<HTMLInputElement | null>(null);
   const inputCamera = useRef<HTMLInputElement | null>(null);
 
+  function receberFoto(arquivo: File): void {
+    lerFoto(
+      arquivo,
+      (foto) => despachar({ tipo: "definir_foto", foto }),
+      () => despachar({ tipo: "foto_recusada" }),
+    );
+  }
+
   function selecionarFoto(evento: ChangeEvent<HTMLInputElement>): void {
     const arquivo = evento.target.files?.[0];
     if (!arquivo) return;
-    lerArquivo(
-      arquivo,
-      (foto) => despachar({ tipo: "definir_foto", foto }),
-      () => despachar({ tipo: "foto_recusada" }),
-    );
+    receberFoto(arquivo);
     evento.target.value = "";
-  }
-
-  function soltarFoto(evento: DragEvent<HTMLDivElement>): void {
-    evento.preventDefault();
-    setArrastando(false);
-    const arquivo = evento.dataTransfer.files?.[0];
-    if (!arquivo) return;
-    lerArquivo(
-      arquivo,
-      (foto) => despachar({ tipo: "definir_foto", foto }),
-      () => despachar({ tipo: "foto_recusada" }),
-    );
   }
 
   function usarCamera(): void {
@@ -240,79 +181,23 @@ export default function Registrar(): ReactNode {
 
   if (estado.etapa === "sucesso") {
     return (
-      <div className="registrar__sucesso">
-        <span className="registrar__sucesso-icone" aria-hidden="true">
-          <Icone nome="check" tamanho={28} />
-        </span>
-        <h2>Relatório gerado!</h2>
-        <p>
-          A ocorrência <strong>{estado.codigoGerado}</strong> foi registrada.
-        </p>
-        <p className="registrar__sucesso-peso">
-          {peso.kg === null
-            ? "Peso não informado."
-            : `Peso aproximado: ${descreverPeso(peso.kg)} · ${DE_ONDE_VEM_O_PESO[peso.origem]}`}
-        </p>
-        {estado.fotoGuardada ? null : (
-          <Alerta variante="info" titulo="A foto não foi guardada">
-            O serviço de imagens não respondeu, então a ocorrência ficou sem foto
-            para as outras pessoas. Neste navegador ela aparece até você
-            recarregar a página.
-          </Alerta>
-        )}
-        <div className="registrar__sucesso-acoes">
-          <Button
-            variante="secundario"
-            onClick={() =>
-              despachar({
-                tipo: "reiniciar",
-                setor: usuario?.unidade ?? "Frigorífico — Setor B2",
-              })
-            }
-          >
-            Registrar outra
-          </Button>
-          <Button variante="primario" onClick={() => navegar("/ocorrencias")}>
-            Ver ocorrências
-          </Button>
-        </div>
-      </div>
+      <Sucesso
+        codigo={estado.codigoGerado}
+        peso={peso}
+        fotoGuardada={estado.fotoGuardada}
+        aoRegistrarOutra={() =>
+          despachar({
+            tipo: "reiniciar",
+            setor: usuario?.unidade ?? "Frigorífico — Setor B2",
+          })
+        }
+        aoVerOcorrencias={() => navegar("/ocorrencias")}
+      />
     );
   }
 
-  const emAnalise = estado.etapa === "analise";
-  const concluida = emAnalise && estado.classificacao !== null;
-  const analiseFalhou = emAnalise && estado.analiseFalhou;
-  const analisando = emAnalise && estado.classificacao === null && !analiseFalhou;
-  const passo = estado.etapa === "detalhes" ? 1 : 2;
-  const rotuloPrioridade =
-    PRIORIDADES.find((p) => p.valor === estado.prioridade)?.rotulo ?? "";
-  const materialRotulo = estado.classificacao?.material
-    ? METADADOS_MATERIAL[estado.classificacao.material].rotulo
-    : "";
-  const tipoRotulo = estado.classificacao?.tipoDetectado ?? materialRotulo;
-  const unidades = estado.classificacao?.unidades ?? null;
-  const valorDoTipo =
-    estado.classificacao?.tipoResiduoId ??
-    opcoesDeTipo.find(
-      (item) =>
-        item.material !== null && item.material === estado.classificacao?.material,
-    )?.valor ??
-    "";
-  const nivelDeContaminacao = estado.classificacao?.contaminacao ?? "";
-  const fotoComErro = !estado.fotoBase64 && (estado.fotoRecusada || Boolean(estado.erroCampo.foto));
-  const classeDaFoto = [
-    "registrar__foto",
-    arrastando ? "registrar__foto--arrastando" : "",
-    fotoComErro ? "registrar__foto--erro" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const valorAusente = analiseFalhou ? (
-    <p className="registrar__ia-valor">—</p>
-  ) : (
-    <span className="registrar__ia-esqueleto" />
-  );
+  const derivados = derivarDoRegistro(estado, opcoesDeTipo);
+  const { analisando, concluida, passo } = derivados;
 
   return (
     <div className="registrar">
@@ -390,561 +275,37 @@ export default function Registrar(): ReactNode {
       ) : null}
 
       <div className="registrar__linha">
-        <div className="registrar__coluna">
-        <div
-          className={classeDaFoto}
-          onDragOver={(evento) => {
-            if (estado.etapa !== "detalhes") return;
-            evento.preventDefault();
-            setArrastando(true);
-          }}
-          onDragLeave={() => setArrastando(false)}
-          onDrop={estado.etapa === "detalhes" ? soltarFoto : undefined}
-        >
-          {estado.fotoBase64 ? (
-            <>
-              <img
-                src={estado.fotoBase64}
-                alt="Foto anexada do resíduo"
-                className="registrar__foto-imagem"
-              />
-              {analisando ? (
-                <span className="registrar__scan" aria-hidden="true" />
-              ) : null}
-              {emAnalise ? (
-                <span className="registrar__selo">
-                  <Icone
-                    nome={concluida ? (estado.semIA ? "editar" : "check") : "brilho"}
-                    tamanho={12}
-                  />
-                  {concluida
-                    ? estado.semIA
-                      ? "Preenchido por você"
-                      : "Análise concluída"
-                    : analiseFalhou
-                      ? "Análise parada"
-                      : "Analisando…"}
-                </span>
-              ) : null}
-              <button
-                type="button"
-                className="registrar__trocar"
-                onClick={trocarFoto}
-              >
-                <Icone nome="galeria" tamanho={15} />
-                Trocar
-              </button>
-            </>
-          ) : (
-            <div className="registrar__foto-vazio">
-              <span
-                className={
-                  estado.fotoRecusada
-                    ? "registrar__foto-icone registrar__foto-icone--erro"
-                    : "registrar__foto-icone"
-                }
-                aria-hidden="true"
-              >
-                <Icone nome="camera" tamanho={30} />
-              </span>
-              <p className="registrar__foto-titulo" role={estado.fotoRecusada ? "alert" : undefined}>
-                {estado.fotoRecusada
-                  ? "Não conseguimos usar essa foto"
-                  : "Arraste a foto do resíduo aqui"}
-              </p>
-              <p className="registrar__foto-desc">
-                {estado.fotoRecusada
-                  ? "Tente de novo ou escolha outra imagem, com boa luz e o resíduo visível."
-                  : "ou escolha um arquivo · a IA identifica tipo, contaminação e quantidade"}
-              </p>
-              <div className="registrar__foto-botoes">
-                <button
-                  type="button"
-                  className="registrar__botao registrar__botao--primario"
-                  onClick={() => inputArquivo.current?.click()}
-                >
-                  <Icone nome="upload" tamanho={16} /> Enviar foto
-                </button>
-                {modoCamera === null ? null : (
-                  <button
-                    type="button"
-                    className="registrar__botao registrar__botao--suave"
-                    onClick={usarCamera}
-                  >
-                    <Icone nome="camera" tamanho={16} /> Usar câmera
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        {estado.erroCampo.foto ? (
-          <p role="alert" className="registrar__erro-campo registrar__erro-campo--icone">
-            <Icone nome="alerta" tamanho={13} /> {estado.erroCampo.foto}
-          </p>
-        ) : null}
-        {emAnalise && (analiseFalhou || estado.erroEnvio) ? (
-          <div className="registrar__faixa" role="alert">
-            <span className="registrar__faixa-icone" aria-hidden="true">
-              <Icone nome="fechar" tamanho={13} />
-            </span>
-            <div>
-              <strong>
-                {analiseFalhou
-                  ? "A análise da IA não respondeu"
-                  : "Não conseguimos enviar a ocorrência"}
-              </strong>
-              <span>
-                {analiseFalhou
-                  ? "Sua foto continua aqui. Tente de novo ou preencha os dados sem a IA."
-                  : "Foto e dados continuam aqui. " + (estado.erroEnvio ?? "")}
-              </span>
-            </div>
-          </div>
-        ) : null}
-        {analiseFalhou ? (
-          <div className="registrar__faixa-acoes">
-            <button
-              type="button"
-              className="registrar__botao registrar__botao--primario"
-              onClick={analisar}
-            >
-              <Icone nome="ciclo" tamanho={15} /> Tentar de novo
-            </button>
-            <button
-              type="button"
-              className="registrar__botao registrar__botao--contorno"
-              onClick={preencherSemIa}
-            >
-              Preencher sem a IA
-            </button>
-          </div>
-        ) : null}
-        </div>
+        <FotoDaOcorrencia
+          estado={estado}
+          derivados={derivados}
+          modoCamera={modoCamera}
+          aoSoltarArquivo={receberFoto}
+          aoEscolherArquivo={() => inputArquivo.current?.click()}
+          aoUsarCamera={usarCamera}
+          aoTrocar={trocarFoto}
+          aoTentarDeNovo={() => void analisar()}
+          aoPreencherSemIa={preencherSemIa}
+        />
 
         {estado.etapa === "detalhes" ? (
-          <section className="registrar__painel" aria-labelledby="reg-titulo">
-            <h2 id="reg-titulo" className="registrar__painel-titulo">
-              Detalhes da ocorrência
-            </h2>
-
-            <div className="registrar__campo">
-              <label htmlFor="reg-desc" className="registrar__rotulo">
-                Descrição <span className="registrar__opcional">· opcional</span>
-              </label>
-              <textarea
-                id="reg-desc"
-                className={
-                  estado.erroCampo.descricao
-                    ? "registrar__textarea registrar__textarea--erro"
-                    : "registrar__textarea"
-                }
-                placeholder="Ex.: caixas de papelão molhadas ao lado da câmara fria"
-                value={estado.descricao}
-                onChange={(e) =>
-                  despachar({
-                    tipo: "definir_descricao",
-                    descricao: e.target.value,
-                  })
-                }
-                aria-invalid={Boolean(estado.erroCampo.descricao) || undefined}
-                aria-describedby={
-                  estado.erroCampo.descricao ? "reg-desc-erro" : undefined
-                }
-              />
-              {estado.erroCampo.descricao ? (
-                <p id="reg-desc-erro" role="alert" className="registrar__erro-campo">
-                  {estado.erroCampo.descricao}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="registrar__campo">
-              <label htmlFor="reg-setor" className="registrar__rotulo">
-                Onde está?
-              </label>
-              <div
-                className={
-                  estado.erroCampo.setor
-                    ? "registrar__select registrar__select--erro"
-                    : "registrar__select"
-                }
-              >
-                <Icone nome="pin" tamanho={18} />
-                <select
-                  id="reg-setor"
-                  value={estado.setor}
-                  onChange={(e) =>
-                    despachar({ tipo: "definir_setor", setor: e.target.value })
-                  }
-                >
-                  {setores.includes(estado.setor) ? null : (
-                    <option value={estado.setor}>{estado.setor}</option>
-                  )}
-                  {setores.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-                <Icone nome="seta-baixo" tamanho={18} />
-              </div>
-              {estado.erroCampo.setor ? (
-                <p role="alert" className="registrar__erro-campo registrar__erro-campo--icone">
-                  <Icone nome="alerta" tamanho={13} /> {estado.erroCampo.setor}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="registrar__campo">
-              <label htmlFor="reg-peso" className="registrar__rotulo">
-                Peso aproximado <span className="registrar__opcional">· opcional</span>
-              </label>
-              <div
-                className={
-                  estado.erroCampo.peso
-                    ? "registrar__peso registrar__peso--erro"
-                    : "registrar__peso"
-                }
-              >
-                <input
-                  id="reg-peso"
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="Ex.: 12,5"
-                  value={estado.pesoInformado}
-                  onChange={(e) =>
-                    despachar({ tipo: "definir_peso", peso: e.target.value })
-                  }
-                  aria-invalid={Boolean(estado.erroCampo.peso) || undefined}
-                  aria-describedby={
-                    estado.erroCampo.peso ? "reg-peso-ajuda reg-peso-erro" : "reg-peso-ajuda"
-                  }
-                />
-                <span aria-hidden="true">kg</span>
-              </div>
-              <p id="reg-peso-ajuda" className="registrar__ajuda">
-                Se não souber, deixe em branco. A IA só estima o peso quando a
-                foto permite; em saco fechado, por exemplo, ela não consegue.
-              </p>
-              {estado.erroCampo.peso ? (
-                <p id="reg-peso-erro" role="alert" className="registrar__erro-campo">
-                  {estado.erroCampo.peso}
-                </p>
-              ) : null}
-            </div>
-
-            <fieldset className="registrar__campo registrar__prioridades">
-              <legend className="registrar__rotulo">Prioridade</legend>
-              <div className="registrar__prio-grid">
-                {PRIORIDADES.map((p) => (
-                  <button
-                    key={p.valor}
-                    type="button"
-                    className={
-                      estado.prioridade === p.valor
-                        ? `registrar__prio registrar__prio--${p.valor} registrar__prio--ativa`
-                        : `registrar__prio registrar__prio--${p.valor}`
-                    }
-                    onClick={() =>
-                      despachar({
-                        tipo: "definir_prioridade",
-                        prioridade: p.valor,
-                      })
-                    }
-                    aria-pressed={estado.prioridade === p.valor}
-                  >
-                    {p.rotulo}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-
-            <div className="registrar__toggle-linha">
-              <div>
-                <p className="registrar__toggle-titulo">
-                  Avisar quem cuida do descarte
-                </p>
-                <p className="registrar__toggle-sub">
-                  A pessoa recebe assim que a análise concluir.
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={estado.avisarResponsavel}
-                onClick={() => despachar({ tipo: "alternar_avisar" })}
-                className={
-                  estado.avisarResponsavel
-                    ? "registrar__toggle registrar__toggle--on"
-                    : "registrar__toggle"
-                }
-                aria-label="Avisar quem cuida do descarte"
-              >
-                <span className="registrar__toggle-bolinha" />
-              </button>
-            </div>
-
-            <div className="registrar__analisar">
-              <button
-                type="button"
-                className="registrar__botao registrar__botao--primario registrar__botao--largo"
-                onClick={analisar}
-                disabled={estado.fotoRecusada}
-              >
-                <Icone nome="brilho" tamanho={16} /> Analisar com IA
-              </button>
-              {estado.fotoRecusada ? (
-                <p className="registrar__dica">
-                  Adicione uma foto pra liberar a análise
-                </p>
-              ) : null}
-              {estado.classificacao ? (
-                <button
-                  type="button"
-                  className="registrar__botao registrar__botao--contorno registrar__botao--largo"
-                  onClick={() =>
-                    erroPeso
-                      ? despachar({ tipo: "definir_erros", erros: { peso: erroPeso } })
-                      : despachar({ tipo: "voltar_a_analise" })
-                  }
-                >
-                  Voltar à análise
-                </button>
-              ) : null}
-            </div>
-          </section>
+          <PainelDetalhes
+            estado={estado}
+            setores={setores}
+            erroPeso={erroPeso}
+            despachar={despachar}
+            aoAnalisar={() => void analisar()}
+          />
         ) : (
-          <section className="registrar__painel" aria-labelledby="reg-titulo">
-            <div className="registrar__painel-topo">
-              <h2 id="reg-titulo" className="registrar__painel-titulo">
-                O que a IA encontrou
-              </h2>
-              {concluida ? (
-                <span
-                  className={`registrar__chip-prio registrar__chip-prio--${estado.prioridade}`}
-                >
-                  {rotuloPrioridade.toUpperCase()}
-                </span>
-              ) : null}
-            </div>
-
-            <div
-              className={
-                analisando
-                  ? "registrar__ia-grid registrar__ia-grid--carregando"
-                  : "registrar__ia-grid"
-              }
-            >
-              <div className="registrar__ia-card" data-cor="papelao">
-                <p className="registrar__ia-rotulo">Tipo</p>
-                {concluida ? (
-                  estado.editando ? (
-                    <select
-                      aria-label="Tipo de resíduo"
-                      className="registrar__ia-campo"
-                      value={valorDoTipo}
-                      onChange={(e) => escolherTipo(e.target.value)}
-                    >
-                      {valorDoTipo === "" ? (
-                        <option value="">{tipoRotulo || "Escolha o tipo"}</option>
-                      ) : null}
-                      {opcoesDeTipo.map((opcao) => (
-                        <option key={opcao.valor} value={opcao.valor}>
-                          {opcao.rotulo}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="registrar__ia-valor">{tipoRotulo || "—"}</p>
-                  )
-                ) : (
-                  valorAusente
-                )}
-              </div>
-              <div className="registrar__ia-card" data-cor="vidro">
-                <p className="registrar__ia-rotulo">Contaminação</p>
-                {concluida ? (
-                  estado.editando ? (
-                    <select
-                      aria-label="Nível de contaminação"
-                      className="registrar__ia-campo"
-                      value={nivelDeContaminacao}
-                      onChange={(e) =>
-                        despachar({
-                          tipo: "ajustar_analise",
-                          ajuste: {
-                            contaminacao: (e.target.value || undefined) as
-                              | NivelContaminacao
-                              | undefined,
-                          },
-                        })
-                      }
-                    >
-                      {nivelDeContaminacao === "" ? (
-                        <option value="">Não informada</option>
-                      ) : null}
-                      {NIVEIS_DE_CONTAMINACAO.map((nivel) => (
-                        <option key={nivel.valor} value={nivel.valor}>
-                          {nivel.rotulo}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="registrar__ia-valor">
-                      {contaminacao(estado.classificacao)}
-                    </p>
-                  )
-                ) : (
-                  valorAusente
-                )}
-              </div>
-              <div className="registrar__ia-card" data-cor="plastico">
-                <p className="registrar__ia-rotulo">Peso aproximado</p>
-                {concluida ? (
-                  estado.editando ? (
-                    <>
-                      <span className="registrar__ia-quilos">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          autoComplete="off"
-                          aria-label="Peso aproximado em quilos"
-                          aria-invalid={erroPeso ? true : undefined}
-                          aria-describedby={erroPeso ? "reg-ia-peso-erro" : undefined}
-                          className="registrar__ia-campo"
-                          placeholder={
-                            estado.classificacao?.pesoEstimadoKg
-                              ? estado.classificacao.pesoEstimadoKg.toLocaleString("pt-BR")
-                              : "Ex.: 12,5"
-                          }
-                          value={estado.pesoInformado}
-                          onChange={(e) =>
-                            despachar({ tipo: "definir_peso", peso: e.target.value })
-                          }
-                        />
-                        <span aria-hidden="true">kg</span>
-                      </span>
-                      {erroPeso ? (
-                        <p id="reg-ia-peso-erro" role="alert" className="registrar__erro-campo">
-                          {erroPeso}
-                        </p>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      <p className="registrar__ia-valor">
-                        {peso.kg === null ? "Não informado" : descreverPeso(peso.kg)}
-                      </p>
-                      <p className="registrar__ia-origem">
-                        {DE_ONDE_VEM_O_PESO[peso.origem]}
-                      </p>
-                    </>
-                  )
-                ) : (
-                  valorAusente
-                )}
-              </div>
-              <div className="registrar__ia-card" data-cor="metal">
-                <p className="registrar__ia-rotulo">
-                  {unidades !== null ? "Caixas" : "Revisão"}
-                </p>
-                {concluida ? (
-                  <p className="registrar__ia-valor">
-                    {unidades !== null
-                      ? `${unidades} un.`
-                      : estado.classificacao?.exigeValidacao
-                        ? "Pelo gestor"
-                        : "—"}
-                  </p>
-                ) : (
-                  valorAusente
-                )}
-              </div>
-            </div>
-
-            {analisando || analiseFalhou ? (
-              <div className="registrar__olhando">
-                <img
-                  src={mascoteCompleto}
-                  alt=""
-                  width={118}
-                  height={179}
-                  className="registrar__olhando-mascote"
-                />
-                <p>
-                  {analiseFalhou
-                    ? "A análise não terminou. Tente de novo ou preencha os dados sem a IA."
-                    : "O VOLTA está olhando a foto com atenção…"}
-                </p>
-              </div>
-            ) : null}
-
-            {concluida && estado.classificacao ? (
-              <>
-                {estado.semIA ? null : (
-                <div className="registrar__recomenda">
-                  <img
-                    src={mascoteCompleto}
-                    alt=""
-                    width={84}
-                    height={127}
-                    className="registrar__recomenda-mascote"
-                  />
-                  <div>
-                    <p className="registrar__recomenda-titulo">
-                      <Icone nome="brilho" tamanho={14} /> VOLTA recomenda
-                    </p>
-                    <p className="registrar__recomenda-texto">
-                      {estado.classificacao.recomendacao}
-                    </p>
-                  </div>
-                </div>
-                )}
-
-                {estado.editando ? (
-                  <p className="registrar__dica">
-                    {estado.semIA
-                      ? "Escolha o tipo do resíduo, preencha o que souber e confirme."
-                      : "Corrija o que a IA errou e toque em Concluir edição."}
-                  </p>
-                ) : null}
-
-                <div className="registrar__acoes">
-                  <button
-                    type="button"
-                    className="registrar__botao registrar__botao--primario registrar__botao--largo"
-                    onClick={registrar}
-                    disabled={
-                      estado.registrando ||
-                      erroPeso !== null ||
-                      (estado.semIA && valorDoTipo === "")
-                    }
-                  >
-                    {estado.registrando ? "Registrando…" : "Confirmar e registrar"}
-                  </button>
-                  <button
-                    type="button"
-                    className="registrar__botao registrar__botao--contorno"
-                    aria-pressed={estado.editando}
-                    onClick={() => despachar({ tipo: "alternar_edicao" })}
-                    disabled={estado.registrando}
-                  >
-                    {estado.editando ? "Concluir edição" : "Editar dados"}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  className="registrar__link"
-                  onClick={() => despachar({ tipo: "voltar_aos_detalhes" })}
-                  disabled={estado.registrando}
-                >
-                  Mudar descrição, setor ou prioridade
-                </button>
-              </>
-            ) : null}
-          </section>
+          <PainelAnalise
+            estado={estado}
+            derivados={derivados}
+            opcoesDeTipo={opcoesDeTipo}
+            peso={peso}
+            erroPeso={erroPeso}
+            despachar={despachar}
+            aoEscolherTipo={escolherTipo}
+            aoRegistrar={() => void registrar()}
+          />
         )}
       </div>
     </div>
