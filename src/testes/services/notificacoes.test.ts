@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { criarOcorrencia } from "../fabricas";
+import type { NotificacaoApi } from "../../types/api";
 import type { AvisosCalculados } from "../../utils/metas";
 import {
   assinarNotificacoes,
@@ -10,8 +11,12 @@ import {
   montarNotificacoes,
 } from "../../services/notificacoes";
 
-// Com a API, as notificações são montadas das ocorrências; com os mocks, vêm de modelos fixos.
-vi.mock("../../services/http", () => ({ USAR_MOCKS: false }));
+// Com a API, as notificações vêm de GET /notifications (ou das ocorrências, sem a rota); com os mocks, de modelos fixos.
+vi.mock("../../services/http", () => ({
+  USAR_MOCKS: false,
+  aoEncerrarSessao: () => () => undefined,
+  requisitar: vi.fn(),
+}));
 
 const AGORA = new Date(2026, 10, 18, 15);
 const SEM_AVISOS: AvisosCalculados = { metaDoDiaBatida: null, foraDoRitmo: null };
@@ -104,6 +109,63 @@ describe("notificações montadas da API", () => {
   });
 });
 
+describe("notificações que vêm da API", () => {
+  const dto = (parcial: Partial<NotificacaoApi> = {}): NotificacaoApi => ({
+    id: "n-1",
+    type: "INCIDENT",
+    title: "Ocorrência aprovada",
+    message: "A ocorrência \"Papel\" foi aprovada.",
+    read: false,
+    createdAt: new Date(2026, 10, 18, 14, 55).toISOString().replace("Z", ""),
+    ...parcial,
+  });
+  const montar = (daApi: Parameters<typeof montarNotificacoes>[7], ocorrencias = [criarOcorrencia({ status: "classificada" })]) =>
+    montarNotificacoes(NINGUEM_LEU, 1, ocorrencias, 0, true, SEM_AVISOS, AGORA, daApi);
+
+  it("mostra as da API no lugar das montadas das ocorrências", () => {
+    const lista = montar([dto()]);
+    expect(lista.map((item) => item.id)).toEqual(["n-1"]);
+    expect(lista[0]).toMatchObject({ tipo: "ocorrencia", destino: "/ocorrencias", lida: false });
+    expect(lista[0].trechos).toEqual([{ texto: "A ocorrência \"Papel\" foi aprovada." }]);
+  });
+
+  it("sem a rota (ou sem resposta), cai para as montadas das ocorrências", () => {
+    expect(montar("indisponivel").map((item) => item.id)).toEqual(["fila-aguardando"]);
+  });
+
+  it("enquanto a primeira resposta não chega, não mostra as montadas, para o sino não piscar", () => {
+    expect(montar(null)).toEqual([]);
+  });
+
+  it("o aviso da meta do mês continua, porque a API não o tem", () => {
+    const ocorrencias = [criarOcorrencia({ pesoKg: 750, criadaEm: new Date(2026, 10, 10).toISOString() })];
+    const lista = montarNotificacoes(NINGUEM_LEU, 0, ocorrencias, 1500, true, SEM_AVISOS, AGORA, [dto()]);
+    expect(lista.map((item) => item.id)).toEqual(["n-1", "meta-mes"]);
+  });
+
+  it("mostra só as 20 mais recentes", () => {
+    const muitas = Array.from({ length: 25 }, (_, indice) => dto({ id: `n-${indice}` }));
+    const lista = montar(muitas);
+    expect(lista).toHaveLength(20);
+    expect(lista[0].id).toBe("n-0");
+    expect(lista[19].id).toBe("n-19");
+  });
+
+  it("vale o que a API diz sobre já ter sido lida, e também o que a pessoa abriu agora", () => {
+    const lista = montarNotificacoes(
+      new Set(["n-2"]),
+      0,
+      [],
+      0,
+      true,
+      SEM_AVISOS,
+      AGORA,
+      [dto({ id: "n-1", read: true }), dto({ id: "n-2" }), dto({ id: "n-3" })],
+    );
+    expect(lista.map((item) => item.lida)).toEqual([true, true, false]);
+  });
+});
+
 describe("avisos da meta nas notificações", () => {
   it("avisa quando a meta de hoje foi batida, com um id por dia", () => {
     const avisos: AvisosCalculados = { metaDoDiaBatida: { hojeKg: 1200, metaDoDiaKg: 60 }, foraDoRitmo: null };
@@ -177,7 +239,11 @@ describe("notificações lidas", () => {
 describe("notificações de demonstração (modo mock)", () => {
   it("vêm de modelos fixos e só mostram a fila quando há o que aprovar", async () => {
     vi.resetModules();
-    vi.doMock("../../services/http", () => ({ USAR_MOCKS: true }));
+    vi.doMock("../../services/http", () => ({
+      USAR_MOCKS: true,
+      aoEncerrarSessao: () => () => undefined,
+      requisitar: vi.fn(),
+    }));
     const modulo = await import("../../services/notificacoes");
 
     const semFila = modulo.montarNotificacoes(NINGUEM_LEU, 0, [], 1500, true, SEM_AVISOS, AGORA);
@@ -192,7 +258,11 @@ describe("notificações de demonstração (modo mock)", () => {
 
   it("a notificação da meta já vem lida e as outras chegam como novas", async () => {
     vi.resetModules();
-    vi.doMock("../../services/http", () => ({ USAR_MOCKS: true }));
+    vi.doMock("../../services/http", () => ({
+      USAR_MOCKS: true,
+      aoEncerrarSessao: () => () => undefined,
+      requisitar: vi.fn(),
+    }));
     const modulo = await import("../../services/notificacoes");
     const idsLidos = modulo.lerNotificacoesLidas();
     const lista = modulo.montarNotificacoes(idsLidos, 0, [], 1500, true, SEM_AVISOS, AGORA);

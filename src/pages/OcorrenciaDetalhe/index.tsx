@@ -41,6 +41,7 @@ import {
   ROTULO_PRIORIDADE,
   aguardaAprovacao,
   categoriaDe,
+  descreverRevisao,
 } from "../../utils/statusOcorrencia";
 import { ModalAprovar } from "./modais/ModalAprovar";
 import { ModalClassificar } from "./modais/ModalClassificar";
@@ -175,6 +176,7 @@ export default function OcorrenciaDetalhe(): ReactNode {
   const decidida = !aguardaAprovacao(ocorrencia.status);
   const numero = ocorrencia.codigo.replace(/\D/g, "");
   const autor = usuario?.nome ?? "Equipe";
+  const revisao = descreverRevisao(ocorrencia, usuario?.id);
 
   async function executar(
     acao: () => Promise<unknown>,
@@ -482,25 +484,28 @@ export default function OcorrenciaDetalhe(): ReactNode {
             ) : null}
 
             {decidida ? (
-              <p className={`detalhe__decisao detalhe__decisao--${categoria}`}>
-                {categoria === "aprovadas" ? (
-                  <>
-                    <Icone nome="check" tamanho={15} /> Aprovada e no PGRS do mês
-                  </>
-                ) : categoria === "encaminhadas" ? (
-                  <>
-                    <Icone nome="seta-direita" tamanho={15} /> Encaminhada para{" "}
-                    {ocorrencia.setorDestino ?? "outro setor"}
-                  </>
-                ) : (
-                  <>
-                    <Icone nome="fechar" tamanho={15} /> Recusada
-                    {ocorrencia.motivoRecusa
-                      ? ` · ${ocorrencia.motivoRecusa}`
-                      : ""}
-                  </>
-                )}
-              </p>
+              <>
+                <p className={`detalhe__decisao detalhe__decisao--${categoria}`}>
+                  {categoria === "aprovadas" ? (
+                    <>
+                      <Icone nome="check" tamanho={15} /> Aprovada e no PGRS do mês
+                    </>
+                  ) : categoria === "encaminhadas" ? (
+                    <>
+                      <Icone nome="seta-direita" tamanho={15} /> Encaminhada para{" "}
+                      {ocorrencia.setorDestino ?? "outro setor"}
+                    </>
+                  ) : (
+                    <>
+                      <Icone nome="fechar" tamanho={15} /> Recusada
+                      {ocorrencia.motivoRecusa
+                        ? ` · ${ocorrencia.motivoRecusa}`
+                        : ""}
+                    </>
+                  )}
+                </p>
+                {revisao ? <p className="detalhe__revisao">{revisao}</p> : null}
+              </>
             ) : dadosReais ? (
               podeRevisar ? (
                 <>

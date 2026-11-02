@@ -5,8 +5,11 @@ import {
   aprovada,
   atividadesDaPessoa,
   calcularPainel,
+  duracaoEmTexto,
+  revisadasPor,
   somaKg,
   taxaDeAprovacao,
+  tempoMedioDeRevisaoMs,
   tempoRelativo,
 } from "../../utils/painel";
 
@@ -172,5 +175,46 @@ describe("atividadesDaPessoa", () => {
 
   it("ignora eventos que não são ação de pessoa, como o da IA", () => {
     expect(atividadesDaPessoa(lista, "IA VOLTA", AGORA.getTime())).toHaveLength(0);
+  });
+});
+
+describe("revisões da pessoa", () => {
+  const hora = (h: number): string => new Date(2026, 10, 18, h).toISOString();
+  const revisada = (id: string, por: string | null, registrada: number, decidida: number | null) =>
+    criarOcorrencia({
+      id,
+      criadaEm: hora(registrada),
+      revisadaPor: por,
+      revisadaEm: decidida === null ? null : hora(decidida),
+    });
+
+  it("revisadasPor separa o que a pessoa decidiu do que outras decidiram ou ninguém decidiu", () => {
+    const lista = [revisada("a", "gestor-1", 8, 9), revisada("b", "gestor-2", 8, 9), revisada("c", null, 8, null)];
+    expect(revisadasPor(lista, "gestor-1").map((o) => o.id)).toEqual(["a"]);
+    expect(revisadasPor(lista, "gestor-3")).toEqual([]);
+  });
+
+  it("o tempo médio vai do registro à decisão e ignora as sem data", () => {
+    const lista = [revisada("a", "gestor-1", 8, 9), revisada("b", "gestor-1", 8, 11), revisada("c", "gestor-1", 8, null)];
+    expect(tempoMedioDeRevisaoMs(lista)).toBe(2 * 3_600_000);
+  });
+
+  it("sem nenhuma decisão com data, não há média", () => {
+    expect(tempoMedioDeRevisaoMs([])).toBeNull();
+    expect(tempoMedioDeRevisaoMs([revisada("a", "gestor-1", 8, null)])).toBeNull();
+  });
+
+  it("uma decisão com data anterior ao registro (relógios diferentes) conta como zero, não como negativa", () => {
+    expect(tempoMedioDeRevisaoMs([revisada("a", "gestor-1", 9, 8)])).toBe(0);
+  });
+});
+
+describe("duracaoEmTexto", () => {
+  it("usa minutos, horas e dias, nunca menos de 1 minuto", () => {
+    expect(duracaoEmTexto(0)).toBe("1 min");
+    expect(duracaoEmTexto(20 * 60_000)).toBe("20 min");
+    expect(duracaoEmTexto(8 * 3_600_000)).toBe("8 h");
+    expect(duracaoEmTexto(24 * 3_600_000)).toBe("1 dia");
+    expect(duracaoEmTexto(3 * 24 * 3_600_000)).toBe("3 dias");
   });
 });

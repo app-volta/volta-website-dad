@@ -109,6 +109,10 @@ export interface IncidenteApi {
   readonly registeredAt: string;
   /** Motivo da última alteração; numa ocorrência recusada, é o motivo da recusa. */
   readonly changeReason?: string | null;
+  /** Quem aprovou ou recusou (id); nulo enquanto aguarda e nas aprovadas antes do campo existir. */
+  readonly reviewedBy?: string | null;
+  /** Quando foi aprovada ou recusada, sem fuso (UTC); nulo como `reviewedBy`. */
+  readonly reviewedAt?: string | null;
 }
 
 /** POST /incidents (os perfis EMPLOYEE e MANAGER registram). */
@@ -190,6 +194,8 @@ export interface CooperativaApi {
   readonly averageRating: number | null;
   /** Categorias de resíduo separadas por vírgula: "PAPEL,PLASTICO". */
   readonly specialties: string;
+  /** E-mail de contato; ausente enquanto a API não o devolve. */
+  readonly email?: string | null;
 }
 
 /** GET /cooperatives/scoring-data (ADMIN, MANAGER e EMPLOYEE): leitura, sem CNPJ. */
@@ -200,6 +206,8 @@ export interface CooperativaParaPontuacaoApi {
   readonly longitude: number;
   readonly averageRating: number | null;
   readonly specialties: readonly string[];
+  /** E-mail de contato; ausente enquanto a API não o devolve. */
+  readonly email?: string | null;
 }
 
 /** POST /cooperatives e PUT /cooperatives/{id} (somente ADMIN). */
@@ -209,6 +217,19 @@ export interface NovaCooperativaApi {
   readonly latitude: number;
   readonly longitude: number;
   readonly specialties: string;
+  /** Obrigatório e em formato de e-mail (até 150 caracteres). */
+  readonly email: string;
+}
+
+/** GET /notifications (ADMIN, MANAGER e EMPLOYEE): as da pessoa logada, da mais recente para a mais antiga. */
+export interface NotificacaoApi {
+  readonly id: string;
+  readonly type: "INCIDENT" | "COLLECTION";
+  readonly title: string;
+  readonly message: string;
+  readonly read: boolean;
+  /** Sem fuso (UTC). */
+  readonly createdAt: string;
 }
 
 /** POST /users (somente ADMIN): cria a conta, sempre como EMPLOYEE. */

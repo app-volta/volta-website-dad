@@ -27,10 +27,11 @@ import {
   analiseInconclusiva,
   categoriaDaApi,
   classificacaoDaAnalise,
+  comDecisaoDaApi,
   eventoDaColeta,
+  eventosLocaisSemRepetir,
   ocorrenciaDaApi,
   opcoesDeTipo,
-  statusDaApi,
   tipoDaAnalise,
 } from "./adaptadores";
 import type { CatalogoApi } from "./adaptadores";
@@ -147,7 +148,7 @@ function aplicarAlteracoes(base: Ocorrencia): Ocorrencia {
     setorDestino: usar(alteracao.setorDestino, base.setorDestino),
     ultimaAlteracao: usar(alteracao.ultimaAlteracao, base.ultimaAlteracao),
     atualizadaEm: usar(alteracao.atualizadaEm, base.atualizadaEm),
-    historico: [...base.historico, ...(alteracao.eventos ?? [])],
+    historico: [...base.historico, ...eventosLocaisSemRepetir(base, alteracao.eventos ?? [])],
   };
 }
 
@@ -247,6 +248,7 @@ function daApi(dto: IncidenteApi, cat: CatalogoApi): Ocorrencia {
     classificacao: classificacoes.get(dto.id) ?? lerAnalises()[dto.id] ?? null,
     coleta: eventosDeColeta.get(dto.id),
     autorNome: nomeDoAutor(dto.userId),
+    revisorNome: dto.reviewedBy ? nomeDoAutor(dto.reviewedBy) : undefined,
   });
 }
 
@@ -522,7 +524,7 @@ const MOTIVO_MAXIMO = 200;
 
 /**
  * Aprova (PENDING → APPROVED) ou recusa (PENDING → REJECTED) no servidor e
- * guarda na lista o status e o motivo que ele devolveu.
+ * guarda na lista o que ele devolveu.
  */
 async function decidirNaApi(
   id: string,
@@ -534,15 +536,9 @@ async function decidirNaApi(
     `/incidents/${id}/${decisao}`,
     { metodo: "PATCH", corpo, sinal },
   );
+  const revisorNome = resposta.reviewedBy ? (nomeDoAutor(resposta.reviewedBy) ?? null) : null;
   bases = bases.map((item) =>
-    item.id === id
-      ? {
-          ...item,
-          status: statusDaApi(resposta.status),
-          motivoRecusa:
-            resposta.status === "REJECTED" ? (resposta.changeReason ?? null) : null,
-        }
-      : item,
+    item.id === id ? comDecisaoDaApi(item, resposta, revisorNome) : item,
   );
 }
 

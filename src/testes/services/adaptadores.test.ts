@@ -4,7 +4,9 @@ import type {
   AnaliseResiduoApi,
   AreaApi,
   CategoriaResiduoApi,
+  CooperativaApi,
   IncidenteApi,
+  NotificacaoApi,
   RiscoApi,
   TipoResiduoApi,
 } from "../../types/api";
@@ -13,7 +15,12 @@ import {
   categoriaDoTexto,
   classificacaoDaAnalise,
   codigoDaOcorrencia,
+  comDecisaoDaApi,
+  cooperativaDaApi,
+  eventoDaDecisao,
+  eventosLocaisSemRepetir,
   materialDoTexto,
+  notificacaoDaApi,
   ocorrenciaDaApi,
   opcoesDeTipo,
   riscoDaAnalise,
@@ -338,5 +345,210 @@ describe("ocorrenciaDaApi", () => {
       contaminacao: "media",
       pesoEstimadoKg: 8,
     });
+  });
+});
+
+describe("quem revisou a ocorrência e quando", () => {
+  const area: AreaApi = {
+    id: "area-1",
+    companyId: "emp-1",
+    sectorName: "Expedição",
+    locationDescription: "Galpão 2",
+  };
+  const base = catalogo([tipo("t-plastico", "PLASTICO")], [area]);
+  const aprovada = incidente({
+    status: "APPROVED",
+    reviewedBy: "gestor-1",
+    reviewedAt: "2026-11-18T14:30:00",
+  });
+
+  it("guarda quem decidiu e a data em UTC, e põe a decisão na linha do tempo", () => {
+    const ocorrencia = ocorrenciaDaApi(aprovada, base, { autorNome: "Ana", revisorNome: "Carlos Lima" });
+    expect(ocorrencia).toMatchObject({
+      revisadaPor: "gestor-1",
+      revisadaPorNome: "Carlos Lima",
+      revisadaEm: "2026-11-18T14:30:00.000Z",
+    });
+    expect(ocorrencia.historico.map((evento) => evento.tipo)).toEqual(["registro", "aprovacao"]);
+    expect(ocorrencia.historico[1]).toMatchObject({
+      autor: "Carlos Lima",
+      texto: "aprovou a ocorrência",
+      em: "2026-11-18T14:30:00.000Z",
+    });
+  });
+
+  it("sem o nome de quem decidiu, o autor do evento é Gestor e o nome fica vazio", () => {
+    const ocorrencia = ocorrenciaDaApi(aprovada, base);
+    expect(ocorrencia.revisadaPorNome).toBeNull();
+    expect(ocorrencia.historico[1].autor).toBe("Gestor");
+  });
+
+  it("na recusa, o evento leva o motivo", () => {
+    const recusada = incidente({
+      status: "REJECTED",
+      changeReason: "Foto ilegível",
+      reviewedBy: "gestor-1",
+      reviewedAt: "2026-11-18T14:30:00",
+    });
+    const evento = ocorrenciaDaApi(recusada, base).historico[1];
+    expect(evento).toMatchObject({ tipo: "recusa", texto: "recusou a ocorrência · Foto ilegível" });
+  });
+
+  it("a ocorrência encerrada conta como aprovada", () => {
+    const encerrada = incidente({ status: "CLOSED", reviewedBy: "gestor-1", reviewedAt: "2026-11-18T14:30:00" });
+    expect(ocorrenciaDaApi(encerrada, base).historico[1].tipo).toBe("aprovacao");
+  });
+
+  it("aprovada antes de a API guardar a decisão, não inventa data nem evento", () => {
+    const ocorrencia = ocorrenciaDaApi(incidente({ status: "APPROVED" }), base);
+    expect(ocorrencia).toMatchObject({ revisadaPor: null, revisadaPorNome: null, revisadaEm: null });
+    expect(ocorrencia.historico).toHaveLength(1);
+  });
+
+  it("a que ainda aguarda não ganha evento de decisão", () => {
+    const ocorrencia = ocorrenciaDaApi(incidente({ reviewedBy: "gestor-1", reviewedAt: "2026-11-18T14:30:00" }), base);
+    expect(ocorrencia.historico).toHaveLength(1);
+  });
+
+  it("a decisão fica na ordem do tempo, entre o registro e a coleta", () => {
+    const coleta = {
+      id: "coleta-1",
+      tipo: "coleta" as const,
+      autor: "Recicla Vida",
+      texto: "recebeu o pedido de coleta",
+      em: "2026-11-18T16:00:00.000Z",
+    };
+    const ocorrencia = ocorrenciaDaApi(aprovada, base, { coleta: [coleta] });
+    expect(ocorrencia.historico.map((evento) => evento.tipo)).toEqual(["registro", "aprovacao", "coleta"]);
+  });
+});
+
+describe("eventoDaDecisao", () => {
+  it("aprovar não leva motivo", () => {
+    expect(eventoDaDecisao("aprovacao", "OCC-1", "2026-11-18T14:30:00.000Z", "Ana", "ignorado")).toMatchObject({
+      tipo: "aprovacao",
+      autor: "Ana",
+      texto: "aprovou a ocorrência",
+    });
+  });
+
+  it("recusar sem motivo diz só que recusou", () => {
+    expect(eventoDaDecisao("recusa", "OCC-1", "2026-11-18T14:30:00.000Z", null).texto).toBe("recusou a ocorrência");
+  });
+});
+
+describe("e-mail da cooperativa", () => {
+  const cooperativa: CooperativaApi = {
+    id: "coop-1",
+    name: "Recicla Vida",
+    cnpj: "11222333000181",
+    latitude: -21.67,
+    longitude: -49.74,
+    averageRating: 4.5,
+    specialties: "PAPEL",
+    email: "  contato@reciclavida.example ",
+  };
+  const volume = { usadoMesKg: 0, volumeMensalKg: [0, 0, 0, 0, 0] };
+
+  it("leva o e-mail que a API devolve, sem os espaços", () => {
+    expect(cooperativaDaApi(cooperativa, volume).email).toBe("contato@reciclavida.example");
+  });
+
+  it("sem e-mail (ou em branco), fica vazio para o botão se desligar", () => {
+    expect(cooperativaDaApi({ ...cooperativa, email: undefined }, volume).email).toBeNull();
+    expect(cooperativaDaApi({ ...cooperativa, email: "   " }, volume).email).toBeNull();
+    expect(cooperativaDaApi({ ...cooperativa, email: null }, volume).email).toBeNull();
+  });
+});
+
+describe("notificacaoDaApi", () => {
+  const AGORA = Date.UTC(2026, 10, 18, 10, 5);
+  const dto: NotificacaoApi = {
+    id: "n-1",
+    type: "COLLECTION",
+    title: "Coleta solicitada",
+    message: 'Coleta solicitada para a ocorrência "Papel misturado".',
+    read: false,
+    createdAt: "2026-11-18T10:00:00",
+  };
+
+  it("mostra a frase da API, quando ela chegou e que ainda não foi lida", () => {
+    expect(notificacaoDaApi(dto, AGORA)).toEqual({
+      id: "n-1",
+      tipo: "coleta",
+      trechos: [{ texto: 'Coleta solicitada para a ocorrência "Papel misturado".' }],
+      quando: "há 5 min",
+      destino: "/ocorrencias",
+      lida: false,
+    });
+  });
+
+  it("o tipo da API define o ícone: ocorrência ou coleta", () => {
+    expect(notificacaoDaApi({ ...dto, type: "INCIDENT" }, AGORA).tipo).toBe("ocorrencia");
+    expect(notificacaoDaApi({ ...dto, type: "COLLECTION" }, AGORA).tipo).toBe("coleta");
+  });
+
+  it("um tipo que a API passe a mandar e o painel não conhece vira ocorrência", () => {
+    expect(notificacaoDaApi({ ...dto, type: "OUTRO" as never }, AGORA).tipo).toBe("ocorrencia");
+  });
+
+  it("respeita o que a API diz sobre já ter sido lida", () => {
+    expect(notificacaoDaApi({ ...dto, read: true }, AGORA).lida).toBe(true);
+  });
+});
+
+describe("decisão guardada na lista e eventos anotados no navegador", () => {
+  const area: AreaApi = { id: "area-1", companyId: "emp-1", sectorName: "Expedição", locationDescription: "Galpão 2" };
+  const base = catalogo([tipo("t-plastico", "PLASTICO")], [area]);
+  const pendente = ocorrenciaDaApi(incidente(), base, { autorNome: "Ana" });
+  const aprovadaNaApi = incidente({ status: "APPROVED", reviewedBy: "gestor-1", reviewedAt: "2026-11-18T14:30:00" });
+  const anotado = {
+    id: "OCC-1-l1",
+    tipo: "aprovacao" as const,
+    autor: "Carlos Lima",
+    texto: "aprovou a ocorrência",
+    em: "2026-11-18T14:31:00.000Z",
+  };
+  const observacao = { ...anotado, id: "OCC-1-l2", tipo: "observacao" as const, texto: "adicionou uma observação · ok" };
+
+  it("depois de aprovar, a lista guarda o status, quem decidiu e a decisão na linha do tempo", () => {
+    const depois = comDecisaoDaApi(pendente, aprovadaNaApi, "Carlos Lima");
+    expect(depois).toMatchObject({
+      status: "aprovada",
+      revisadaPor: "gestor-1",
+      revisadaPorNome: "Carlos Lima",
+      revisadaEm: "2026-11-18T14:30:00.000Z",
+      motivoRecusa: null,
+    });
+    expect(depois.historico.map((evento) => evento.tipo)).toEqual(["registro", "aprovacao"]);
+  });
+
+  it("depois de recusar, guarda o motivo no status e no evento", () => {
+    const recusada = incidente({ status: "REJECTED", changeReason: "Foto ilegível", reviewedBy: "gestor-1", reviewedAt: "2026-11-18T14:30:00" });
+    const depois = comDecisaoDaApi(pendente, recusada, null);
+    expect(depois).toMatchObject({ status: "recusada", motivoRecusa: "Foto ilegível", revisadaPorNome: null });
+    expect(depois.historico[1]).toMatchObject({ tipo: "recusa", autor: "Gestor", texto: "recusou a ocorrência · Foto ilegível" });
+  });
+
+  it("decidir de novo troca a decisão anterior em vez de empilhar duas", () => {
+    const primeira = comDecisaoDaApi(pendente, aprovadaNaApi, "Carlos Lima");
+    const segunda = comDecisaoDaApi(primeira, aprovadaNaApi, "Carlos Lima");
+    expect(segunda.historico.filter((evento) => evento.tipo === "aprovacao")).toHaveLength(1);
+  });
+
+  it("com um servidor que ainda não devolve a data, só muda o status e o histórico fica igual", () => {
+    const depois = comDecisaoDaApi(pendente, incidente({ status: "APPROVED" }), null);
+    expect(depois).toMatchObject({ status: "aprovada", revisadaPor: null, revisadaEm: null });
+    expect(depois.historico).toEqual(pendente.historico);
+  });
+
+  it("com a decisão na API, descarta a aprovação anotada no navegador e mantém as outras anotações", () => {
+    const comDecisao = ocorrenciaDaApi(aprovadaNaApi, base, { revisorNome: "Carlos Lima" });
+    expect(eventosLocaisSemRepetir(comDecisao, [anotado, observacao])).toEqual([observacao]);
+  });
+
+  it("sem a decisão na API, mantém a aprovação anotada no navegador", () => {
+    const semDecisao = ocorrenciaDaApi(incidente({ status: "APPROVED" }), base);
+    expect(eventosLocaisSemRepetir(semDecisao, [anotado, observacao])).toEqual([anotado, observacao]);
   });
 });

@@ -8,7 +8,27 @@ import {
 } from "../services/painel";
 import type { Ocorrencia } from "../types/ocorrencia";
 import type { AtividadeEquipe, PainelInicio } from "../types/painel";
-import { atividadesDaPessoa } from "../utils/painel";
+import {
+  atividadesDaPessoa,
+  duracaoEmTexto,
+  revisadasPor,
+  tempoMedioDeRevisaoMs,
+} from "../utils/painel";
+
+/** Quantas ocorrências a pessoa aprovou ou recusou e quanto demorou, em média, depois do registro. */
+export function useRevisoesDe(
+  ocorrencias: readonly Ocorrencia[] | null,
+  usuarioId: string,
+): { readonly quantidade: number; readonly tempoMedio: string | null } {
+  return useMemo(() => {
+    const revisadas = revisadasPor(ocorrencias ?? [], usuarioId);
+    const media = tempoMedioDeRevisaoMs(revisadas);
+    return {
+      quantidade: revisadas.length,
+      tempoMedio: media === null ? null : duracaoEmTexto(media),
+    };
+  }, [ocorrencias, usuarioId]);
+}
 
 /** Quantas ocorrências a pessoa registrou. */
 export function useRegistradasPor(

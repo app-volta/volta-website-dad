@@ -7,6 +7,7 @@ import type {
   HistoricoColetaApi,
   IncidenteApi,
   NotasDasCooperativasApi,
+  NotificacaoApi,
   PerfilApi,
   PrioridadeApi,
   RelatorioIaApi,
@@ -35,12 +36,14 @@ import type {
   Ocorrencia,
   PrioridadeOcorrencia,
   StatusOcorrencia,
+  TipoEvento,
 } from "../types/ocorrencia";
 import type { AcaoMensagem } from "../types/assistente";
-import type { Trecho } from "../types/notificacao";
+import type { Notificacao, TipoNotificacao, Trecho } from "../types/notificacao";
 import type { PapelUsuario, Usuario } from "../types/usuario";
 import { instanteUtc } from "../utils/datas";
 import { mascararCnpj } from "../utils/formatacao";
+import { tempoRelativo } from "../utils/painel";
 import type { VolumeDaCooperativa } from "../utils/volumeCooperativas";
 
 /**
@@ -511,9 +514,10 @@ function cnpjParaExibir(cnpj: string): string {
 }
 
 /**
- * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede,
- * nota e as categorias aceitas; contato, capacidade e licença não existem lá e
- * ficam vazios. A distância só entra quando se sabe de onde a empresa envia.
+ * Cooperativa da API no formato das telas. A API guarda nome, CNPJ, sede, nota,
+ * categorias aceitas e e-mail; nome do contato, telefone, capacidade e licença
+ * não existem lá e ficam vazios. A distância só entra quando se sabe de onde a
+ * empresa envia.
  */
 export function cooperativaDaApi(
   dto: CooperativaApi,
@@ -529,7 +533,7 @@ export function cooperativaDaApi(
     materiaisAceitos: materiaisDasEspecialidades(dto.specialties),
     contato: null,
     telefone: null,
-    email: null,
+    email: dto.email?.trim() || null,
     distanciaKm,
     avaliacao: dto.averageRating,
     situacao: "ativa",
@@ -566,6 +570,103 @@ export function eventoDaColeta(
     autor: nomeDaCooperativa ?? "Cooperativa",
     texto: observacao ? `${texto} · ${observacao}` : texto,
     em: instanteUtc(historico.changedAt),
+  };
+}
+
+/** Quem aparece como autor da decisão quando a API só devolve o id de quem a tomou. */
+const AUTOR_DA_DECISAO = "Gestor";
+
+/** A aprovação ou recusa como evento da linha do tempo, com a data que a API guardou. */
+export function eventoDaDecisao(
+  decisao: "aprovacao" | "recusa",
+  codigo: string,
+  em: string,
+  autor: string | null,
+  motivo: string | null = null,
+): EventoOcorrencia {
+  const texto =
+    decisao === "aprovacao"
+      ? "aprovou a ocorrência"
+      : motivo
+        ? `recusou a ocorrência · ${motivo}`
+        : "recusou a ocorrência";
+  return {
+    id: `${codigo}-decisao`,
+    tipo: decisao,
+    autor: autor ?? AUTOR_DA_DECISAO,
+    texto,
+    em,
+  };
+}
+
+const TIPOS_DE_DECISAO: ReadonlySet<TipoEvento> = new Set(["aprovacao", "recusa"]);
+
+/**
+ * Os eventos anotados só neste navegador, sem o que a API já conta. Quando ela
+ * guarda quem decidiu e quando, a aprovação ou recusa anotada aqui ficaria
+ * repetida na linha do tempo.
+ */
+export function eventosLocaisSemRepetir(
+  base: Ocorrencia,
+  locais: readonly EventoOcorrencia[],
+): readonly EventoOcorrencia[] {
+  const decisaoNaApi = base.historico.some((evento) => TIPOS_DE_DECISAO.has(evento.tipo));
+  return decisaoNaApi ? locais.filter((evento) => !TIPOS_DE_DECISAO.has(evento.tipo)) : locais;
+}
+
+/**
+ * A ocorrência da lista depois de aprovar ou recusar: o status e o motivo que a
+ * API devolveu e, se ela já guarda, quem decidiu e quando (com o evento na
+ * linha do tempo no lugar de qualquer decisão anterior).
+ */
+export function comDecisaoDaApi(
+  item: Ocorrencia,
+  resposta: IncidenteApi,
+  revisorNome: string | null,
+): Ocorrencia {
+  const recusada = resposta.status === "REJECTED";
+  const motivo = recusada ? (resposta.changeReason ?? null) : null;
+  const revisadaEm = resposta.reviewedAt ? instanteUtc(resposta.reviewedAt) : null;
+  const historico = revisadaEm
+    ? [
+        ...item.historico.filter((evento) => !TIPOS_DE_DECISAO.has(evento.tipo)),
+        eventoDaDecisao(recusada ? "recusa" : "aprovacao", item.codigo, revisadaEm, revisorNome, motivo),
+      ].sort((a, b) => a.em.localeCompare(b.em))
+    : item.historico;
+  return {
+    ...item,
+    status: statusDaApi(resposta.status),
+    motivoRecusa: motivo,
+    revisadaPor: resposta.reviewedBy ?? null,
+    revisadaPorNome: revisorNome,
+    revisadaEm,
+    historico,
+  };
+}
+
+/** O tipo de cada notificação da API; o ícone e a cor dependem dele. */
+const TIPO_DA_NOTIFICACAO: Readonly<
+  Record<NotificacaoApi["type"], TipoNotificacao>
+> = {
+  INCIDENT: "ocorrencia",
+  COLLECTION: "coleta",
+};
+
+/**
+ * Notificação da API no formato do sino. A API não diz de qual ocorrência é, então
+ * o clique leva à lista; a mensagem já traz a frase pronta, sem precisar do título.
+ */
+export function notificacaoDaApi(
+  dto: NotificacaoApi,
+  agora: number = Date.now(),
+): Notificacao {
+  return {
+    id: dto.id,
+    tipo: TIPO_DA_NOTIFICACAO[dto.type] ?? "ocorrencia",
+    trechos: [{ texto: dto.message }],
+    quando: tempoRelativo(instanteUtc(dto.createdAt), agora),
+    destino: "/ocorrencias",
+    lida: dto.read,
   };
 }
 
@@ -625,6 +726,8 @@ export interface ExtrasOcorrencia {
   readonly coleta?: readonly EventoOcorrencia[];
   readonly classificacao?: ClassificacaoIA | null;
   readonly autorNome?: string;
+  /** Nome de quem decidiu; a API só devolve o id, então só se sabe o da pessoa logada. */
+  readonly revisorNome?: string;
 }
 
 export function ocorrenciaDaApi(
@@ -677,6 +780,20 @@ export function ocorrenciaDaApi(
     });
   }
 
+  const revisadaEm = dto.reviewedAt ? instanteUtc(dto.reviewedAt) : null;
+  const revisorNome = extras.revisorNome ?? null;
+  if (revisadaEm && dto.status !== "PENDING") {
+    historico.push(
+      eventoDaDecisao(
+        dto.status === "REJECTED" ? "recusa" : "aprovacao",
+        codigo,
+        revisadaEm,
+        revisorNome,
+        dto.status === "REJECTED" ? (dto.changeReason ?? null) : null,
+      ),
+    );
+  }
+
   // A coleta acontece depois do registro: mantém a linha do tempo em ordem.
   historico.push(...(extras.coleta ?? []));
   historico.sort((a, b) => a.em.localeCompare(b.em));
@@ -707,6 +824,9 @@ export function ocorrenciaDaApi(
       contaminacaoDaApi(dto.contaminationLevel) === "alta",
     setorDestino: null,
     motivoRecusa: dto.status === "REJECTED" ? (dto.changeReason ?? null) : null,
+    revisadaPor: dto.reviewedBy ?? null,
+    revisadaPorNome: revisorNome,
+    revisadaEm,
     ultimaAlteracao: null,
     historico,
   };

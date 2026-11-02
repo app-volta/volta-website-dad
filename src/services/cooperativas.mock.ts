@@ -1,7 +1,7 @@
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
 import { pontoA } from "../utils/geo";
 import type { Coordenadas } from "../utils/geo";
-import { validarLicenca } from "../utils/cooperativas";
+import { validarEmailDaCooperativa, validarLicenca } from "../utils/cooperativas";
 import { mascararCnpj } from "../utils/formatacao";
 import { validarCnpj } from "../utils/validadores";
 import { aguardar } from "./http";
@@ -175,6 +175,8 @@ export async function adicionarCooperativa(
   }
   const erroLicenca = validarLicenca(dados.licenca);
   if (erroLicenca) throw new Error(erroLicenca);
+  const erroEmail = validarEmailDaCooperativa(dados.email);
+  if (erroEmail) throw new Error(erroEmail);
 
   const digitos = dados.cnpj.replace(/\D/g, "");
   if (catalogo.some((c) => c.cnpj.replace(/\D/g, "") === digitos)) {
@@ -195,7 +197,7 @@ export async function adicionarCooperativa(
     materiaisAceitos: [...dados.materiais],
     contato: null,
     telefone: null,
-    email: null,
+    email: dados.email.trim().toLowerCase(),
     distanciaKm,
     avaliacao: null,
     situacao: "em_homologacao",

@@ -8,6 +8,11 @@ import {
   marcarTodasComoLidas,
   montarNotificacoes,
 } from "../services/notificacoes";
+import {
+  acompanharNotificacoesDaApi,
+  assinarNotificacoesDaApi,
+  lerNotificacoesDaApi,
+} from "../services/notificacoesApi";
 import { avisosDaMeta } from "../utils/metas";
 import { useMetaRecuperacao, usePreferenciasDaMeta } from "./useMeta";
 import {
@@ -24,6 +29,8 @@ export function useNotificacoes(): readonly Notificacao[] {
   useEffect(() => {
     garantirCarregado();
   }, []);
+  useEffect(() => acompanharNotificacoesDaApi(), []);
+  const daApi = useSyncExternalStore(assinarNotificacoesDaApi, lerNotificacoesDaApi);
   const lidas = useSyncExternalStore(assinarNotificacoes, lerNotificacoesLidas);
   const pendentes = useSyncExternalStore(assinarMudancas, quantidadeAguardando);
   const ocorrencias = useSyncExternalStore(assinarMudancas, lerOcorrencias);
@@ -38,6 +45,8 @@ export function useNotificacoes(): readonly Notificacao[] {
     metaKg,
     podeRevisar,
     avisosDaMeta(ocorrencias, metaKg, preferenciasDaMeta),
+    new Date(),
+    daApi,
   );
 }
 

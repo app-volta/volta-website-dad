@@ -4,7 +4,14 @@ export interface Trecho {
   readonly destaque?: boolean;
 }
 
-export type TipoNotificacao = "aprovacao" | "licenca" | "fila" | "meta";
+/** "ocorrencia" e "coleta" são as que a API devolve; as demais o painel monta sozinho. */
+export type TipoNotificacao =
+  | "aprovacao"
+  | "licenca"
+  | "fila"
+  | "meta"
+  | "ocorrencia"
+  | "coleta";
 
 export interface Notificacao {
   readonly id: string;

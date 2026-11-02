@@ -12,6 +12,7 @@ import {
   resumirCooperativas,
   rotuloLicenca,
   temDistancias,
+  validarEmailDaCooperativa,
   validarLatitude,
   validarLicenca,
   validarLongitude,
@@ -184,5 +185,19 @@ describe("raio de 10 km", () => {
   it("só fala em raio quando todas as distâncias são conhecidas", () => {
     expect(temDistancias(lista)).toBe(false);
     expect(temDistancias(lista.slice(0, 3))).toBe(true);
+  });
+});
+
+describe("validarEmailDaCooperativa", () => {
+  it("exige o e-mail e o formato", () => {
+    expect(validarEmailDaCooperativa("")).toBe("Informe o e-mail da cooperativa.");
+    expect(validarEmailDaCooperativa("   ")).toBe("Informe o e-mail da cooperativa.");
+    expect(validarEmailDaCooperativa("sem-arroba")).toBe("E-mail em formato inválido.");
+    expect(validarEmailDaCooperativa("contato@cooperativa")).toBe("E-mail em formato inválido.");
+  });
+
+  it("aceita um e-mail válido, mesmo com espaços nas pontas", () => {
+    expect(validarEmailDaCooperativa("contato@reciclavida.com.br")).toBeNull();
+    expect(validarEmailDaCooperativa("  contato@reciclavida.com.br ")).toBeNull();
   });
 });

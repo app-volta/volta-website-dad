@@ -1,4 +1,5 @@
 import type { Cooperativa, MaterialAceito } from "../types/cooperativa";
+import { validarEmail } from "./validadores";
 
 export type EstadoLicenca =
   | "valida"
@@ -158,6 +159,12 @@ export function validarMateriais(
   materiais: readonly MaterialAceito[],
 ): string | null {
   return materiais.length === 0 ? "Escolha ao menos um material." : null;
+}
+
+/** O e-mail de contato é obrigatório no cadastro: é por ele que o gestor fala com a cooperativa. */
+export function validarEmailDaCooperativa(email: string): string | null {
+  const limpo = email.trim();
+  return limpo ? validarEmail(limpo) : "Informe o e-mail da cooperativa.";
 }
 
 /** Aceita vírgula ou ponto como separador decimal; vazio ou inválido vira NaN. */
