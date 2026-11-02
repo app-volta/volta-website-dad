@@ -508,33 +508,28 @@ export default function OcorrenciaDetalhe(): ReactNode {
               </>
             ) : dadosReais ? (
               podeRevisar ? (
-                <>
-                  <div className="detalhe__decidir">
-                    <button
-                      type="button"
-                      className="detalhe__aprovar"
-                      aria-haspopup="dialog"
-                      disabled={semRede}
-                      onClick={() => abrir("aprovar")}
-                    >
-                      <Icone nome="check" tamanho={16} />
-                      Aprovar ocorrência
-                    </button>
-                    <button
-                      type="button"
-                      className="detalhe__recusar"
-                      aria-haspopup="dialog"
-                      disabled={semRede}
-                      onClick={() => abrir("recusar")}
-                    >
-                      <Icone nome="fechar" tamanho={15} />
-                      Recusar
-                    </button>
-                  </div>
-                  <Alerta variante="info" titulo="Outras ações indisponíveis">
-                    A API ainda não salva reclassificação, encaminhamento ou observações.
-                  </Alerta>
-                </>
+                <div className="detalhe__decidir">
+                  <button
+                    type="button"
+                    className="detalhe__aprovar"
+                    aria-haspopup="dialog"
+                    disabled={semRede}
+                    onClick={() => abrir("aprovar")}
+                  >
+                    <Icone nome="check" tamanho={16} />
+                    Aprovar ocorrência
+                  </button>
+                  <button
+                    type="button"
+                    className="detalhe__recusar"
+                    aria-haspopup="dialog"
+                    disabled={semRede}
+                    onClick={() => abrir("recusar")}
+                  >
+                    <Icone nome="fechar" tamanho={15} />
+                    Recusar
+                  </button>
+                </div>
               ) : (
                 <Alerta variante="info" titulo="Aguardando aprovação do gestor">
                   Seu perfil pode acompanhar os detalhes, mas não pode aprovar ou recusar esta ocorrência.
