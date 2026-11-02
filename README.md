@@ -15,6 +15,7 @@ cooperativa parceira e finaliza a ocorrência.
 - [React Router v7](https://reactrouter.com/) para navegação
 - [Recharts](https://recharts.org/) para os gráficos de barras de Relatórios
 - [oxlint](https://oxc.rs/) para linting rápido
+- [Vitest](https://vitest.dev/) para os testes unitários
 - Deploy configurado para Vercel (SPA rewrites via `vercel.json`)
 
 ## Rodando localmente
@@ -39,6 +40,10 @@ npm run preview
 
 # linter
 npm run lint
+
+# testes unitários (uma vez) ou em modo observação
+npm test
+npm run test:watch
 ```
 
 ## Variáveis de ambiente
@@ -159,6 +164,10 @@ src/
 ├─ context/<Nome>/index.tsx        # Contextos + Providers
 ├─ hooks/use<Nome>.ts              # hooks customizados (data-fetching)
 ├─ utils/                          # validadores, storage, formatação
+├─ testes/                         # testes unitários (Vitest), uma pasta por camada
+│  ├─ utils/<arquivo>.test.ts
+│  ├─ services/<arquivo>.test.ts
+│  └─ fabricas.ts                  # dados de exemplo (ocorrência, cooperativa) para os testes
 └─ App.tsx                         # roteamento + lazy loading
 ```
 
@@ -176,6 +185,30 @@ Regras estritas:
 - **Todo input tem `<label htmlFor>`** e mensagens de erro com `role="alert"`.
 - **`localStorage` com envelope `{ _versao, dados }`** — versão diferente
   descarta com segurança em vez de quebrar a aplicação.
+
+## Testes unitários
+
+Os testes cobrem a lógica pura, que é onde mora a regra de negócio: `src/utils/`
+(metas e avisos da meta, validadores, senha, painel, formatação, licenças das
+cooperativas, CSV do relatório PGRS, distâncias) e `src/services/` (os
+adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
+Vitest em ambiente `node`, sem navegador e sem rede.
+
+- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/` e
+  `services/`), com o nome do arquivo testado e `.test.ts`
+  (`src/utils/metas.ts` → `src/testes/utils/metas.test.ts`). A exceção é
+  `pessoas.test.ts`, que cobre `datas.ts`, `equipe.ts` e `pessoa.ts` juntos.
+- Datas: monte com `new Date(ano, mês, dia, hora)` (horário local) e passe o
+  "agora" como argumento, em vez de depender do relógio. Assim o teste dá o mesmo
+  resultado em qualquer fuso, inclusive na pipeline (UTC).
+- Dados de exemplo: `criarOcorrencia`, `criarCooperativa` e `criarConfiguracoes`,
+  em `src/testes/fabricas.ts`; cada teste muda só o campo que importa.
+- Quem importa `services/http` (o `USAR_MOCKS`) troca o módulo com
+  `vi.mock("../../services/http", ...)`, para escolher entre os mocks e a API.
+
+A pipeline (`.github/workflows/ci.yaml`) roda, nesta ordem: lint, verificação de
+tipos, `npm test` e build; se qualquer uma falhar, o check `build-test` da PR
+fica vermelho.
 
 ## Rotas
 
