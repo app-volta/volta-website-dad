@@ -86,7 +86,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
 | Perfil e Configurações | `PUT /users/me` (nome e cargo); meta mensal em `GET /goals` e `PUT /goals` (ADMIN e MANAGER gravam); cartão da unidade em `GET /companies/me` (ADMIN e MANAGER) e `GET /areas/mine` |
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER); o gráfico "Ocorrências por setor" conta as próprias ocorrências, sem endpoint extra |
-| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
+| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN) ou `GET /cooperatives/scoring-data` (demais perfis), mais `GET /collections` para o volume mensal. O mapa (Leaflet, com os mapas do OpenStreetMap, liberados na CSP do `vercel.json`) centraliza na unidade com `GET /companies/me` |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 

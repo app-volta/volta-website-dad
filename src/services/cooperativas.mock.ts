@@ -1,4 +1,6 @@
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
+import { pontoA } from "../utils/geo";
+import type { Coordenadas } from "../utils/geo";
 import { validarLicenca } from "../utils/cooperativas";
 import { mascararCnpj } from "../utils/formatacao";
 import { validarCnpj } from "../utils/validadores";
@@ -8,6 +10,9 @@ import { aguardar } from "./http";
  * MOCK: substitua por chamada real quando o backend expuser /cooperativas.
  * O catálogo vive em memória; recarregar a página volta ao estado inicial.
  */
+
+/** A unidade da demonstração (Lins/SP): as cooperativas ficam em volta dela, à distância informada. */
+const ORIGEM_DA_DEMONSTRACAO: Coordenadas = { latitude: -21.6786, longitude: -49.7425 };
 
 /** Data local daqui a N dias, no formato AAAA-MM-DD. */
 function dataEmDias(dias: number): string {
@@ -38,7 +43,7 @@ let catalogo: readonly Cooperativa[] = [
     licencaValidaAte: "2027-12-31",
     licencaDocumento: "licenca-jbs-ambiental.pdf",
     volumeMensalKg: [450, 520, 570, 585, 585],
-    posicaoMapa: { x: 40.2, y: 53.4 },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, 2.4, 35),
   },
   {
     id: "coop-recicla-vida",
@@ -59,7 +64,7 @@ let catalogo: readonly Cooperativa[] = [
     licencaValidaAte: dataEmDias(12),
     licencaDocumento: "licenca-recicla-vida.pdf",
     volumeMensalKg: [300, 390, 355, 480, 480],
-    posicaoMapa: { x: 22.1, y: 37.2 },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, 3.1, 300),
   },
   {
     id: "coop-cooperviva",
@@ -80,7 +85,7 @@ let catalogo: readonly Cooperativa[] = [
     licencaValidaAte: "2027-03-31",
     licencaDocumento: "licenca-cooperviva.pdf",
     volumeMensalKg: [70, 75, 90, 95, 95],
-    posicaoMapa: { x: 74, y: 73.1 },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, 5.7, 150),
   },
   {
     id: "coop-econorte",
@@ -101,7 +106,7 @@ let catalogo: readonly Cooperativa[] = [
     licencaValidaAte: null,
     licencaDocumento: "licenca-econorte.pdf",
     volumeMensalKg: [0, 0, 0, 30, 37],
-    posicaoMapa: { x: 86, y: 29.3 },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, 8.2, 70),
   },
   {
     id: "coop-verde-vivo",
@@ -122,9 +127,14 @@ let catalogo: readonly Cooperativa[] = [
     licencaValidaAte: null,
     licencaDocumento: null,
     volumeMensalKg: [0, 0, 0, 0, 0],
-    posicaoMapa: { x: 62, y: 97.2 },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, 11.4, 200),
   },
 ];
+
+/** Na demonstração a unidade fica em Lins/SP. */
+export async function obterOrigemDoMapa(): Promise<Coordenadas | null> {
+  return ORIGEM_DA_DEMONSTRACAO;
+}
 
 export async function listarCooperativas(
   sinal?: AbortSignal,
@@ -175,6 +185,7 @@ export async function adicionarCooperativa(
     .split("")
     .reduce((soma, digito, i) => soma + Number(digito) * (i + 1), 0);
 
+  const distanciaKm = 1 + (semente % 130) / 10;
   const nova: Cooperativa = {
     id: `coop-${digitos}`,
     nome,
@@ -185,7 +196,7 @@ export async function adicionarCooperativa(
     contato: null,
     telefone: null,
     email: null,
-    distanciaKm: 1 + (semente % 130) / 10,
+    distanciaKm,
     avaliacao: null,
     situacao: "em_homologacao",
     parceiraGrupo: false,
@@ -194,7 +205,7 @@ export async function adicionarCooperativa(
     licencaValidaAte: null,
     licencaDocumento: dados.licenca?.name ?? null,
     volumeMensalKg: [0, 0, 0, 0, 0],
-    posicaoMapa: { x: 14 + ((semente * 7) % 72), y: 28 + ((semente * 11) % 58) },
+    ...pontoA(ORIGEM_DA_DEMONSTRACAO, distanciaKm, (semente * 47) % 360),
   };
   catalogo = [...catalogo, nova];
   return nova;

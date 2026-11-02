@@ -50,7 +50,8 @@ export type NomeIcone =
   | "alvo"
   | "reticencias"
   | "lixeira"
-  | "lista";
+  | "lista"
+  | "expandir";
 
 interface IconeProps extends SVGProps<SVGSVGElement> {
   readonly nome: NomeIcone;
@@ -265,6 +266,7 @@ const CAMINHOS: Readonly<Record<NomeIcone, ReactNode>> = {
       <circle cx="4.8" cy="18" r="0.9" />
     </>
   ),
+  expandir: <path d="M4 9 V4 H9 M15 4 H20 V9 M20 15 V20 H15 M9 20 H4 V15" />,
 };
 
 /**

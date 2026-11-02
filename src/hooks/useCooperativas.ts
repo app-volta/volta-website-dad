@@ -4,10 +4,12 @@ import {
   adicionarCooperativa,
   listarCooperativas,
   obterCooperativa,
+  obterOrigemDoMapa,
 } from "../services/cooperativas";
 import type { EstadoLista, EstadoRequisicao } from "../types/comum";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
 import { foiProibido } from "../utils/erros";
+import type { Coordenadas } from "../utils/geo";
 
 /** `chaveRecarga` busca a lista de novo quando muda, sem apagar a que já está na tela. */
 export function useCooperativas(
@@ -49,6 +51,23 @@ export function useCooperativas(
   }, [chaveRecarga]);
 
   return estado;
+}
+
+/** De onde a unidade envia o resíduo, o centro do mapa; nulo enquanto carrega ou sem coordenadas. */
+export function useOrigemDoMapa(): Coordenadas | null {
+  const [origem, setOrigem] = useState<Coordenadas | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    void obterOrigemDoMapa().then((ponto) => {
+      if (ativo) setOrigem(ponto);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  return origem;
 }
 
 interface ResultadoCooperativa {

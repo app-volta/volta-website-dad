@@ -11,6 +11,7 @@ import { Toast } from "../../components/Toast";
 import {
   useAcoesCooperativas,
   useCooperativas,
+  useOrigemDoMapa,
 } from "../../hooks/useCooperativas";
 import { useAuth } from "../../context/AuthContext";
 import { foiConflito } from "../../utils/erros";
@@ -41,6 +42,7 @@ export default function Cooperativas(): ReactNode {
   const [chaveRecarga, setChaveRecarga] = useState<number>(0);
   const { dados, carregando, erro, semPermissao } = useCooperativas(chaveRecarga);
   const acoes = useAcoesCooperativas();
+  const origem = useOrigemDoMapa();
   const dadosReais = useDadosReais();
   const { usuario } = useAuth();
   // Só o ADMIN cadastra na volta-api; quem tem outro perfil só consulta.
@@ -165,6 +167,7 @@ export default function Cooperativas(): ReactNode {
               aoSelecionar={setSelecionadaId}
               aoAbrirDocumentos={() => setVerDocumentos(true)}
               dadosReais={dadosReais}
+              origem={origem}
             />
           </div>
         </>

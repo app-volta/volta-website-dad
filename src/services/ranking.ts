@@ -1,6 +1,7 @@
 import type {
   ContextoDaOcorrenciaApi,
   CooperativaProximaApi,
+  EmpresaApi,
   NotasDasCooperativasApi,
   PosicaoEmpresaApi,
 } from "../types/api";
@@ -45,10 +46,15 @@ export async function obterPosicaoDaEmpresa(
 }
 
 /**
- * Coordenadas da empresa, de onde o resíduo sai. A volta-api só as expõe no
- * contexto de pontuação de uma ocorrência, então vem da mais recente.
+ * Coordenadas da empresa, de onde o resíduo sai. O administrador e o gestor as
+ * leem em GET /companies/me; para os outros perfis, a volta-api só as expõe no
+ * contexto de pontuação de uma ocorrência, então vêm da mais recente.
  */
 const origem = criarCache(async (): Promise<Coordenadas | null> => {
+  const empresa = await requisitar<EmpresaApi>("/companies/me").catch(() => null);
+  if (typeof empresa?.latitude === "number" && typeof empresa.longitude === "number") {
+    return { latitude: empresa.latitude, longitude: empresa.longitude };
+  }
   const ocorrencias = await listarOcorrencias();
   const maisRecente = ocorrencias[0];
   if (!maisRecente) return null;

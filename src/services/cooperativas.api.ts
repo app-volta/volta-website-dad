@@ -1,12 +1,12 @@
 import type { CooperativaApi, NovaCooperativaApi } from "../types/api";
 import type { Cooperativa, NovaCooperativa } from "../types/cooperativa";
 import { distanciaEmKm, maisProximasPrimeiro } from "../utils/geo";
+import type { Coordenadas } from "../utils/geo";
 import { validarCnpj } from "../utils/validadores";
 import { volumeDaCooperativa, volumesPorCooperativa } from "../utils/volumeCooperativas";
 import {
   cooperativaDaApi,
   especialidadesDosMateriais,
-  posicoesNoMapa,
 } from "./adaptadores";
 import { listarColetas } from "./coletas";
 import {
@@ -53,6 +53,14 @@ async function distanciasAteAEmpresa(
   );
 }
 
+/**
+ * De onde a unidade envia o resíduo: o centro do mapa. Nula quando a empresa
+ * ainda não tem coordenadas (então o mapa se ajusta às cooperativas).
+ */
+export function obterOrigemDoMapa(): Promise<Coordenadas | null> {
+  return origemDaEmpresa().catch(() => null);
+}
+
 export async function listarCooperativas(
   sinal?: AbortSignal,
 ): Promise<readonly Cooperativa[]> {
@@ -62,8 +70,7 @@ export async function listarCooperativas(
     listarColetas().catch(() => []),
     listarOcorrencias(sinal).catch(() => []),
   ]);
-  const [posicoes, volumes, distancias] = [
-    posicoesNoMapa(cooperativas),
+  const [volumes, distancias] = [
     volumesPorCooperativa(coletas, ocorrencias),
     await distanciasAteAEmpresa(cooperativas),
   ];
@@ -71,7 +78,6 @@ export async function listarCooperativas(
     cooperativas.map((dto) =>
       cooperativaDaApi(
         dto,
-        posicoes.get(dto.id) ?? { x: 50, y: 50 },
         volumeDaCooperativa(volumes, dto.id),
         distancias.get(dto.id) ?? null,
       ),
@@ -135,6 +141,6 @@ export async function adicionarCooperativa(
   const todas = await listarCooperativas(sinal);
   return (
     todas.find((c) => c.id === criada.id) ??
-    cooperativaDaApi(criada, { x: 50, y: 50 }, volumeDaCooperativa(new Map(), criada.id))
+    cooperativaDaApi(criada, volumeDaCooperativa(new Map(), criada.id))
   );
 }

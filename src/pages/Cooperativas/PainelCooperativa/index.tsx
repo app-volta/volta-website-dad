@@ -1,6 +1,8 @@
+import { lazy, Suspense, useState } from "react";
 import type { ReactNode } from "react";
 
 import { Icone } from "../../../components/Icone";
+import { ModalAcao } from "../../../components/ModalAcao";
 import type { Cooperativa } from "../../../types/cooperativa";
 import {
   estadoLicenca,
@@ -12,8 +14,15 @@ import {
   formatarKmOpcional,
   formatarNota,
 } from "../../../utils/formatacao";
+import type { Coordenadas } from "../../../utils/geo";
 import { corDaCooperativa } from ".././cores";
-import { MapaCooperativas } from ".././MapaCooperativas";
+
+// O Leaflet pesa uns 45 kB: fica fora do primeiro carregamento da tela.
+const MapaCooperativas = lazy(() =>
+  import(".././MapaCooperativas").then((modulo) => ({
+    default: modulo.MapaCooperativas,
+  })),
+);
 
 /** Altura, em px, da barra do maior volume. */
 const ALTURA_MAXIMA_BARRA = 87;
@@ -25,6 +34,8 @@ interface PainelCooperativaProps {
   readonly aoSelecionar: (id: string) => void;
   readonly aoAbrirDocumentos: () => void;
   readonly dadosReais: boolean;
+  /** De onde a unidade envia o resíduo, o centro do mapa. */
+  readonly origem: Coordenadas | null;
 }
 
 export function PainelCooperativa({
@@ -33,14 +44,57 @@ export function PainelCooperativa({
   aoSelecionar,
   aoAbrirDocumentos,
   dadosReais,
+  origem,
 }: PainelCooperativaProps): ReactNode {
+  const [ampliado, setAmpliado] = useState(false);
+
   return (
     <section className="coops__painel" aria-label="Detalhes da cooperativa">
-      <MapaCooperativas
-        todas={todas}
-        selecionadaId={selecionada?.id ?? null}
-        aoSelecionar={aoSelecionar}
-      />
+      <Suspense
+        fallback={<div className="coops__mapa" role="status" aria-label="Carregando o mapa" />}
+      >
+        <MapaCooperativas
+          todas={todas}
+          selecionadaId={selecionada?.id ?? null}
+          aoSelecionar={aoSelecionar}
+          origem={origem}
+          aoAmpliar={() => setAmpliado(true)}
+        />
+        {ampliado ? (
+          <ModalAcao
+            aberto
+            icone="pin"
+            tom="verde"
+            largura={1120}
+            titulo="Mapa das cooperativas"
+            subtitulo="Clique num pino para escolher a cooperativa."
+            aoFechar={() => setAmpliado(false)}
+            rodape={
+              <button
+                type="button"
+                className="modal-acao__botao modal-acao__botao--contorno"
+                onClick={() => setAmpliado(false)}
+              >
+                Fechar
+              </button>
+            }
+          >
+            <MapaCooperativas
+              todas={todas}
+              selecionadaId={selecionada?.id ?? null}
+              aoSelecionar={aoSelecionar}
+              origem={origem}
+              ampliado
+            />
+            {selecionada ? (
+              <p className="coops__mapa-escolhida" aria-live="polite">
+                Selecionada: <strong>{selecionada.nome}</strong>. Feche a janela para ver os
+                detalhes.
+              </p>
+            ) : null}
+          </ModalAcao>
+        ) : null}
+      </Suspense>
       {selecionada ? (
         <Detalhe
           coop={selecionada}
