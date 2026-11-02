@@ -11,20 +11,18 @@ interface CartaoPgrsProps {
   readonly scoreEsg?: number | null;
   /** Posição da empresa no ranking, quando a API de ranking informa. */
   readonly posicaoNoRanking?: PosicaoNoRanking | null;
-  readonly gerando: boolean;
-  readonly temUltimo: boolean;
+  /** Abre o documento do PGRS, que a pessoa salva em PDF. */
   readonly aoGerar: () => void;
-  readonly aoBaixarUltimo: () => void;
+  /** Baixa o mesmo PGRS em planilha (CSV). */
+  readonly aoBaixarCsv: () => void;
 }
 
 export function CartaoPgrs({
   periodo,
   scoreEsg = null,
   posicaoNoRanking = null,
-  gerando,
-  temUltimo,
   aoGerar,
-  aoBaixarUltimo,
+  aoBaixarCsv,
 }: CartaoPgrsProps): ReactNode {
   return (
     <section className="rel__pgrs" aria-labelledby="rel-pgrs-titulo">
@@ -84,20 +82,18 @@ export function CartaoPgrs({
             type="button"
             className="rel__pgrs-botao rel__pgrs-botao--claro"
             onClick={aoGerar}
-            disabled={gerando}
           >
             <Icone nome="documento" tamanho={14} />
-            {gerando ? "Gerando…" : "Gerar PGRS"}
+            Gerar PGRS
           </button>
           <button
             type="button"
             className="rel__pgrs-botao rel__pgrs-botao--vidro"
-            onClick={aoBaixarUltimo}
-            disabled={!temUltimo || gerando}
-            title={temUltimo ? undefined : "Gere um relatório para baixar o último"}
+            onClick={aoBaixarCsv}
+            title="O mesmo relatório em planilha"
           >
             <Icone nome="download" tamanho={14} />
-            Último
+            CSV
           </button>
         </div>
       </div>

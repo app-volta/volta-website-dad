@@ -1,0 +1,111 @@
+/* A página do documento: barra de ações e fundo de bancada, só na tela. */
+.pgrs-tela {
+  min-height: 100%;
+  padding: 20px 16px 40px;
+  background: #e7ece8;
+}
+
+.pgrs-tela__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto 8px;
+}
+
+.pgrs-tela__voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  color: #16211b;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pgrs-tela__voltar:hover {
+  text-decoration: underline;
+}
+
+.pgrs-tela__salvar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #0e7c48;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pgrs-tela__salvar:hover:not(:disabled) {
+  background: #0b6a3d;
+}
+
+.pgrs-tela__salvar:focus-visible,
+.pgrs-tela__voltar:focus-visible {
+  outline: 3px solid #0e7c48;
+  outline-offset: 3px;
+}
+
+.pgrs-tela__salvar:disabled {
+  background: #9db8a9;
+  cursor: not-allowed;
+}
+
+.pgrs-tela__dica {
+  width: 210mm;
+  max-width: 100%;
+  margin: 0 auto 18px;
+  color: #4a574f;
+  font-size: 13px;
+}
+
+/* O documento precisa de 210 mm; em tela estreita a página rola de lado em vez de se espremer. */
+.pgrs-tela > .pgrs {
+  overflow-x: auto;
+}
+
+/* ---------- impressão: sai só o documento, em A4, sem margem do navegador */
+
+@page pgrs {
+  size: A4;
+  margin: 0;
+}
+
+.pgrs__pagina {
+  page: pgrs;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .pgrs-tela {
+    padding: 0;
+    background: none;
+  }
+
+  .pgrs-tela__barra,
+  .pgrs-tela__dica {
+    display: none !important;
+  }
+
+  .pgrs-tela > .pgrs {
+    overflow: visible;
+  }
+}

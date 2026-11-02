@@ -1,4 +1,4 @@
-import type { PeriodoRelatorio, PgrsGerado, RelatorioPgrs } from "../types/relatorio";
+import type { PeriodoRelatorio, RelatorioPgrs } from "../types/relatorio";
 import { USAR_MOCKS } from "./http";
 import * as api from "./relatorios.api";
 import * as mock from "./relatorios.mock";
@@ -12,12 +12,8 @@ interface ServicoRelatorios {
     periodo: PeriodoRelatorio,
     sinal?: AbortSignal,
   ) => Promise<RelatorioPgrs>;
-  readonly gerarPgrs: (
-    periodo: PeriodoRelatorio,
-    sinal?: AbortSignal,
-  ) => Promise<PgrsGerado>;
 }
 
 const servico: ServicoRelatorios = USAR_MOCKS ? mock : api;
 
-export const { obterRelatorio, gerarPgrs } = servico;
+export const { obterRelatorio } = servico;

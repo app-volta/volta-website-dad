@@ -1,9 +1,25 @@
 import type {
+  PeriodoAnterior,
   PeriodoRelatorio,
-  PgrsGerado,
   RelatorioPgrs,
 } from "../types/relatorio";
+import { intervaloAnterior, rotuloDoAnterior } from "../utils/relatorioPgrs";
 import { aguardar } from "./http";
+
+/** As quatro ocorrências aprovadas mais recentes que o documento do PGRS mostra como amostra. */
+const AMOSTRA_DE_OCORRENCIAS: RelatorioPgrs["aprovadasRecentes"] = [
+  { id: "occ-0481", codigo: "#0481", titulo: "Sucata metálica", setor: "Manutenção", material: "metal", pesoKg: 61, registradaPor: "João Pereira" },
+  { id: "occ-0480", codigo: "#0480", titulo: "Papelão limpo", setor: "Recebimento", material: "papelao", pesoKg: 45, registradaPor: "Ana Souza" },
+  { id: "occ-0476", codigo: "#0476", titulo: "Papelão molhado", setor: "Frigorífico B2", material: "papelao", pesoKg: 40, registradaPor: "Davi Liu" },
+  { id: "occ-0475", codigo: "#0475", titulo: "Metal diverso", setor: "Manutenção", material: "metal", pesoKg: 33, registradaPor: "João Pereira" },
+];
+
+/** O que o período anterior teve (o rótulo "setembro de 2026" sai da data de hoje). */
+const ANTERIORES: Readonly<Record<PeriodoRelatorio, Omit<PeriodoAnterior, "rotulo">>> = {
+  mes: { ocorrencias: 40, recuperadoKg: 1062, taxaAprovacao: 91 },
+  trimestre: { ocorrencias: 127, recuperadoKg: 3150, taxaAprovacao: 90 },
+  ano: { ocorrencias: 512, recuperadoKg: 12400, taxaAprovacao: 91 },
+};
 
 /**
  * MOCK: substitua por chamada real quando o backend expuser /relatorios.
@@ -39,10 +55,22 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Laboratório", ocorrencias: 3 },
     ],
     destinacao: [
-      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 47 },
-      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 31 },
-      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 22 },
+      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 47, kg: 539, materiais: ["papelao", "plastico", "metal", "vidro"] },
+      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 31, kg: 356, materiais: ["papelao", "plastico"] },
+      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 22, kg: 252, materiais: ["papelao"] },
     ],
+    setoresRecuperados: [
+      { nome: "Frigorífico B2", kg: 342 },
+      { nome: "Expedição", kg: 218 },
+      { nome: "Manutenção", kg: 187 },
+      { nome: "Recebimento", kg: 160 },
+      { nome: "Refeitório", kg: 98 },
+      { nome: "Laboratório", kg: 74 },
+      { nome: "Escritório", kg: 42 },
+      { nome: "Pátio", kg: 26 },
+    ],
+    aprovadasRecentes: AMOSTRA_DE_OCORRENCIAS,
+    recorrencia: { setor: "Frigorífico B2", titulo: "Papelão molhado", vezes: 3 },
   },
   trimestre: {
     periodo: "trimestre",
@@ -72,10 +100,22 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Laboratório", ocorrencias: 10 },
     ],
     destinacao: [
-      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 45 },
-      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 32 },
-      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 23 },
+      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 45, kg: 1531, materiais: ["papelao", "plastico", "metal", "vidro"] },
+      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 32, kg: 1089, materiais: ["papelao", "plastico"] },
+      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 23, kg: 782, materiais: ["papelao"] },
     ],
+    setoresRecuperados: [
+      { nome: "Frigorífico B2", kg: 1012 },
+      { nome: "Expedição", kg: 654 },
+      { nome: "Manutenção", kg: 561 },
+      { nome: "Recebimento", kg: 478 },
+      { nome: "Refeitório", kg: 301 },
+      { nome: "Laboratório", kg: 212 },
+      { nome: "Escritório", kg: 118 },
+      { nome: "Pátio", kg: 66 },
+    ],
+    aprovadasRecentes: AMOSTRA_DE_OCORRENCIAS,
+    recorrencia: { setor: "Frigorífico B2", titulo: "Papelão molhado", vezes: 7 },
   },
   ano: {
     periodo: "ano",
@@ -105,10 +145,22 @@ const RELATORIOS: Readonly<Record<PeriodoRelatorio, RelatorioPgrs>> = {
       { nome: "Laboratório", ocorrencias: 38 },
     ],
     destinacao: [
-      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 44 },
-      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 33 },
-      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 23 },
+      { cooperativaId: "coop-jbs-ambiental", nome: "JBS Ambiental", percentual: 44, kg: 5931, materiais: ["papelao", "plastico", "metal", "vidro"] },
+      { cooperativaId: "coop-recicla-vida", nome: "Recicla Vida", percentual: 33, kg: 4448, materiais: ["papelao", "plastico"] },
+      { cooperativaId: "coop-cooperviva", nome: "Cooperviva", percentual: 23, kg: 3101, materiais: ["papelao"] },
     ],
+    setoresRecuperados: [
+      { nome: "Frigorífico B2", kg: 4120 },
+      { nome: "Expedição", kg: 2630 },
+      { nome: "Manutenção", kg: 2250 },
+      { nome: "Recebimento", kg: 1910 },
+      { nome: "Refeitório", kg: 1230 },
+      { nome: "Laboratório", kg: 820 },
+      { nome: "Escritório", kg: 360 },
+      { nome: "Pátio", kg: 160 },
+    ],
+    aprovadasRecentes: AMOSTRA_DE_OCORRENCIAS,
+    recorrencia: { setor: "Frigorífico B2", titulo: "Papelão molhado", vezes: 19 },
   },
 };
 
@@ -117,14 +169,6 @@ export async function obterRelatorio(
   sinal?: AbortSignal,
 ): Promise<RelatorioPgrs> {
   await aguardar(450, sinal);
-  return RELATORIOS[periodo];
-}
-
-/** Simula a geração do documento do PGRS, que o backend fará de verdade. */
-export async function gerarPgrs(
-  _periodo: PeriodoRelatorio,
-  sinal?: AbortSignal,
-): Promise<PgrsGerado> {
-  await aguardar(1200, sinal);
-  return { geradoEm: new Date().toISOString() };
+  const rotulo = rotuloDoAnterior(periodo, intervaloAnterior(periodo, new Date()));
+  return { ...RELATORIOS[periodo], anterior: { rotulo, ...ANTERIORES[periodo] } };
 }
