@@ -734,11 +734,14 @@
   .pgrs {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 24px;
   }
 
+  /* A margem automática centraliza a página quando há espaço e, quando não há, deixa rolar de lado. */
   .pgrs__pagina {
+    flex: none;
+    margin-inline: auto;
     box-shadow: 0 2px 18px rgba(5, 43, 26, 0.18);
   }
 }

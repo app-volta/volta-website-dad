@@ -504,3 +504,75 @@
   gap: 14px;
   margin-top: 16px;
 }
+
+/*
+ * Em tela estreita a tabela não cabe: cada material vira um bloco (nome, depois os
+ * quatro valores em duas colunas), para o campo da meta ficar à vista sem rolar de lado.
+ */
+@media (max-width: 640px) {
+  .metas__tabela {
+    display: block;
+    min-width: 0;
+  }
+
+  .metas__tabela thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .metas__tabela tbody,
+  .metas__tabela tfoot {
+    display: block;
+  }
+
+  .metas__tabela tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 14px;
+    padding: 14px 0;
+    border-top: 1px solid var(--metas-borda);
+  }
+
+  .metas__tabela tbody tr:first-child {
+    border-top: 0;
+    padding-top: 4px;
+  }
+
+  .metas__tabela tbody tr + tr th,
+  .metas__tabela tbody tr + tr td,
+  .metas__tabela tfoot th,
+  .metas__tabela tfoot td {
+    border-top: 0;
+  }
+
+  .metas__tabela tr > th {
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+
+  .metas__tabela td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .metas__tabela td::before {
+    content: attr(data-rotulo);
+    color: var(--metas-mudo);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .metas__campo--compacto {
+    width: 100%;
+  }
+}
