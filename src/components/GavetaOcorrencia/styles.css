@@ -127,22 +127,6 @@
   object-fit: cover;
 }
 
-.gaveta__selo {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 30px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: rgba(11, 74, 44, 0.88);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .gaveta__selos {
   display: flex;
   flex-wrap: wrap;

@@ -251,12 +251,11 @@ export function analiseInconclusiva(analise: AnaliseResiduoApi): boolean {
   );
 }
 
-/** Análise da foto no formato que as telas leem. A IA não informa a confiança. */
+/** Análise da foto no formato que as telas leem. */
 export function classificacaoDaAnalise(analise: AnaliseResiduoApi): ClassificacaoIA {
   const risco = riscoDaAnalise(analise);
   return {
     material: materialDoTexto(analise.detected_waste_type),
-    confianca: null,
     contaminacao: risco ? CONTAMINACAO_DA_API[risco] : undefined,
     recomendacao: analise.recommendations,
     relatorio: analise.report_text,
@@ -322,7 +321,6 @@ function classificacaoDoIncidente(
   if (dto.contaminationLevel === null && dto.estimatedQuantity === null) return null;
   return {
     material,
-    confianca: null,
     contaminacao: contaminacaoDaApi(dto.contaminationLevel),
     recomendacao: "",
     pesoEstimadoKg: dto.estimatedQuantity,
@@ -336,7 +334,6 @@ export function classificacaoDoRelatorio(
 ): ClassificacaoIA {
   return {
     material: materialDoTexto(relatorio.detectedWasteType) ?? materialDaOcorrencia,
-    confianca: null,
     contaminacao: contaminacaoDaApi(relatorio.aiContaminationLevel),
     recomendacao: relatorio.recommendations ?? relatorio.reportText ?? "",
     relatorio: relatorio.reportText ?? undefined,
