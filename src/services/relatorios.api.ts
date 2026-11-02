@@ -1,6 +1,5 @@
 import type {
   PeriodoRelatorio,
-  PgrsGerado,
   PosicaoNoRanking,
   RelatorioPgrs,
 } from "../types/relatorio";
@@ -59,12 +58,4 @@ export async function obterRelatorio(
     nomesCooperativas,
     posicaoNoRanking,
   });
-}
-
-/** O CSV do PGRS é montado na própria tela; aqui só se marca o instante da geração. */
-export function gerarPgrs(
-  _periodo: PeriodoRelatorio,
-  _sinal?: AbortSignal,
-): Promise<PgrsGerado> {
-  return Promise.resolve({ geradoEm: new Date().toISOString() });
 }

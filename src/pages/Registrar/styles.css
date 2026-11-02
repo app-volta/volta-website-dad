@@ -160,27 +160,6 @@
   pointer-events: none;
 }
 
-.registrar__deteccao {
-  position: absolute;
-  border: 1.6px solid #fff;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.registrar__deteccao-rotulo {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  padding: 3px 7px;
-  border-radius: 4px;
-  background: #fff;
-  color: var(--reg-verde);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 12px;
-  white-space: nowrap;
-}
-
 .registrar__painel {
   display: flex;
   flex-direction: column;
@@ -599,34 +578,6 @@
   margin: 0;
   color: var(--reg-mudo);
   font-size: 13px;
-}
-
-.registrar__confianca {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 11px;
-  color: var(--reg-mudo);
-  font-size: 13px;
-}
-
-.registrar__confianca-barra {
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #edf2ee;
-}
-
-.registrar__confianca-barra span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #15874c 30%, #0e7c48 100%);
-}
-
-.registrar__confianca strong {
-  color: var(--reg-verde);
-  font-weight: 700;
 }
 
 .registrar__recomenda {

@@ -14,7 +14,7 @@ import { Toast } from "../../components/Toast";
 import { useAuth } from "../../context/AuthContext";
 import { useAcoesOcorrencia } from "../../hooks/useAcoesOcorrencia";
 import { useConexao } from "../../hooks/useConexao";
-import { useMetaRecuperacao } from "../../hooks/useMeta";
+import { useMetaRecuperacao, usePreferenciasDaMeta } from "../../hooks/useMeta";
 import { useDicaVolta, useInsightVolta } from "../../hooks/useInsights";
 import { useOcorrencias } from "../../hooks/useOcorrencias";
 import { usePainel } from "../../hooks/usePainel";
@@ -151,8 +151,9 @@ export default function Home(): ReactNode {
   const pendentes = fila.length;
   const totalMes = painel.recuperadoMesKg;
   const metaMes = useMetaRecuperacao();
-  // Sem meta definida (0) não há percentual: as telas escondem o que dependeria dela.
-  const temMeta = metaMes > 0;
+  const mostrarMeta = usePreferenciasDaMeta().avisosDaMeta.mostrarNoInicio;
+  // Sem meta definida (0), ou com o aviso desligado, não há percentual: as telas escondem o que dependeria dela.
+  const temMeta = metaMes > 0 && mostrarMeta;
   const progressoMeta = temMeta ? Math.min((totalMes / metaMes) * 100, 100) : 0;
   // Com a API ainda carregando, os números reais ainda não existem: mostra "—".
   const aguardandoDados = dadosReais && dados === null;
@@ -162,9 +163,16 @@ export default function Home(): ReactNode {
   const projecaoMeta = temMeta
     ? Math.round(((totalMes + kgNaFila) / metaMes) * 100)
     : 0;
-  const textoDaMeta = temMeta
-    ? `${Math.round(progressoMeta)}% da meta`
-    : "sem meta definida";
+  const textoDaMeta = !mostrarMeta
+    ? null
+    : temMeta
+      ? `${Math.round(progressoMeta)}% da meta`
+      : "sem meta definida";
+  const serieDoGrafico = janela === "semanas" ? painel.semanas : painel.meses;
+  // Sem a meta no Início, o gráfico fica só com o recuperado.
+  const pontosDoGrafico = mostrarMeta
+    ? serieDoGrafico
+    : serieDoGrafico.map(({ rotulo, valor }) => ({ rotulo, valor }));
   const deltaOcorrencias = deltaDeOcorrencias(painel.ocorrenciasVariacao);
   const deltaTaxa = deltaDePontos(painel.taxaVariacaoPontos);
   const materiaisMes = [
@@ -310,8 +318,8 @@ export default function Home(): ReactNode {
             }
             delta={
               painel.recuperadoVariacaoPct === null
-                ? textoDaMeta
-                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}% · ${textoDaMeta}`
+                ? (textoDaMeta ?? "")
+                : `${painel.recuperadoVariacaoPct >= 0 ? "+" : "−"}${Math.abs(painel.recuperadoVariacaoPct)}%${textoDaMeta ? ` · ${textoDaMeta}` : ""}`
             }
             direcao={
               painel.recuperadoVariacaoPct !== null && painel.recuperadoVariacaoPct < 0
@@ -375,7 +383,7 @@ export default function Home(): ReactNode {
             </div>
           </header>
           <GraficoLinha
-            pontos={janela === "semanas" ? painel.semanas : painel.meses}
+            pontos={pontosDoGrafico}
             rotulo="Recuperação de resíduos ao longo do tempo"
           />
           <div className="home-legenda">

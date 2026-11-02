@@ -4,6 +4,7 @@ import {
   assinarMeta,
   garantirMetaCarregada,
   metaRecuperacaoAtual,
+  preferenciasDaMeta,
 } from "../services/configuracoes";
 
 /**
@@ -16,4 +17,9 @@ export function useMetaRecuperacao(): number {
     garantirMetaCarregada();
   }, []);
   return useSyncExternalStore(assinarMeta, metaRecuperacaoAtual);
+}
+
+/** O que a meta guarda neste navegador (meta do dia, dias, divisão por material e avisos); muda na hora ao salvar. */
+export function usePreferenciasDaMeta(): ReturnType<typeof preferenciasDaMeta> {
+  return useSyncExternalStore(assinarMeta, preferenciasDaMeta);
 }

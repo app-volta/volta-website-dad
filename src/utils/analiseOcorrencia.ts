@@ -4,24 +4,15 @@ import type {
 } from "../types/classificacao";
 import type { Ocorrencia } from "../types/ocorrencia";
 
-function nivelPorConfianca(confianca: number | null): NivelContaminacao | null {
-  if (confianca === null) return null;
-  if (confianca >= 0.85) return "baixa";
-  if (confianca >= 0.75) return "media";
-  return "alta";
-}
-
 const ROTULO_CONTAMINACAO: Readonly<Record<NivelContaminacao, string>> = {
   baixa: "Baixa",
   media: "Média",
   alta: "Alta",
 };
 
-/** Nível informado pela IA; se não veio, deduz da confiança. "—" sem nenhum dos dois. */
+/** Nível de contaminação informado pela IA; "—" quando ela não informou. */
 export function contaminacao(classificacao: ClassificacaoIA | null): string {
-  const nivel =
-    classificacao?.contaminacao ??
-    nivelPorConfianca(classificacao?.confianca ?? null);
+  const nivel = classificacao?.contaminacao;
   return nivel ? ROTULO_CONTAMINACAO[nivel] : "—";
 }
 

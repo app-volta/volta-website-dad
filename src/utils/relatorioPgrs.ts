@@ -1,12 +1,16 @@
 import type { ColetaApi, MetricaEsgApi } from "../types/api";
 import { MATERIAIS } from "../types/material";
+import type { Material } from "../types/material";
 import type { Ocorrencia } from "../types/ocorrencia";
 import type {
   DestinacaoCooperativa,
   GeracaoPorSetor,
+  OcorrenciaDoRelatorio,
   OcorrenciasDoSetor,
+  PeriodoAnterior,
   PeriodoRelatorio,
   PosicaoNoRanking,
+  RecorrenciaNoPeriodo,
   RelatorioPgrs,
 } from "../types/relatorio";
 import { instanteUtc } from "./datas";
@@ -20,6 +24,8 @@ import {
 
 const LIMITE_SETORES = 5;
 const LIMITE_COOPERATIVAS = 5;
+/** Ocorrências aprovadas que o documento do PGRS mostra como amostra. */
+const LIMITE_AMOSTRA = 4;
 /** Setores mostrados no gráfico de ocorrências; os demais se juntam em "Outros setores". */
 const LIMITE_SETORES_NO_GRAFICO = 8;
 const NOME_OUTROS_SETORES = "Outros setores";
@@ -64,6 +70,40 @@ export function intervaloDoPeriodo(periodo: PeriodoRelatorio, agora: Date): Inte
   };
 }
 
+/** O período de mesmo tamanho que termina onde o de `periodo` começa. */
+export function intervaloAnterior(periodo: PeriodoRelatorio, agora: Date): Intervalo {
+  const atual = intervaloDoPeriodo(periodo, agora);
+  const de =
+    periodo === "ano"
+      ? new Date(agora.getFullYear() - 1, 0, 1).getTime()
+      : inicioDoMes(new Date(atual.de), periodo === "mes" ? -1 : -3);
+  return { de, ate: atual.de, mesInicial: chaveDoMes(de), mesFinal: chaveDoMes(atual.de - 1) };
+}
+
+export function rotuloDoAnterior(periodo: PeriodoRelatorio, intervalo: Intervalo): string {
+  if (periodo === "trimestre") return "o trimestre anterior";
+  const data = new Date(intervalo.de);
+  return periodo === "ano"
+    ? String(data.getFullYear())
+    : data.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+}
+
+function periodoAnterior(
+  periodo: PeriodoRelatorio,
+  ocorrencias: readonly Ocorrencia[],
+  agora: Date,
+): PeriodoAnterior | null {
+  const intervalo = intervaloAnterior(periodo, agora);
+  const doPeriodo = entre(ocorrencias, intervalo.de, intervalo.ate);
+  if (doPeriodo.length === 0) return null;
+  return {
+    rotulo: rotuloDoAnterior(periodo, intervalo),
+    ocorrencias: doPeriodo.length,
+    recuperadoKg: Math.round(somaKg(doPeriodo.filter(aprovada))),
+    taxaAprovacao: taxaDeAprovacao(doPeriodo),
+  };
+}
+
 function desvioDoAterro(
   intervalo: Intervalo,
   metricas: readonly MetricaEsgApi[],
@@ -85,7 +125,8 @@ function desvioDoAterro(
   return Math.round((somaKg(subconjunto.filter(aprovada)) / total) * 100);
 }
 
-function geracaoPorSetor(subconjunto: readonly Ocorrencia[]): readonly GeracaoPorSetor[] {
+/** Todos os setores com peso, do que mais gera para o que menos gera. */
+function setoresPorPeso(subconjunto: readonly Ocorrencia[]): readonly GeracaoPorSetor[] {
   const porSetor = new Map<string, number>();
   for (const o of subconjunto) {
     porSetor.set(o.localizacao.setor, (porSetor.get(o.localizacao.setor) ?? 0) + o.pesoKg);
@@ -93,8 +134,48 @@ function geracaoPorSetor(subconjunto: readonly Ocorrencia[]): readonly GeracaoPo
   return [...porSetor]
     .map(([nome, kg]) => ({ nome, kg: Math.round(kg) }))
     .filter((setor) => setor.kg > 0)
-    .sort((a, b) => b.kg - a.kg)
-    .slice(0, LIMITE_SETORES);
+    .sort((a, b) => b.kg - a.kg);
+}
+
+function geracaoPorSetor(subconjunto: readonly Ocorrencia[]): readonly GeracaoPorSetor[] {
+  return setoresPorPeso(subconjunto).slice(0, LIMITE_SETORES);
+}
+
+/** O par setor + tipo de resíduo que mais se repetiu, se alguma vez passou de uma ocorrência. */
+function recorrenciaNoPeriodo(subconjunto: readonly Ocorrencia[]): RecorrenciaNoPeriodo | null {
+  const contagem = new Map<string, RecorrenciaNoPeriodo>();
+  for (const o of subconjunto) {
+    const chave = `${o.localizacao.setor}|${o.titulo.toLowerCase()}`;
+    const atual = contagem.get(chave);
+    contagem.set(chave, {
+      setor: o.localizacao.setor,
+      titulo: o.titulo,
+      vezes: (atual?.vezes ?? 0) + 1,
+    });
+  }
+  const mais = [...contagem.values()].sort(
+    (a, b) =>
+      b.vezes - a.vezes ||
+      a.setor.localeCompare(b.setor, "pt-BR") ||
+      a.titulo.localeCompare(b.titulo, "pt-BR"),
+  )[0];
+  return mais && mais.vezes >= 2 ? mais : null;
+}
+
+/** As ocorrências aprovadas mais recentes, para a amostra do documento. */
+function aprovadasRecentes(aprovadas: readonly Ocorrencia[]): readonly OcorrenciaDoRelatorio[] {
+  return [...aprovadas]
+    .sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))
+    .slice(0, LIMITE_AMOSTRA)
+    .map((o) => ({
+      id: o.id,
+      codigo: o.codigo,
+      titulo: o.titulo,
+      setor: o.localizacao.setor,
+      material: o.material,
+      pesoKg: o.pesoKg,
+      registradaPor: o.criadaPorNome,
+    }));
 }
 
 /** Conta as ocorrências de cada setor, recusadas e pendentes incluídas. */
@@ -124,17 +205,27 @@ function destinacaoPorCooperativa(
   entrada: EntradaRelatorio,
 ): readonly DestinacaoCooperativa[] {
   const pesoPorOcorrencia = new Map(entrada.ocorrencias.map((o) => [o.id, o.pesoKg]));
+  const materialPorOcorrencia = new Map(entrada.ocorrencias.map((o) => [o.id, o.material]));
   const doPeriodo = entrada.coletas.filter((c) => {
     const instante = new Date(instanteUtc(c.requestedAt)).getTime();
     return instante >= intervalo.de && instante < intervalo.ate && c.currentStatus !== "CANCELED";
   });
 
-  const porCooperativa = new Map<string, { coletas: number; kg: number }>();
+  const porCooperativa = new Map<
+    string,
+    { coletas: number; kg: number; materiais: ReadonlySet<Material> }
+  >();
   for (const coleta of doPeriodo) {
-    const atual = porCooperativa.get(coleta.cooperativeId) ?? { coletas: 0, kg: 0 };
+    const atual = porCooperativa.get(coleta.cooperativeId) ?? {
+      coletas: 0,
+      kg: 0,
+      materiais: new Set<Material>(),
+    };
+    const material = materialPorOcorrencia.get(coleta.incidentId);
     porCooperativa.set(coleta.cooperativeId, {
       coletas: atual.coletas + 1,
       kg: atual.kg + (pesoPorOcorrencia.get(coleta.incidentId) ?? 0),
+      materiais: material ? new Set([...atual.materiais, material]) : atual.materiais,
     });
   }
 
@@ -150,6 +241,8 @@ function destinacaoPorCooperativa(
         entrada.nomesCooperativas.get(cooperativaId) ??
         `Cooperativa ${cooperativaId.slice(0, 4).toUpperCase()}`,
       percentual: Math.round(((porPeso ? dados.kg : dados.coletas) / total) * 100),
+      ...(dados.kg > 0 ? { kg: Math.round(dados.kg) } : {}),
+      materiais: MATERIAIS.filter((material) => dados.materiais.has(material)),
     }))
     .sort((a, b) => b.percentual - a.percentual)
     .slice(0, LIMITE_COOPERATIVAS);
@@ -185,5 +278,9 @@ export function calcularRelatorio(
     destinacao: destinacaoPorCooperativa(intervalo, entrada),
     scoreEsg: entrada.scoreEsg,
     posicaoNoRanking: entrada.posicaoNoRanking,
+    anterior: periodoAnterior(periodo, entrada.ocorrencias, agora),
+    setoresRecuperados: setoresPorPeso(aprovadas),
+    aprovadasRecentes: aprovadasRecentes(aprovadas),
+    recorrencia: recorrenciaNoPeriodo(subconjunto),
   };
 }

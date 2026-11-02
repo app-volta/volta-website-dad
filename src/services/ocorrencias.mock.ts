@@ -1,5 +1,9 @@
 import fotoExemplo from "../assets/foto-exemplo.svg";
-import type { ClassificacaoIA, OpcaoTipoResiduo } from "../types/classificacao";
+import type {
+  ClassificacaoIA,
+  NivelContaminacao,
+  OpcaoTipoResiduo,
+} from "../types/classificacao";
 import type { Material } from "../types/material";
 import { MATERIAIS, METADADOS_MATERIAL } from "../types/material";
 import type {
@@ -37,7 +41,7 @@ interface ModeloOcorrencia {
   readonly material: Material | null;
   readonly setor: string;
   readonly pesoKg: number;
-  readonly confianca: number;
+  readonly contaminacao: NivelContaminacao;
   readonly prioridade: PrioridadeOcorrencia;
   readonly status: StatusOcorrencia;
   readonly autor: string;
@@ -45,16 +49,16 @@ interface ModeloOcorrencia {
 }
 
 const RECENTES: readonly ModeloOcorrencia[] = [
-  { titulo: "Papelão molhado", material: "papelao", setor: "Frigorífico B2", pesoKg: 38, confianca: 0.88, prioridade: "alta", status: "classificada", autor: "Breno Gomes", criadaEm: quando(0, 9, 12) },
-  { titulo: "Plástico de embalagem", material: "plastico", setor: "Expedição", pesoKg: 22, confianca: 0.91, prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(0, 8, 40) },
-  { titulo: "Sucata metálica", material: "metal", setor: "Manutenção", pesoKg: 61, confianca: 0.97, prioridade: "baixa", status: "aprovada", autor: "João Pereira", criadaEm: quando(0, 7, 15) },
-  { titulo: "Papelão limpo", material: "papelao", setor: "Recebimento", pesoKg: 45, confianca: 0.95, prioridade: "baixa", status: "aprovada", autor: "Ana Souza", criadaEm: quando(1, 16, 30) },
-  { titulo: "Vidro", material: "vidro", setor: "Refeitório", pesoKg: 12, confianca: 0.84, prioridade: "media", status: "encaminhada", autor: "Rafael Lima", criadaEm: quando(1, 14, 2) },
-  { titulo: "Plástico filme", material: "plastico", setor: "Expedição", pesoKg: 18, confianca: 0.79, prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(1, 10, 20) },
-  { titulo: "Óleo de cozinha", material: null, setor: "Refeitório", pesoKg: 9, confianca: 0.72, prioridade: "alta", status: "recusada", autor: "Rafael Lima", criadaEm: quando(2, 11, 5) },
-  { titulo: "Papelão molhado", material: "papelao", setor: "Frigorífico B2", pesoKg: 40, confianca: 0.9, prioridade: "alta", status: "aprovada", autor: "Breno Gomes", criadaEm: quando(3, 9, 40) },
-  { titulo: "Metal diverso", material: "metal", setor: "Manutenção", pesoKg: 33, confianca: 0.93, prioridade: "baixa", status: "aprovada", autor: "João Pereira", criadaEm: quando(4, 15, 10) },
-  { titulo: "Pallet de madeira", material: null, setor: "Expedição", pesoKg: 55, confianca: 0.86, prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(4, 13, 25) },
+  { titulo: "Papelão molhado", material: "papelao", setor: "Frigorífico B2", pesoKg: 38, contaminacao: "baixa", prioridade: "alta", status: "classificada", autor: "Breno Gomes", criadaEm: quando(0, 9, 12) },
+  { titulo: "Plástico de embalagem", material: "plastico", setor: "Expedição", pesoKg: 22, contaminacao: "baixa", prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(0, 8, 40) },
+  { titulo: "Sucata metálica", material: "metal", setor: "Manutenção", pesoKg: 61, contaminacao: "baixa", prioridade: "baixa", status: "aprovada", autor: "João Pereira", criadaEm: quando(0, 7, 15) },
+  { titulo: "Papelão limpo", material: "papelao", setor: "Recebimento", pesoKg: 45, contaminacao: "baixa", prioridade: "baixa", status: "aprovada", autor: "Ana Souza", criadaEm: quando(1, 16, 30) },
+  { titulo: "Vidro", material: "vidro", setor: "Refeitório", pesoKg: 12, contaminacao: "media", prioridade: "media", status: "encaminhada", autor: "Rafael Lima", criadaEm: quando(1, 14, 2) },
+  { titulo: "Plástico filme", material: "plastico", setor: "Expedição", pesoKg: 18, contaminacao: "media", prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(1, 10, 20) },
+  { titulo: "Óleo de cozinha", material: null, setor: "Refeitório", pesoKg: 9, contaminacao: "alta", prioridade: "alta", status: "recusada", autor: "Rafael Lima", criadaEm: quando(2, 11, 5) },
+  { titulo: "Papelão molhado", material: "papelao", setor: "Frigorífico B2", pesoKg: 40, contaminacao: "baixa", prioridade: "alta", status: "aprovada", autor: "Breno Gomes", criadaEm: quando(3, 9, 40) },
+  { titulo: "Metal diverso", material: "metal", setor: "Manutenção", pesoKg: 33, contaminacao: "baixa", prioridade: "baixa", status: "aprovada", autor: "João Pereira", criadaEm: quando(4, 15, 10) },
+  { titulo: "Pallet de madeira", material: null, setor: "Expedição", pesoKg: 55, contaminacao: "baixa", prioridade: "media", status: "classificada", autor: "Carla Mendes", criadaEm: quando(4, 13, 25) },
 ];
 
 const TITULOS_ANTIGOS: readonly { readonly titulo: string; readonly material: Material | null; readonly setor: string }[] = [
@@ -93,6 +97,14 @@ const PRIORIDADES_ANTIGAS: readonly PrioridadeOcorrencia[] = [
   "baixa",
 ];
 
+const CONTAMINACOES_ANTIGAS: readonly NivelContaminacao[] = [
+  "baixa",
+  "baixa",
+  "media",
+  "baixa",
+  "alta",
+];
+
 const ANTIGAS: readonly ModeloOcorrencia[] = Array.from({ length: 42 }, (_, i) => {
   const base = TITULOS_ANTIGOS[i % TITULOS_ANTIGOS.length];
   return {
@@ -100,7 +112,7 @@ const ANTIGAS: readonly ModeloOcorrencia[] = Array.from({ length: 42 }, (_, i) =
     material: base.material,
     setor: base.setor,
     pesoKg: 8 + ((i * 13) % 60),
-    confianca: 0.7 + ((i * 7) % 28) / 100,
+    contaminacao: CONTAMINACOES_ANTIGAS[i % CONTAMINACOES_ANTIGAS.length],
     prioridade: PRIORIDADES_ANTIGAS[i % PRIORIDADES_ANTIGAS.length],
     status: STATUS_ANTIGOS[i % STATUS_ANTIGOS.length],
     autor: AUTORES[(i + 2) % AUTORES.length],
@@ -112,7 +124,6 @@ function eventosIniciais(
   codigo: string,
   autor: string,
   tituloOuMaterial: string,
-  confianca: number | null,
   em: string,
 ): EventoOcorrencia[] {
   return [
@@ -127,10 +138,7 @@ function eventosIniciais(
       id: `${codigo}-e2`,
       tipo: "ia",
       autor: "IA VOLTA",
-      texto:
-        confianca === null
-          ? `classificou como ${tituloOuMaterial}`
-          : `classificou como ${tituloOuMaterial} · confiança ${Math.round(confianca * 100)}%`,
+      texto: `classificou como ${tituloOuMaterial}`,
       em,
       rotuloTempo: "+2 min",
     },
@@ -179,7 +187,7 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
     status: modelo.status,
     classificacao: {
       material: modelo.material ?? "papelao",
-      confianca: Number(modelo.confianca.toFixed(2)),
+      contaminacao: modelo.contaminacao,
       recomendacao: RECOMENDACAO_PADRAO,
       analisadaEm,
     },
@@ -201,7 +209,6 @@ function montar(modelo: ModeloOcorrencia, numero: number): Ocorrencia {
         modelo.material
           ? METADADOS_MATERIAL[modelo.material].rotulo
           : modelo.titulo,
-        modelo.confianca,
         modelo.criadaEm,
       ),
       ...decisaoInicial(codigo, modelo),
@@ -345,7 +352,6 @@ export async function criarOcorrencia(
       codigo,
       entrada.autorNome,
       METADADOS_MATERIAL[material].rotulo,
-      classificacao.confianca,
       agora,
     ),
   };

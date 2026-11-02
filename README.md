@@ -15,6 +15,7 @@ cooperativa parceira e finaliza a ocorrência.
 - [React Router v7](https://reactrouter.com/) para navegação
 - [Recharts](https://recharts.org/) para os gráficos de barras de Relatórios
 - [oxlint](https://oxc.rs/) para linting rápido
+- [Vitest](https://vitest.dev/) para os testes unitários
 - Deploy configurado para Vercel (SPA rewrites via `vercel.json`)
 
 ## Rodando localmente
@@ -39,6 +40,10 @@ npm run preview
 
 # linter
 npm run lint
+
+# testes unitários (uma vez) ou em modo observação
+npm test
+npm run test:watch
 ```
 
 ## Variáveis de ambiente
@@ -86,7 +91,7 @@ bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
 | Notificações | montadas das ocorrências (últimos registros, fila, meta do mês) |
 | Perfil e Configurações | `PUT /users/me` (nome e cargo); meta mensal em `GET /goals` e `PUT /goals` (ADMIN e MANAGER gravam); cartão da unidade em `GET /companies/me` (ADMIN e MANAGER) e `GET /areas/mine` |
 | Relatórios | calculados de `GET /incidents` e `GET /collections`, com `GET /esg/metrics` e `GET /esg/score` (ADMIN ou MANAGER); o gráfico "Ocorrências por setor" conta as próprias ocorrências, sem endpoint extra |
-| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN), mais `GET /collections` para o volume mensal |
+| Cooperativas | `GET /cooperatives` e `POST /cooperatives` (ADMIN) ou `GET /cooperatives/scoring-data` (demais perfis), mais `GET /collections` para o volume mensal. O mapa (Leaflet, com os mapas do OpenStreetMap, liberados na CSP do `vercel.json`) centraliza na unidade com `GET /companies/me` |
 | Equipe | `GET /users`, `POST /users` e `PATCH /users/{id}/role` (ADMIN) |
 | Ranking (volta-api-redis) | Relatórios: `GET /api/v1/ranking/{companyId}/position`. Cooperativas: `GET /api/v1/cooperatives/nearby` (distância) e `PUT /api/v1/cooperatives/{id}/location` ao cadastrar (ADMIN). Detalhe da ocorrência: `GET /api/v1/incidents/{id}/cooperative-scores` no cartão "VOLTA recomenda" |
 
@@ -110,6 +115,25 @@ esta ação" na tela (Cooperativas e Equipe exigem ADMIN) ou o dado que dá para
 calcular sem ele (Relatórios sem ESG e sem coletas). Para ver tudo, entre com um
 usuário ADMIN.
 
+## Relatório PGRS em PDF
+
+O botão **Gerar PGRS** (Relatórios) abre `/relatorios/pgrs`, o documento do PGRS em duas
+páginas A4: capa com a unidade, indicadores do período comparados com o anterior, meta
+do mês, recuperado por material e por setor, destinação final por cooperativa (com a
+licença ambiental), amostra das ocorrências aprovadas, recomendações do VOLTA e a
+declaração do responsável. **Salvar como PDF** abre a impressão do navegador: em
+Destino, escolha "Salvar como PDF". O CSS de impressão (`@page` A4, sem margem, cores
+exatas) leva só o documento, e o título da página já vira o nome do arquivo
+(`pgrs-outubro-2026.pdf`). Não há biblioteca de PDF: é o próprio navegador que gera.
+
+- O conteúdo sai de `src/utils/documentoPgrs.ts` (função pura, com testes) e é
+  desenhado por `src/pages/RelatorioPgrs/DocumentoPgrs`. O que a API não informa (CNPJ
+  e endereço para quem não é ADMIN ou MANAGER, licença e distância das cooperativas,
+  comparação com o período anterior sem ocorrências nele) aparece como traço ou some;
+  nada é inventado. As recomendações vêm só dos dados do período.
+- As fontes do documento são Inter e Poppins (`@fontsource`), carregadas só nesta rota.
+- Testado no Chrome. O botão **CSV** do cartão baixa o mesmo PGRS em planilha.
+
 Alguns números não têm endpoint e são calculados no app: o Início e os
 Relatórios contam as ocorrências por data de registro (a API não informa a data
 da aprovação), o desvio do aterro usa as métricas ESG quando existem e, sem
@@ -119,8 +143,8 @@ devolve as pessoas de todas as empresas; a tela filtra pela empresa de quem
 está logado.
 
 O que a volta-api não guarda aparece como "—" ou "Não informada": cidade,
-contato, distância, capacidade e licença das cooperativas, setor das pessoas e
-confiança da IA. Cadastrar cooperativa pede latitude e longitude e não envia a
+contato, distância, capacidade e licença das cooperativas e o setor das pessoas.
+Cadastrar cooperativa pede latitude e longitude e não envia a
 licença em PDF; cadastrar pessoa cria a conta na hora, com a senha informada,
 porque não há convite por e-mail.
 
@@ -159,6 +183,10 @@ src/
 ├─ context/<Nome>/index.tsx        # Contextos + Providers
 ├─ hooks/use<Nome>.ts              # hooks customizados (data-fetching)
 ├─ utils/                          # validadores, storage, formatação
+├─ testes/                         # testes unitários (Vitest), uma pasta por camada
+│  ├─ utils/<arquivo>.test.ts
+│  ├─ services/<arquivo>.test.ts
+│  └─ fabricas.ts                  # dados de exemplo (ocorrência, cooperativa) para os testes
 └─ App.tsx                         # roteamento + lazy loading
 ```
 
@@ -177,14 +205,43 @@ Regras estritas:
 - **`localStorage` com envelope `{ _versao, dados }`** — versão diferente
   descarta com segurança em vez de quebrar a aplicação.
 
+## Testes unitários
+
+Os testes cobrem a lógica pura, que é onde mora a regra de negócio: `src/utils/`
+(metas e avisos da meta, validadores, senha, painel, formatação, licenças das
+cooperativas, CSV e documento do relatório PGRS, distâncias) e `src/services/` (os
+adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
+Vitest em ambiente `node`, sem navegador e sem rede.
+
+- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/` e
+  `services/`), com o nome do arquivo testado e `.test.ts`
+  (`src/utils/metas.ts` → `src/testes/utils/metas.test.ts`). A exceção é
+  `pessoas.test.ts`, que cobre `datas.ts`, `equipe.ts` e `pessoa.ts` juntos.
+- Datas: monte com `new Date(ano, mês, dia, hora)` (horário local) e passe o
+  "agora" como argumento, em vez de depender do relógio. Assim o teste dá o mesmo
+  resultado em qualquer fuso, inclusive na pipeline (UTC).
+- Dados de exemplo: `criarOcorrencia`, `criarCooperativa` e `criarConfiguracoes`,
+  em `src/testes/fabricas.ts`; cada teste muda só o campo que importa.
+- Quem importa `services/http` (o `USAR_MOCKS`) troca o módulo com
+  `vi.mock("../../services/http", ...)`, para escolher entre os mocks e a API.
+
+A pipeline (`.github/workflows/ci.yaml`) roda, nesta ordem: lint, verificação de
+tipos, `npm test` e build; se qualquer uma falhar, o check `build-test` da PR
+fica vermelho.
+
 ## Rotas
 
 | Caminho | Página | Acesso |
 |---------|--------|--------|
 | `/login` | Login | Público |
-| `/recuperar-senha` | Esqueci minha senha (4 passos) | Público |
+| `/recuperar-senha` | Recuperar a senha (e-mail, código de 4 dígitos e senha nova) | Público |
 | `/` | Home (dashboard) | Privado |
 | `/registrar` | Registrar ocorrência (`useReducer`) | Privado |
+| `/relatorios` | Relatórios PGRS: indicadores do período, gráficos e exportação em CSV | Privado |
+| `/relatorios/metas` | Metas do mês e do dia (ADMIN e MANAGER) | Privado |
+| `/relatorios/pgrs` | Documento do PGRS em duas páginas A4, que a pessoa salva em PDF pelo navegador (`?periodo=mes`, `trimestre` ou `ano`) | Privado |
+| `/equipe` | Equipe e convites (ADMIN) | Privado |
+| `/configuracoes` | Meta, unidade, notificações e senha | Privado |
 | `/ocorrencias` | Lista com filtro por material | Privado |
 | `/ocorrencias/:id` | Detalhe + ações (reclassificar / encaminhar / finalizar) | Privado |
 | `/cooperativas` | Lista de cooperativas parceiras | Privado |

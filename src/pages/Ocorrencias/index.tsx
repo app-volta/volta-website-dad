@@ -19,7 +19,6 @@ import type { Material } from "../../types/material";
 import type { Ocorrencia } from "../../types/ocorrencia";
 import { baixarCsv, montarCsv } from "../../utils/exportarCsv";
 import {
-  formatarConfianca,
   formatarPeso,
   formatarRegistro,
 } from "../../utils/formatacao";
@@ -191,7 +190,6 @@ export default function Ocorrencias(): ReactNode {
         "Ocorrência",
         "Setor",
         "Peso (kg)",
-        "Confiança IA",
         "Prioridade",
         "Status",
         "Registrada por",
@@ -202,7 +200,6 @@ export default function Ocorrencias(): ReactNode {
         o.titulo,
         o.localizacao.setor,
         o.pesoKg,
-        formatarConfianca(o.classificacao?.confianca ?? null),
         ROTULO_PRIORIDADE[o.prioridade],
         ROTULO_CATEGORIA[categoriaDe(o.status)],
         o.criadaPorNome,
@@ -329,7 +326,6 @@ export default function Ocorrencias(): ReactNode {
                   <th scope="col" className="ocorrencias__col-peso">
                     Peso<span className="sr-only"> aproximado</span>
                   </th>
-                  <th scope="col" className="ocorrencias__col-confianca">Confiança IA</th>
                   <th scope="col" className="ocorrencias__col-prioridade">Prioridade</th>
                   <th scope="col" className="ocorrencias__col-status">Status</th>
                   <th scope="col" className="ocorrencias__col-registrada">Registrada</th>
@@ -392,7 +388,6 @@ export default function Ocorrencias(): ReactNode {
                   </tr>
                 ) : (
                   visiveis.map((o) => {
-                    const confianca = o.classificacao?.confianca ?? null;
                     return (
                       <tr
                         key={o.id}
@@ -450,17 +445,6 @@ export default function Ocorrencias(): ReactNode {
                         <td>{o.localizacao.setor}</td>
                         <td>
                           <strong>{formatarPeso(o.pesoKg, true)}</strong>
-                        </td>
-                        <td>
-                          <span className="ocorrencias__confianca">
-                            <span
-                              className="ocorrencias__barra"
-                              aria-hidden="true"
-                            >
-                              <span style={{ width: `${(confianca ?? 0) * 100}%` }} />
-                            </span>
-                            <strong>{formatarConfianca(confianca)}</strong>
-                          </span>
                         </td>
                         <td>
                           <span

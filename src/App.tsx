@@ -19,6 +19,8 @@ const OcorrenciaDetalhe = lazy(() => import("./pages/OcorrenciaDetalhe"));
 const Cooperativas = lazy(() => import("./pages/Cooperativas"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const RelatoriosMetas = lazy(() => import("./pages/RelatoriosMetas"));
+const RelatorioPgrs = lazy(() => import("./pages/RelatorioPgrs"));
 const Equipe = lazy(() => import("./pages/Equipe"));
 const Configuracoes = lazy(() => import("./pages/Configuracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -137,6 +139,26 @@ export default function App(): ReactNode {
             >
               <Relatorios />
             </RotaPrivada>
+          }
+        />
+        <Route
+          path="/relatorios/metas"
+          element={
+            <RotaPrivada
+              titulo="Metas do mês e do dia"
+              subtitulo="Relatórios PGRS · quanto a unidade quer recuperar"
+            >
+              <RelatoriosMetas />
+            </RotaPrivada>
+          }
+        />
+        {/* O documento do PGRS fica fora do painel: a impressão leva só as duas páginas A4. */}
+        <Route
+          path="/relatorios/pgrs"
+          element={
+            <PrivateRoute>
+              <RelatorioPgrs />
+            </PrivateRoute>
           }
         />
         <Route

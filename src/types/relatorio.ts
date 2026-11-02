@@ -27,6 +27,10 @@ export interface DestinacaoCooperativa {
   readonly cooperativaId: string;
   readonly nome: string;
   readonly percentual: number;
+  /** Quilos destinados à cooperativa no período; ausente quando só se sabe a parcela. */
+  readonly kg?: number;
+  /** Materiais das ocorrências que a cooperativa coletou. */
+  readonly materiais?: readonly Material[];
 }
 
 export interface PosicaoNoRanking {
@@ -53,8 +57,38 @@ export interface RelatorioPgrs {
   readonly scoreEsg?: number | null;
   /** Posição da empresa no ranking (volta-api-redis); ausente no protótipo ou sem pontuação. */
   readonly posicaoNoRanking?: PosicaoNoRanking | null;
+  /** O período anterior, do mesmo tamanho, para o documento comparar; ausente quando não há base. */
+  readonly anterior?: PeriodoAnterior | null;
+  /** Todos os setores que geraram resíduo aprovado, do maior para o menor (o documento junta os menores). */
+  readonly setoresRecuperados?: readonly GeracaoPorSetor[];
+  /** As ocorrências aprovadas mais recentes do período, para a amostra do documento. */
+  readonly aprovadasRecentes?: readonly OcorrenciaDoRelatorio[];
+  /** O que mais se repetiu no período (mesmo setor e mesmo tipo de resíduo, ao menos duas vezes). */
+  readonly recorrencia?: RecorrenciaNoPeriodo | null;
 }
 
-export interface PgrsGerado {
-  readonly geradoEm: string;
+export interface RecorrenciaNoPeriodo {
+  readonly setor: string;
+  readonly titulo: string;
+  readonly vezes: number;
+}
+
+/** O que o período anterior teve, para os "vs. setembro" do documento. */
+export interface PeriodoAnterior {
+  /** "setembro de 2026", "o trimestre anterior" ou "2025": como o texto cita o período. */
+  readonly rotulo: string;
+  readonly ocorrencias: number;
+  readonly recuperadoKg: number;
+  readonly taxaAprovacao: number | null;
+}
+
+/** Uma ocorrência aprovada na amostra do documento do PGRS. */
+export interface OcorrenciaDoRelatorio {
+  readonly id: string;
+  readonly codigo: string;
+  readonly titulo: string;
+  readonly setor: string;
+  readonly material: Material | null;
+  readonly pesoKg: number;
+  readonly registradaPor: string;
 }

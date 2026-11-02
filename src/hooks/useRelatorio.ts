@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { gerarPgrs, obterRelatorio } from "../services/relatorios";
+import { obterRelatorio } from "../services/relatorios";
 import type { EstadoRequisicao } from "../types/comum";
 import type { PeriodoRelatorio, RelatorioPgrs } from "../types/relatorio";
 
@@ -53,14 +53,4 @@ export function useRelatorio(
     carregando: !atual,
     erro: atual ? (resultado?.erro ?? null) : null,
   };
-}
-
-interface AcoesRelatorio {
-  readonly gerarPgrs: typeof gerarPgrs;
-}
-
-const ACOES: AcoesRelatorio = { gerarPgrs };
-
-export function useAcoesRelatorio(): AcoesRelatorio {
-  return ACOES;
 }
