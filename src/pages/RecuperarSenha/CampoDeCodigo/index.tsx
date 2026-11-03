@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-const TAMANHO_DO_CODIGO = 4;
+/** Um nome fixo para cada quadrado: a lista tem sempre quatro itens e nunca muda de ordem. */
+const CASAS = ["milhar", "centena", "dezena", "unidade"] as const;
+const TAMANHO_DO_CODIGO = CASAS.length;
 
 interface CampoDeCodigoProps {
   readonly valor: string;
@@ -44,9 +46,9 @@ export function CampoDeCodigo({
     <div
       className={`codigo${comErro ? " codigo--erro" : ""}${focado ? " codigo--foco" : ""}`}
     >
-      {Array.from({ length: TAMANHO_DO_CODIGO }, (_, indice) => (
+      {CASAS.map((casa, indice) => (
         <span
-          key={indice}
+          key={casa}
           aria-hidden="true"
           className={`codigo__digito${
             valor[indice] ? " codigo__digito--cheio" : ""

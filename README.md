@@ -168,6 +168,13 @@ do chatbot, mas não é guardada: a volta-api recebe uma URL, e o upload depende
 do armazenamento (S3). Se a IA não confirma o resíduo na foto, o app não cria a
 ocorrência e pede outra foto.
 
+Ao sair, o painel apaga só a sessão (`volta:sessao`). O que ficou guardado neste
+navegador continua lá de propósito, para não perder trabalho que a API ainda não
+guarda: os encaminhamentos, as observações, as reclassificações e as análises da IA,
+que são separados por pessoa (cada login só vê os seus), e as preferências de
+Configurações, que valem para o navegador inteiro. Em um computador compartilhado,
+limpe os dados do site no navegador.
+
 Os contratos estão em `src/types/api.ts`; a tradução para os tipos do app, em
 `src/services/adaptadores.ts`.
 
@@ -186,6 +193,7 @@ src/
 ├─ testes/                         # testes unitários (Vitest), uma pasta por camada
 │  ├─ utils/<arquivo>.test.ts
 │  ├─ services/<arquivo>.test.ts
+│  ├─ pages/<pagina>.test.ts       # lógica pura que mora na pasta de uma página (derivados do Registrar)
 │  └─ fabricas.ts                  # dados de exemplo (ocorrência, cooperativa) para os testes
 └─ App.tsx                         # roteamento + lazy loading
 ```
@@ -196,6 +204,11 @@ Regras estritas:
   telas usam vai para `src/components/`; o que só uma página usa fica dentro
   da pasta dela, também em pasta própria (por exemplo
   `src/pages/Cooperativas/ModalAdicionar/index.tsx`).
+- **Página grande vira partes pequenas.** O `Registrar` guarda só o estado (um
+  reducer) e as ações; cada parte da tela é um componente na própria pasta
+  (`FotoDaOcorrencia`, `PainelDetalhes`, `PainelAnalise`, `Sucesso`) que recebe o
+  estado e o `despachar` por props, e o que se calcula do estado fica em
+  `derivados.ts`, com testes. Nenhum arquivo da página passa de 320 linhas.
 - **Zero `any` em `src/`.** Todas as entidades e props têm interfaces em
   `src/types/`.
 - **Nenhum `fetch` fora de `src/services/`.** Páginas e componentes chamam
@@ -204,6 +217,17 @@ Regras estritas:
 - **Todo input tem `<label htmlFor>`** e mensagens de erro com `role="alert"`.
 - **`localStorage` com envelope `{ _versao, dados }`** — versão diferente
   descarta com segurança em vez de quebrar a aplicação.
+- **Convenção de nomes.** Nomes do domínio e das telas ficam em português
+  (`Ocorrencia`, `Cooperativa`, `Alerta`, `Icone`, `Interruptor`,
+  `useOcorrencias`). As peças genéricas de interface, com o nome que o React e a
+  web usam, ficam em inglês (`Button`, `Input`, `Spinner`, `Toast`, `Modal`,
+  `SkeletonList`, `useDebounce`, `usePagination`). Os nomes que juntam as duas
+  coisas (`CooperativaCard`, `MaterialBadge`) seguem a mesma regra: o domínio em
+  português e o tipo da peça em inglês.
+- **"Manter conectado".** Com a opção marcada, a sessão (e o token) fica no
+  `localStorage` e sobrevive ao fechamento do navegador; desmarcada, fica no
+  `sessionStorage`, que o navegador apaga quando a aba fecha. A regra está em
+  `src/utils/sessaoSalva.ts`, com testes.
 
 ## Testes unitários
 
@@ -213,8 +237,8 @@ cooperativas, CSV e documento do relatório PGRS, distâncias) e `src/services/`
 adaptadores que traduzem a volta-api e a montagem das notificações). Rodam no
 Vitest em ambiente `node`, sem navegador e sem rede.
 
-- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/` e
-  `services/`), com o nome do arquivo testado e `.test.ts`
+- Todos os testes ficam em `src/testes/`, numa pasta por camada (`utils/`,
+  `services/` e `pages/`), com o nome do arquivo testado e `.test.ts`
   (`src/utils/metas.ts` → `src/testes/utils/metas.test.ts`). A exceção é
   `pessoas.test.ts`, que cobre `datas.ts`, `equipe.ts` e `pessoa.ts` juntos.
 - Datas: monte com `new Date(ano, mês, dia, hora)` (horário local) e passe o

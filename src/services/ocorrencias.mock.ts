@@ -282,17 +282,6 @@ export function quantidadeAguardando(): number {
   return CATALOGO.filter((item) => aguardaAprovacao(item.status)).length;
 }
 
-export function semelhantesNaSemana(ocorrencia: Ocorrencia): number {
-  const limite = Date.now() - 7 * 86_400_000;
-  return CATALOGO.filter(
-    (item) =>
-      item.titulo === ocorrencia.titulo &&
-      item.localizacao.setor === ocorrencia.localizacao.setor &&
-      new Date(item.criadaEm).getTime() >= limite &&
-      item.criadaEm <= ocorrencia.criadaEm,
-  ).length;
-}
-
 function proximoCodigo(): string {
   const maior = Math.max(
     ...CATALOGO.map((item) => Number(item.codigo.replace(/\D/g, ""))),

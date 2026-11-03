@@ -17,7 +17,12 @@ import type {
   SessaoAutenticada,
   Usuario,
 } from "../../types/usuario";
-import { carregar, remover, salvar } from "../../utils/armazenamento";
+import type { Armazenamento } from "../../utils/armazenamento";
+import {
+  esquecerSessao,
+  guardarSessao,
+  lerSessaoGuardada,
+} from "../../utils/sessaoSalva";
 
 /**
  * Contexto de autenticação — resolve o prop-drilling do usuário logado.
@@ -29,8 +34,6 @@ import { carregar, remover, salvar } from "../../utils/armazenamento";
  * em um único lugar.
  */
 
-const CHAVE_STORAGE = "volta:sessao";
-const VERSAO_STORAGE = 1;
 const LIMITE_TEMPORIZADOR_MS = 2_147_483_000;
 
 /**
@@ -40,6 +43,8 @@ const LIMITE_TEMPORIZADOR_MS = 2_147_483_000;
  */
 let sessaoAtual: SessaoAutenticada | null = null;
 let aoSessaoExpirar: (() => void) | null = null;
+/** Onde a sessão fica guardada: com "Manter conectado" sobrevive ao navegador; sem ele, só à aba. */
+let guardarEm: Armazenamento = "local";
 
 configurarSessaoHttp({
   obterToken: () => sessaoAtual?.token ?? null,
@@ -56,9 +61,10 @@ configurarSessaoHttp({
 });
 
 function lerSessaoSalva(): SessaoAutenticada | null {
-  const salva = carregar<SessaoAutenticada>(CHAVE_STORAGE, VERSAO_STORAGE);
-  if (!salva) return null;
-  return new Date(salva.expiraEm).getTime() > Date.now() ? salva : null;
+  const guardada = lerSessaoGuardada();
+  if (!guardada) return null;
+  guardarEm = guardada.onde;
+  return guardada.sessao;
 }
 
 interface ValorAuthContext {
@@ -68,7 +74,8 @@ interface ValorAuthContext {
   readonly erro: string | null;
   /** A sessão acabou, mas a tela continua visível até a pessoa escolher "Entrar de novo". */
   readonly sessaoExpirada: boolean;
-  readonly entrar: (credenciais: CredenciaisLogin) => Promise<void>;
+  /** `manterConectado` (padrão: sim) decide se a sessão sobrevive ao fechamento do navegador. */
+  readonly entrar: (credenciais: CredenciaisLogin, manterConectado?: boolean) => Promise<void>;
   readonly sair: () => void;
   /** Encerra a sessão vencida; a rota privada leva ao login e, depois dele, de volta a esta página. */
   readonly entrarDeNovo: () => void;
@@ -131,18 +138,19 @@ export function AuthProvider({ children }: AuthProviderProps): ReactNode {
 
   useEffect(() => {
     if (sessao) {
-      salvar(CHAVE_STORAGE, VERSAO_STORAGE, sessao);
+      guardarSessao(sessao, guardarEm);
     } else {
-      remover(CHAVE_STORAGE);
+      esquecerSessao();
     }
   }, [sessao]);
 
   const entrar = useCallback(
-    async (credenciais: CredenciaisLogin) => {
+    async (credenciais: CredenciaisLogin, manterConectado = true) => {
       setCarregando(true);
       setErro(null);
       try {
         const nova = await autenticar(credenciais);
+        guardarEm = manterConectado ? "local" : "sessao";
         aplicarSessao(nova);
       } catch (excecao) {
         const mensagem =

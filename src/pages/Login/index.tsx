@@ -57,7 +57,7 @@ export default function Login(): ReactNode {
     setErrosCampo(validacao.erros);
     if (!validacao.valido) return;
     try {
-      await entrar({ email: formulario.email, senha: formulario.senha });
+      await entrar({ email: formulario.email, senha: formulario.senha }, manterConectado);
     } catch (excecao) {
       // E-mail ou senha errados (401): a senha digitada é apagada, o e-mail fica.
       if (foiNaoAutorizado(excecao)) {

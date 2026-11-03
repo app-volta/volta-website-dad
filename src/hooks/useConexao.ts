@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from "react";
 
+import { confirmarConexao } from "../services/conexao";
+
 /**
  * Estado da conexão com a internet, compartilhado entre as telas. Segue os eventos
  * online/offline do navegador; "Tentar de novo" confirma de verdade, pedindo a
@@ -9,8 +11,6 @@ interface EstadoConexao {
   readonly online: boolean;
   readonly verificando: boolean;
 }
-
-const TEMPO_LIMITE_MS = 5000;
 
 let estado: EstadoConexao = {
   online: typeof navigator === "undefined" ? true : navigator.onLine,
@@ -40,16 +40,7 @@ function assinar(ouvinte: () => void): () => void {
 
 async function verificar(): Promise<void> {
   atualizar({ verificando: true });
-  try {
-    await fetch("/", {
-      method: "HEAD",
-      cache: "no-store",
-      signal: AbortSignal.timeout(TEMPO_LIMITE_MS),
-    });
-    atualizar({ online: true, verificando: false });
-  } catch {
-    atualizar({ online: false, verificando: false });
-  }
+  atualizar({ online: await confirmarConexao(), verificando: false });
 }
 
 interface UsoDaConexao extends EstadoConexao {
