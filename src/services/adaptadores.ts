@@ -428,9 +428,10 @@ export function membroDaApi(
 }
 
 /**
- * O banco do QA veio da carga antiga, com as categorias dos tipos de resíduo em
- * inglês (PAPER, PLASTIC, GLASS...). A API devolve o texto como está, então o app
- * traduz para as categorias que ele conhece. Sem correspondência: não reciclável.
+ * Parte dos dados do banco veio da carga antiga, com as categorias dos tipos de
+ * resíduo em inglês (PAPER, PLASTIC, GLASS...). A API devolve o texto como está,
+ * então o app traduz para as categorias que ele conhece. Sem correspondência:
+ * não reciclável.
  */
 const CATEGORIA_POR_SINONIMO: Readonly<Record<string, CategoriaResiduoApi>> = {
   PAPEL: "PAPEL",

@@ -56,9 +56,9 @@ Elas ficam no `.env` (não versionado). O `.env.example` documenta cada uma.
 | `VITE_CHAT_API_BASE_URL` | Base do chatbot. Use `/chat-api` (também por proxy). |
 | `VITE_RANKING_API_BASE_URL` | Base da API de ranking (volta-api-redis). Use `/ranking-api` (também por proxy). |
 | `VITE_USAR_MOCKS` | `false` liga as APIs; `true` usa os mocks locais. A Vercel usa `false` via `.env.production`; o Docker usa `true` por padrão (sobrescreva com `--build-arg VITE_USAR_MOCKS=false`). |
-| `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de QA. |
-| `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de QA. |
-| `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de QA. |
+| `VITE_API_PROXY_TARGET` | Destino do proxy do Vite, só no desenvolvimento. Padrão: a API de produção. |
+| `VITE_CHAT_PROXY_TARGET` | Destino do proxy do chatbot, só no desenvolvimento. Padrão: o chatbot de produção. |
+| `VITE_RANKING_PROXY_TARGET` | Destino do proxy da API de ranking, só no desenvolvimento. Padrão: o ranking de produção. |
 | `VITE_CLOUDINARY_CLOUD_NAME` | Conta do Cloudinary onde ficam as fotos das ocorrências. Não é segredo. |
 | `VITE_CLOUDINARY_PRESET_OCORRENCIA` | Configuração de envio (sem assinatura) das fotos: `AI-Analysis`, que guarda em `Ocorrencia/Assets/Images`. Não é segredo. |
 | `VITE_CLOUDINARY_API_URL` | Opcional: troca a base do envio (por padrão `https://api.cloudinary.com/v1_1`), útil em testes. |
@@ -76,9 +76,11 @@ VITE_USAR_MOCKS=false
 ```
 
 O navegador chama `/api/...` na própria origem. Em desenvolvimento, o Vite
-repassa para a API de QA (`vite.config.ts`); na Vercel, o `rewrite` do
+repassa para a API de produção (`vite.config.ts`); na Vercel, o `rewrite` do
 `vercel.json` faz o mesmo. Isso evita o CORS, que a API ainda não libera, e o
-bloqueio de conteúdo misto (site HTTPS chamando API HTTP).
+bloqueio de conteúdo misto (site HTTPS chamando API HTTP). O servidor de
+produção responde só por HTTP, então o trecho entre a Vercel e a API não é
+criptografado; o navegador fala com a Vercel por HTTPS.
 
 | Tela | Endpoints |
 |------|-----------|
@@ -290,11 +292,30 @@ Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 - Alvos de toque com ao menos 44 px de altura
 - Contraste conferido nas variáveis da paleta
 
+## Ambientes
+
+O painel usa um ambiente só: **produção**. O QA (hosts com `.qa`) ainda existe
+no servidor, mas o painel não aponta mais para ele.
+
+| O quê | Endereço |
+|---|---|
+| Painel (Vercel, branch `main`) | https://volta-website-dad.vercel.app |
+| volta-api | http://api.54.210.1.34.sslip.io |
+| Chatbot (IA) | http://chat.54.210.1.34.sslip.io |
+| API de ranking | http://ranking.54.210.1.34.sslip.io |
+
+### Como o painel chega nelas
+
+O navegador nunca chama esses endereços direto. Ele chama a própria origem
+(`/api`, `/chat-api` e `/ranking-api`) e um proxy repassa: o Vite no
+desenvolvimento (`vite.config.ts`) e o `rewrite` do `vercel.json` na Vercel.
+Para trocar de ambiente, é nesses dois arquivos que o destino muda.
+
 ## Deploy na Vercel
 
 A branch `main` é publicada em https://volta-website-dad.vercel.app. O build
 de produção lê o `.env.production`, que liga as APIs (`VITE_USAR_MOCKS=false`);
-por isso o login e as telas dependem do ambiente de QA estar ligado. Para um
+por isso o login e as telas dependem do ambiente de produção estar ligado. Para um
 deploy só com os mocks (qualquer e-mail e senha com 6 caracteres ou mais
 entram), defina `VITE_USAR_MOCKS=true` nas variáveis do projeto na Vercel.
 
@@ -303,7 +324,7 @@ que rotas como `/ocorrencias/1234` funcionem em recarga direta. Ao
 importar o repo na Vercel, os padrões do Vite (`npm run build` / pasta
 `dist`) já funcionam. Para usar a API real, configure em Environment
 Variables `VITE_API_BASE_URL=/api` e `VITE_USAR_MOCKS=false`; o `rewrite` de
-`/api` no `vercel.json` aponta para a API de QA.
+`/api` no `vercel.json` aponta para a API de produção.
 
 O `vercel.json` também manda os cabeçalhos de segurança: `Content-Security-Policy`
 (o navegador só carrega script, imagem e conexão da própria aplicação e do
