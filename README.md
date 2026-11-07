@@ -292,6 +292,77 @@ Rotas privadas passam por `<PrivateRoute>`, que consome só o `AuthContext`
 - Alvos de toque com ao menos 44 px de altura
 - Contraste conferido nas variáveis da paleta
 
+## Ambientes
+
+O painel usa um ambiente só: **produção**. O QA (hosts com `.qa`) ainda existe
+no servidor, mas o painel não aponta mais para ele.
+
+| O quê | Endereço |
+|---|---|
+| Painel (Vercel, branch `main`) | https://volta-website-dad.vercel.app |
+| volta-api | http://api.54.210.1.34.sslip.io |
+| Chatbot (IA) | http://chat.54.210.1.34.sslip.io |
+| API de ranking | http://ranking.54.210.1.34.sslip.io |
+| Swagger da volta-api | http://api.54.210.1.34.sslip.io/swagger-ui.html (pede o usuário e a senha do Swagger) |
+
+Repositórios do servidor: [volta-api-core](https://github.com/app-volta/volta-api-core)
+(a API em Spring) e [volta-devops](https://github.com/app-volta/volta-devops)
+(os manifestos do Kubernetes).
+
+### Como o painel chega nelas
+
+O navegador nunca chama esses endereços direto. Ele chama a própria origem
+(`/api`, `/chat-api` e `/ranking-api`) e um proxy repassa: o Vite no
+desenvolvimento (`vite.config.ts`) e o `rewrite` do `vercel.json` na Vercel.
+Para trocar de ambiente, é nesses dois arquivos que o destino muda.
+
+### Conferir se os serviços estão no ar
+
+Cada comando deve responder `200`:
+
+```bash
+curl -i http://api.54.210.1.34.sslip.io/actuator/health
+curl -i http://ranking.54.210.1.34.sslip.io/actuator/health
+curl -i http://chat.54.210.1.34.sslip.io/health
+```
+
+### Conferir para onde o painel local aponta
+
+Na pasta do projeto, os três destinos devem aparecer sem o `.qa`:
+
+```bash
+grep -n "sslip" vite.config.ts
+```
+
+O `.env.local` não deve ter nenhuma variável `VITE_*_PROXY_TARGET`, porque ela
+vence o padrão do `vite.config.ts`:
+
+```bash
+grep -n "PROXY" .env.local
+```
+
+### Só HTTP, sem HTTPS
+
+O servidor de produção responde apenas por HTTP (o overlay de produção do
+volta-devops não tem o certificado que o QA tem). O navegador fala com a
+Vercel por HTTPS, então não há conteúdo misto, mas o trecho entre a Vercel e a
+API não é criptografado: a senha do login e o token passam em texto puro nele.
+A correção está no volta-devops (certificado no overlay de produção), não neste
+repositório.
+
+### Qual código roda em cada ambiente do servidor
+
+No volta-api-core, um push na `main` publica em **produção** e um push na
+`develop` publica no **QA** (workflow `CD`). Uma função que só existe na
+`develop` do back não chega à produção até a `develop` ser levada para a `main`.
+
+### Usuários
+
+O administrador inicial é criado pelo próprio back na inicialização, com as
+variáveis `ADMIN_EMAIL` e `ADMIN_PASSWORD` do servidor. As credenciais não ficam
+neste repositório. O primeiro acesso de cada usuário exige trocar a senha
+provisória.
+
 ## Deploy na Vercel
 
 A branch `main` é publicada em https://volta-website-dad.vercel.app. O build
